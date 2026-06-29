@@ -19,6 +19,19 @@ namespace VfxSandbox.Editor
             // Tự động sinh/cập nhật toàn bộ Textures (Noise, Normal, Caustics) trước khi nạp
             ProceduralTextureGenerator.Generate();
 
+            // Kích hoạt Depth Texture và Opaque Texture trên URP Asset để nước hiển thị bọt viền dốc và khúc xạ đáy cát
+            var pipelineAsset = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
+            if (pipelineAsset == null)
+            {
+                pipelineAsset = UnityEngine.Rendering.QualitySettings.renderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
+            }
+            if (pipelineAsset != null)
+            {
+                pipelineAsset.supportsCameraDepthTexture = true;
+                pipelineAsset.supportsCameraOpaqueTexture = true;
+                EditorUtility.SetDirty(pipelineAsset);
+            }
+
             // 1. Dựng các vật liệu (Materials)
             // A. Vật liệu nước cách điệu (Stylized Water Material)
             string waterMatPath = matDir + "/mat_stylized_water.mat";

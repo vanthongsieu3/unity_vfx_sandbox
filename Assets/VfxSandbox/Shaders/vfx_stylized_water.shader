@@ -308,23 +308,18 @@ Shader "VFX/StylizedWater"
                 float dist2 = distance(input.worldPos.xz, _Pillar2Pos.xy);
                 float distBoat = distance(input.worldPos.xz, _BoatPos.xy);
                 
-                float ringSpeed = 1.4;
-                float maxRingRadius = 2.4;
-                float ringWidth = 0.28;
+                // Đọc pha sóng phản xạ từ cọc 1, cọc 2 và thuyền
+                float phase1 = dist1 * _RippleScale - _Time.y * _RippleSpeed;
+                float phase2 = dist2 * _RippleScale - _Time.y * _RippleSpeed;
+                float phaseBoat = distBoat * _RippleScale - _Time.y * _RippleSpeed;
 
-                // Cọc 1
-                float timeRad1 = frac(_Time.y * 0.35) * maxRingRadius;
-                float ringMask1 = smoothstep(ringWidth, 0.0, abs(dist1 - timeRad1)) * (1.0 - timeRad1 / maxRingRadius);
-                
-                // Cọc 2 (Lệch pha để nhấp nhô so le sinh động)
-                float timeRad2 = frac(_Time.y * 0.35 + 0.5) * maxRingRadius;
-                float ringMask2 = smoothstep(ringWidth, 0.0, abs(dist2 - timeRad2)) * (1.0 - timeRad2 / maxRingRadius);
+                // Tạo nhiều vòng tròn đồng tâm sắc nét ở các đỉnh sóng (crest) và dập tắt dần theo khoảng cách exp
+                float ring1 = pow(saturate(sin(phase1)), 6.0) * exp(-dist1 * _RippleDecay);
+                float ring2 = pow(saturate(sin(phase2)), 6.0) * exp(-dist2 * _RippleDecay);
+                float ringBoat = pow(saturate(sin(phaseBoat)), 6.0) * exp(-distBoat * (_RippleDecay * 1.2));
 
-                // Thuyền
-                float timeRadBoat = frac(_Time.y * 0.35 + 0.25) * maxRingRadius;
-                float ringMaskBoat = smoothstep(ringWidth, 0.0, abs(distBoat - timeRadBoat)) * (1.0 - timeRadBoat / maxRingRadius);
-
-                float pillarFoam = max(max(ringMask1, ringMask2), ringMaskBoat) * 0.85 * smoothstep(4.0, 0.0, min(min(dist1, dist2), distBoat));
+                // Gộp chung các vòng bọt phản chấn, nhân với hệ số cường độ và giới hạn bán kính ảnh hưởng
+                float pillarFoam = max(max(ring1, ring2), ringBoat) * 0.85 * smoothstep(4.0, 0.0, min(min(dist1, dist2), distBoat));
 
                 // D. Bọt viền ôm khít sát sạt vật thể (Solid outline foam hugging the boat and pillars) - Độc lập góc dốc
                 float outlineMask = 0.0;
