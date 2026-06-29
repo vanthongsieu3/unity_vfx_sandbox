@@ -188,7 +188,7 @@ Shader "VFX/StylizedWater"
                 // Phép dựng sóng Gerstner giải tích hướng tâm
                 float k1 = _WaveScale;
                 float w1 = _Time.y * _WaveSpeed;
-                float wave1 = sin(wavePos * k1 + w1) * _WaveHeight;
+                float wave1 = sin(wavePos * k1 - w1) * _WaveHeight;
 
                 // Tạo sóng phụ chéo góc 37 độ để dập dềnh tự nhiên
                 float2 waveDir2 = float2(waveDir.x * 0.8 - waveDir.y * 0.6, waveDir.y * 0.8 + waveDir.x * 0.6);
@@ -206,7 +206,7 @@ Shader "VFX/StylizedWater"
 
                 float k2 = _WaveScale * 1.35;
                 float w2 = _Time.y * _WaveSpeed * 1.15;
-                float wave2 = cos(wavePos2 * k2 + w2) * (_WaveHeight * 0.55);
+                float wave2 = cos(wavePos2 * k2 - w2) * (_WaveHeight * 0.55);
 
                 float baseWaveHeight = wave1 + wave2;
 
@@ -245,11 +245,11 @@ Shader "VFX/StylizedWater"
                 output.waveHeight = baseWaveHeight + ripple1 + ripple2 + rippleBoat;
 
                 // 3. Tính toán Vector Pháp tuyến (Normal Vector) chính xác dựa trên đạo hàm sóng chiếu theo hướng và sóng phản xạ
-                float dy1_dx = k1 * d_wavePos_dx * cos(wavePos * k1 + w1) * _WaveHeight;
-                float dy1_dz = k1 * d_wavePos_dz * cos(wavePos * k1 + w1) * _WaveHeight;
+                float dy1_dx = k1 * d_wavePos_dx * cos(wavePos * k1 - w1) * _WaveHeight;
+                float dy1_dz = k1 * d_wavePos_dz * cos(wavePos * k1 - w1) * _WaveHeight;
 
-                float dy2_dx = -k2 * d_wavePos2_dx * sin(wavePos2 * k2 + w2) * (_WaveHeight * 0.55);
-                float dy2_dz = -k2 * d_wavePos2_dz * sin(wavePos2 * k2 + w2) * (_WaveHeight * 0.55);
+                float dy2_dx = -k2 * d_wavePos2_dx * sin(wavePos2 * k2 - w2) * (_WaveHeight * 0.55);
+                float dy2_dz = -k2 * d_wavePos2_dz * sin(wavePos2 * k2 - w2) * (_WaveHeight * 0.55);
 
                 // Đạo hàm cho sóng phản xạ cọc 1 đã biến dạng dạng wake hình giọt nước
                 float2 rDir1 = waveTangent * p1Perp * 1.3 + waveDir * p1Along * p1AlongScale;
