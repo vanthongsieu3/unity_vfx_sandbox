@@ -8,11 +8,13 @@ Shader "VFX/StylizedWater"
         _WaterOpacity("Base Opacity", Range(0, 1)) = 0.5                  // Độ trong suốt cơ bản của nước
         _DepthMaxDistance("Depth Color Blending Distance", Float) = 4.0   // Khoảng cách chuyển màu nông/sâu
 
-        [Header(Shoreline Foam)]
+        [Header(Shoreline and Wave Crest Foam)]
         _FoamColor("Foam Color", Color) = (1.0, 1.0, 1.0, 1.0)
-        _FoamDistance("Foam Width", Float) = 0.55                         // Độ rộng bọt sóng xô bờ
+        _FoamDistance("Shore Foam Width", Float) = 0.55                   // Độ rộng bọt sóng xô bờ
         _FoamNoiseScale("Foam Noise Scale", Float) = 4.0                  // Tỉ lệ nhiễu bọt sóng
         _FoamNoiseWeight("Foam Edge Noise Distortion", Range(0.1, 0.8)) = 0.45 // Độ lồi lõm của mép bọt sóng
+        _WaveCrestThreshold("Wave Crest Foam Threshold", Float) = 0.08    // Điểm cao của sóng bắt đầu sinh bọt đỉnh
+        _WaveCrestRange("Wave Crest Foam Range", Float) = 0.18            // Dải chuyển tiếp bọt đỉnh sóng
 
         [Header(Normal Map Ripples)]
         _NormalMap("Normal Map", 2D) = "bump" {}
@@ -77,6 +79,7 @@ Shader "VFX/StylizedWater"
                 float3 worldNormal  : TEXCOORD1;
                 float3 viewDirWS    : TEXCOORD3;
                 float3 worldPos     : TEXCOORD4;
+                float waveHeight    : TEXCOORD5; // Lưu chiều cao nhấp nhô của đỉnh sóng để sinh bọt đỉnh
             };
 
             Texture2D _NoiseMap;
@@ -93,10 +96,12 @@ Shader "VFX/StylizedWater"
                 float _FoamDistance;
                 float _FoamNoiseScale;
                 float _FoamNoiseWeight;
+                float _WaveCrestThreshold;
+                float _WaveCrestRange;
                 float _NormalScale1;
                 float _NormalScale2;
-                float2 _NormalSpeed1;
-                float2 _NormalSpeed2;
+                float4 _NormalSpeed1; // Đổi sang float4 khớp với Vector trong properties để tránh lỗi desync alignment CBuffer
+                float4 _NormalSpeed2; // Đổi sang float4
                 float _RefractionStrength;
                 float _WaveHeight;
                 float _WaveScale;
@@ -129,6 +134,7 @@ Shader "VFX/StylizedWater"
                 float wave2 = cos(positionWS.z * k2 + w2) * (_WaveHeight * 0.55);
 
                 positionWS.y += wave1 + wave2;
+                output.waveHeight = wave1 + wave2; // Truyền chiều cao sóng sang fragment
 
                 // 2. Tính toán Vector Pháp tuyến (Normal Vector) dựa trên đạo hàm sóng
                 float dy_dx = k1 * cos(positionWS.x * k1 + w1) * _WaveHeight;
@@ -150,8 +156,8 @@ Shader "VFX/StylizedWater"
                 float2 screenUv = input.positionCS.xy / _ScreenParams.xy;
 
                 // 1. Đọc và hòa trộn 2 lớp Map Pháp tuyến (Normal Map) chuyển động chéo nhau
-                float2 normalUv1 = input.worldPos.xz * _NormalScale1 + _NormalSpeed1 * _Time.y;
-                float2 normalUv2 = input.worldPos.xz * _NormalScale2 + _NormalSpeed2 * _Time.y;
+                float2 normalUv1 = input.worldPos.xz * _NormalScale1 + _NormalSpeed1.xy * _Time.y;
+                float2 normalUv2 = input.worldPos.xz * _NormalScale2 + _NormalSpeed2.xy * _Time.y;
                 
                 float3 normal1 = UnpackNormal(_NormalMap.Sample(sampler_NormalMap, normalUv1));
                 float3 normal2 = UnpackNormal(_NormalMap.Sample(sampler_NormalMap, normalUv2));
@@ -198,13 +204,19 @@ Shader "VFX/StylizedWater"
                 float3 finalWaterColor = lerp(sceneColor, reflectedColor, opacity);
 
                 // 6. Tạo bọt nước xô bờ gợn sóng cách điệu (Stylized Shoreline Foam)
-                // Sử dụng nhiễu bọt để biến dạng độ rộng của bọt nước, tạo các viền bọt quanh đá tự nhiên méo mó
                 float2 foamUv = input.worldPos.xz * _FoamNoiseScale + blendedNormalMap.xy * 0.2 + float2(_Time.y * 0.12, _Time.y * 0.06);
                 float foamNoise = _NoiseMap.Sample(sampler_NoiseMap, foamUv).r;
-                float foamFactor = saturate(1.0 - depthDiff / _FoamDistance);
                 
-                // Hoà trộn nhiễu vào độ sâu để cắt nét bọt sóng trắng
-                float foamCutout = smoothstep(0.42, 0.48, foamFactor + foamNoise * _FoamNoiseWeight);
+                // A. Bọt xô bờ (Shoreline foam)
+                float shoreFoamFactor = saturate(1.0 - depthDiff / _FoamDistance);
+                float shoreFoamMask = smoothstep(0.42, 0.48, shoreFoamFactor + foamNoise * _FoamNoiseWeight);
+
+                // B. Bọt đỉnh sóng (Wave Crest foam) - Tự động nổi bọt trắng xóa trên ngọn các con sóng nhấp nhô di chuyển ngoài khơi
+                float waveCrestFactor = saturate((input.waveHeight - _WaveCrestThreshold) / _WaveCrestRange);
+                float waveCrestMask = smoothstep(0.45, 0.52, waveCrestFactor + foamNoise * _FoamNoiseWeight);
+
+                // Gộp chung hai loại bọt nước
+                float foamCutout = max(shoreFoamMask, waveCrestMask);
                 finalWaterColor = lerp(finalWaterColor, _FoamColor.rgb, foamCutout * _FoamColor.a);
 
                 // 7. Tạo vân nắng lung linh khúc xạ (Distorted Caustics)

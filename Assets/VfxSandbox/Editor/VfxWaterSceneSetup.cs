@@ -45,6 +45,8 @@ namespace VfxSandbox.Editor
             waterMat.SetFloat("_FoamDistance", 0.55f);
             waterMat.SetFloat("_FoamNoiseScale", 4.0f);
             waterMat.SetFloat("_FoamNoiseWeight", 0.45f); // Độ lồi lõm của viền bọt
+            waterMat.SetFloat("_WaveCrestThreshold", 0.08f); // Bọt đỉnh sóng nổi lên ở đỉnh
+            waterMat.SetFloat("_WaveCrestRange", 0.18f);
             waterMat.SetFloat("_WaveHeight", 0.22f); // Sóng nhấp nhô tuyệt đẹp
             waterMat.SetFloat("_WaveScale", 0.85f);
             waterMat.SetFloat("_WaveSpeed", 1.6f);
