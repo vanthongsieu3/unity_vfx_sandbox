@@ -27,6 +27,8 @@ namespace VfxSandbox
         [Header("References")]
         public Renderer waterRenderer;
 
+        private Vector4[] pillarPositionsArray = new Vector4[10];
+
         private void Update()
         {
             // Tự động tìm kiếm mặt nước nếu chưa gán
@@ -39,35 +41,30 @@ namespace VfxSandbox
                 }
             }
 
-            // Tự động dò tìm và gán 2 đảo đá vôi gần thuyền nhất để kích hoạt bọt sóng phản chấn
+            // Tự động dò tìm tất cả 10 đảo đá vôi để đồng bộ mảng vị trí lên Shader và dùng cho CPU
             GameObject[] allObjects = GameObject.FindObjectsByType<GameObject>(FindObjectsSortMode.None);
-            float minDist1 = float.MaxValue;
-            float minDist2 = float.MaxValue;
-            Vector2 closestP1 = new Vector2(1.2f, 1.5f);
-            Vector2 closestP2 = new Vector2(-1.8f, 3.2f);
-            Vector2 boatPos2D = new Vector2(transform.position.x, transform.position.z);
-
+            Vector4[] pillarPositions = new Vector4[10];
+            int count = 0;
             foreach (var go in allObjects)
             {
                 if (go != null && go.name.StartsWith("Water_Rock_Obstacle_"))
                 {
-                    Vector2 rockPos2D = new Vector2(go.transform.position.x, go.transform.position.z);
-                    float dist = Vector2.Distance(boatPos2D, rockPos2D);
-                    if (dist < minDist1)
+                    if (count < 10)
                     {
-                        minDist2 = minDist1;
-                        closestP2 = closestP1;
-                        
-                        minDist1 = dist;
-                        closestP1 = rockPos2D;
-                    }
-                    else if (dist < minDist2)
-                    {
-                        minDist2 = dist;
-                        closestP2 = rockPos2D;
+                        float radius = go.transform.localScale.x * 0.5f;
+                        pillarPositions[count] = new Vector4(go.transform.position.x, go.transform.position.z, radius, 0f);
+                        count++;
                     }
                 }
             }
+            // Điền nốt các slot trống bằng Vector4.zero
+            for (int i = count; i < 10; i++)
+            {
+                pillarPositions[i] = Vector4.zero;
+            }
+            
+            // Lưu lại cho CPU
+            this.pillarPositionsArray = pillarPositions;
 
             // Tự động đồng bộ hóa toàn bộ thông số từ Material sang C# để làm Single Source of Truth
             if (waterRenderer != null && waterRenderer.sharedMaterial != null)
@@ -86,15 +83,10 @@ namespace VfxSandbox
                 rippleDecay = mat.GetFloat("_RippleDecay");
                 boatLength = mat.GetFloat("_BoatLength");
 
-                // Đẩy tọa độ động của thuyền và 2 cột gần nhất lên shader để vẽ sóng phản chấn hình capsule
+                // Đẩy tọa độ động của thuyền và mảng 10 cọc đá lên shader
                 mat.SetVector("_BoatPos", new Vector4(transform.position.x, transform.position.z, 0f, 0f));
                 mat.SetVector("_BoatDir", new Vector4(transform.forward.x, transform.forward.z, 0f, 0f));
-                mat.SetVector("_Pillar1Pos", new Vector4(closestP1.x, closestP1.y, 0f, 0f));
-                mat.SetVector("_Pillar2Pos", new Vector4(closestP2.x, closestP2.y, 0f, 0f));
-
-                // Lưu lại tọa độ cọc để phục vụ hàm tính toán GetWaveHeight nổi của CPU
-                pillar1Pos = closestP1;
-                pillar2Pos = closestP2;
+                mat.SetVectorArray("_PillarPositions", pillarPositions);
             }
 
             Vector3 currentPos = transform.position;
@@ -158,24 +150,32 @@ namespace VfxSandbox
 
             float baseHeight = wave1 + wave2;
 
-            // B. Sóng phản xạ dạng vệt nước (Wake) uốn cong theo dòng chảy của sóng chính từ 2 cột đá
-            Vector2 toP1 = new Vector2(pos.x, pos.z) - pillar1Pos;
-            float p1Along = Vector2.Dot(toP1, waveDir);
-            float p1Perp = Vector2.Dot(toP1, waveTangent);
-            float p1AlongScale = p1Along > 0.0f ? 0.65f : 2.5f;
-            float defDist1 = Mathf.Sqrt(p1Perp * p1Perp * 1.3f + p1Along * p1Along * p1AlongScale);
+            // B. Sóng phản xạ dạng vệt nước (Wake) từ 10 cọc đá vôi Vịnh Hạ Long
+            float totalPillarRipple = 0f;
+            if (pillarPositionsArray != null)
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    Vector4 p = pillarPositionsArray[i];
+                    if (p.sqrMagnitude < 0.001f) continue;
 
-            Vector2 toP2 = new Vector2(pos.x, pos.z) - pillar2Pos;
-            float p2Along = Vector2.Dot(toP2, waveDir);
-            float p2Perp = Vector2.Dot(toP2, waveTangent);
-            float p2AlongScale = p2Along > 0.0f ? 0.65f : 2.5f;
-            float defDist2 = Mathf.Sqrt(p2Perp * p2Perp * 1.3f + p2Along * p2Along * p2AlongScale);
+                    Vector2 pPos = new Vector2(p.x, p.y);
+                    Vector2 toP = new Vector2(pos.x, pos.z) - pPos;
+                    float pAlong = Vector2.Dot(toP, waveDir);
+                    float pPerp = Vector2.Dot(toP, waveTangent);
+                    float pAlongScale = pAlong > 0.0f ? 0.65f : 2.5f;
+                    float defDist = Mathf.Sqrt(pPerp * pPerp * 1.3f + pAlong * pAlong * pAlongScale);
 
-            float decay1 = p1Along > 0.0f ? rippleDecay : rippleDecay * 2.8f;
-            float decay2 = p2Along > 0.0f ? rippleDecay : rippleDecay * 2.8f;
+                    float decay = pAlong > 0.0f ? rippleDecay : rippleDecay * 2.8f;
+                    float ripple = Mathf.Sin(defDist * rippleScale - time * rippleSpeed) * rippleHeight * Mathf.Exp(-defDist * decay);
+                    
+                    // Giới hạn khoảng cách sóng cọc 3.5m khớp shader bằng hàm smoothstep
+                    float tClamp = Mathf.Clamp01((3.5f - defDist) / 3.5f);
+                    float weight = tClamp * tClamp * (3f - 2f * tClamp);
 
-            float ripple1 = Mathf.Sin(defDist1 * rippleScale - time * rippleSpeed) * rippleHeight * Mathf.Exp(-defDist1 * decay1);
-            float ripple2 = Mathf.Sin(defDist2 * rippleScale - time * rippleSpeed) * rippleHeight * Mathf.Exp(-defDist2 * decay2);
+                    totalPillarRipple += ripple * weight;
+                }
+            }
 
             // Bổ sung sóng phản xạ hình capsule từ chính con thuyền để khớp 100% với mặt nước biến dạng của shader
             Vector2 boatForward = new Vector2(transform.forward.x, transform.forward.z);
@@ -192,7 +192,7 @@ namespace VfxSandbox
 
             float rippleBoat = Mathf.Sin(distBoat * rippleScale - time * rippleSpeed) * (rippleHeight * 0.8f) * Mathf.Exp(-distBoat * (rippleDecay * 1.2f));
 
-            return baseHeight + ripple1 + ripple2 + rippleBoat;
+            return baseHeight + totalPillarRipple + rippleBoat;
         }
     }
 }

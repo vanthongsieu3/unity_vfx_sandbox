@@ -53,7 +53,7 @@ Material:
     - _FoamNoiseWeight: 0.45
     - _Glossiness: 200
     - _NoiseScale: 4
-    - _NormalScale1: 0.05
+    - _NormalScale1: 0.31
     - _NormalScale2: 0.08
     - _OutlineDistance: 1.48
     - _ReflectionStrength: 0.75
@@ -73,7 +73,7 @@ Material:
     - _WaveScale: 0.85
     - _WaveSpeed: 1.6
     m_Colors:
-    - _BoatDir: {r: 0.6983967, g: 0.71554863, b: 0, a: 0}
+    - _BoatDir: {r: 0.6368762, g: 0.7709227, b: 0, a: 0}
     - _BoatPos: {r: -0.5, g: -1, b: 0, a: 0}
     - _CausticsColor: {r: 0.65, g: 1, b: 0.92, a: 1}
     - _DeepColor: {r: 0.01, g: 0.12, b: 0.38, a: 0.98}
