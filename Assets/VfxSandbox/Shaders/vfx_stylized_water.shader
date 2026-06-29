@@ -31,7 +31,7 @@ Shader "VFX/StylizedWater"
         _NormalSpeed1("Normal Speed 1 (X, Y)", Vector) = (0.05, 0.02, 0, 0)
         _NormalSpeed2("Normal Speed 2 (X, Y)", Vector) = (-0.03, 0.04, 0, 0)
         _RefractionStrength("Refraction Distortion Strength", Float) = 0.12 // Độ khúc xạ biến dạng đáy nước
-        _PlanarReflectionTexture("Planar Reflection Texture", 2D) = "white" {} // Kết cấu phản chiếu thực tế từ camera phản chiếu
+        _PlanarReflectionTexture("Planar Reflection Texture", 2D) = "black" {} // Kết cấu phản chiếu thực tế từ camera phản chiếu
 
         [Header(Procedural Gerstner Waves)]
         _WaveDirection("Wave Propagation Direction (X, Y)", Vector) = (0.0, -1.0, 0, 0) // Hướng truyền sóng (mặc định từ sau ra trước hướng về bờ cát cạn)
@@ -294,10 +294,13 @@ Shader "VFX/StylizedWater"
                 // Đọc ảnh phản chiếu phẳng với biến dạng từ Normal Map để tạo gợn sóng phản chiếu lăn tăn
                 float2 reflectUv = screenUv + blendedNormalMap.xy * 0.035;
                 reflectUv = clamp(reflectUv, 0.002, 0.998); // Tránh tràn biên Render Texture
-                float3 planarReflection = tex2D(_PlanarReflectionTexture, reflectUv).rgb;
+                float4 planarReflectionSample = tex2D(_PlanarReflectionTexture, reflectUv);
+                
+                // Nếu chưa có ảnh phản chiếu (ví dụ ở Edit Mode hoặc tắt script), tự động hòa trộn về màu bầu trời làm mặc định
+                float3 reflectionColor = lerp(_SkyColor.rgb, planarReflectionSample.rgb, planarReflectionSample.a);
 
                 // Hòa trộn phản chiếu thực tế (Planar) vào màu gốc của nước
-                float3 reflectedColor = lerp(waterBaseColor, planarReflection, _ReflectionStrength);
+                float3 reflectedColor = lerp(waterBaseColor, reflectionColor, _ReflectionStrength);
                 // Hòa trộn thêm một chút màu trời ở góc nhìn Fresnel cực nghiêng để tạo độ sâu
                 reflectedColor = lerp(reflectedColor, _SkyColor.rgb, fresnel * 0.45);
 
