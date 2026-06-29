@@ -8,7 +8,7 @@ namespace VfxSandbox
         public float waveHeight = 0.22f;
         public float waveScale = 0.85f;
         public float waveSpeed = 1.6f;
-        public Vector2 waveDirection = new Vector2(0f, -1f);
+        public Vector2 waveDirection = new Vector2(0f, 1f);
 
         [Header("Obstacle Ripple Parameters (Must match Shader)")]
         public Vector2 pillar1Pos = new Vector2(1.2f, 1.5f);

@@ -79,7 +79,7 @@ namespace VfxSandbox.Editor
             // Xóa sạch kết cấu phản chiếu lưu trữ cũ để ép shader dùng fallback đen (màu trời) trong Edit Mode
             waterMat.SetTexture("_PlanarReflectionTexture", null);
 
-            waterMat.SetVector("_WaveDirection", new Vector4(0f, -1f, 0f, 0f)); // Sóng đánh từ xa (sau) về gần bờ cát (trước)
+            waterMat.SetVector("_WaveDirection", new Vector4(0f, 1f, 0f, 0f)); // Sóng đánh từ khơi (sau) vào bờ cát (trước)
             waterMat.SetFloat("_WaveHeight", 0.22f); // Sóng nhấp nhô tuyệt đẹp
             waterMat.SetFloat("_WaveScale", 0.85f);
             waterMat.SetFloat("_WaveSpeed", 1.6f);

@@ -443,7 +443,7 @@ Shader "VFX/StylizedWater"
                 float distToP2Surf = max(0.0, defDist2Outline - 0.45);
                 float p2Outline = saturate(1.0 - distToP2Surf / _OutlineDistance);
                 
-                float2 offsetBoat = _BoatPos.xy + waveDir * 0.55;
+                float2 offsetBoat = _BoatPos.xy - boatForward * 0.55; // Vệt bọt thuyền dạt ra phía sau lái thuyền (sternward) ngược hướng mũi thuyền
                 float2 vecAPOutline = input.worldPos.xz - (offsetBoat - boatForward * (_BoatLength * 0.5));
                 float tSegOutline = saturate(dot(vecAPOutline, segAB) / max(0.001, dot(segAB, segAB)));
                 float2 closestPtBoatOutline = (offsetBoat - boatForward * (_BoatLength * 0.5)) + tSegOutline * segAB;
