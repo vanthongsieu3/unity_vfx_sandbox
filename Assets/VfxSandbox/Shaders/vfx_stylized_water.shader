@@ -351,7 +351,6 @@ Shader "VFX/StylizedWater"
                 reflectedColor = lerp(reflectedColor, _SkyColor.rgb, fresnel * 0.45);
 
                 float opacity = lerp(_WaterOpaqueness, _DeepColor.a, depthFactor);
-                float3 finalWaterColor = lerp(sceneColor, reflectedColor, opacity);
 
                 // 6. Tạo bọt nước xô bờ gợn sóng cách điệu (Stylized Shoreline Foam)
                 float2 foamUv = input.worldPos.xz * (_FoamNoiseScale * 0.06) + blendedNormalMap.xy * 0.15 + float2(_Time.y * 0.12, _Time.y * 0.06);
@@ -425,14 +424,31 @@ Shader "VFX/StylizedWater"
                 // D. Bọt viền ôm khít sát sạt vật thể (Solid outline foam hugging the boat and pillars) - Giải tích kết hợp Depth
                 float outlineMask = 0.0;
                 
-                // 1. Viền giải tích độc lập (Chống lỗi tắt Depth Texture trên máy người dùng)
-                float distToP1Surf = max(0.0, defDist1 - 0.6); // Bán kính cọc 1 là 0.6m
+                // 1. Viền giải tích độc lập lệch tâm theo dòng chảy (Leeward Shifted Outline - Chống lỗi tắt Depth)
+                float2 offsetP1 = _Pillar1Pos.xy + waveDir * 0.45;
+                float2 toP1Outline = input.worldPos.xz - offsetP1;
+                float p1AlongOutline = dot(toP1Outline, waveDir);
+                float p1PerpOutline = dot(toP1Outline, waveTangent);
+                float p1ScaleOutline = p1AlongOutline > 0.0 ? 0.75 : 3.2; // Rất mỏng ở đầu sóng chính, rất dài ở đuôi sóng chảy xuôi dòng
+                float defDist1Outline = sqrt(p1PerpOutline * p1PerpOutline * 1.3 + p1AlongOutline * p1AlongOutline * p1ScaleOutline);
+                float distToP1Surf = max(0.0, defDist1Outline - 0.5);
                 float p1Outline = saturate(1.0 - distToP1Surf / _OutlineDistance);
                 
-                float distToP2Surf = max(0.0, defDist2 - 0.55); // Bán kính cọc 2 là 0.55m
+                float2 offsetP2 = _Pillar2Pos.xy + waveDir * 0.45;
+                float2 toP2Outline = input.worldPos.xz - offsetP2;
+                float p2AlongOutline = dot(toP2Outline, waveDir);
+                float p2PerpOutline = dot(toP2Outline, waveTangent);
+                float p2ScaleOutline = p2AlongOutline > 0.0 ? 0.75 : 3.2;
+                float defDist2Outline = sqrt(p2PerpOutline * p2PerpOutline * 1.3 + p2AlongOutline * p2AlongOutline * p2ScaleOutline);
+                float distToP2Surf = max(0.0, defDist2Outline - 0.45);
                 float p2Outline = saturate(1.0 - distToP2Surf / _OutlineDistance);
                 
-                float distToBoatSurf = max(0.0, distBoat - 0.45); // Thuyền rộng khoảng 0.45m
+                float2 offsetBoat = _BoatPos.xy + waveDir * 0.55;
+                float2 vecAPOutline = input.worldPos.xz - (offsetBoat - boatForward * (_BoatLength * 0.5));
+                float tSegOutline = saturate(dot(vecAPOutline, segAB) / max(0.001, dot(segAB, segAB)));
+                float2 closestPtBoatOutline = (offsetBoat - boatForward * (_BoatLength * 0.5)) + tSegOutline * segAB;
+                float distBoatOutline = distance(input.worldPos.xz, closestPtBoatOutline);
+                float distToBoatSurf = max(0.0, distBoatOutline - 0.4);
                 float boatOutline = saturate(1.0 - distToBoatSurf / _OutlineDistance);
                 
                 float analyticalOutline = max(max(p1Outline, p2Outline), boatOutline);
@@ -457,6 +473,15 @@ Shader "VFX/StylizedWater"
 
                 // Gộp chung bốn loại bọt nước
                 float foamCutout = max(max(max(shoreFoamMask, waveCrestMask), pillarFoam), outlineMask);
+
+                // Xử lý ẩn hoàn toàn nước và bọt trên bãi cát khô (khi depthDiff < 0.0)
+                if (depthDiff < 0.0)
+                {
+                    opacity = 0.0;
+                    foamCutout = 0.0;
+                }
+
+                float3 finalWaterColor = lerp(sceneColor, reflectedColor, opacity);
                 finalWaterColor = lerp(finalWaterColor, _FoamColor.rgb, foamCutout * _FoamColor.a);
 
                 // 7. Tạo vân nắng lung linh khúc xạ (Distorted Caustics) bằng lưới vân Voronoi sắc sảo
