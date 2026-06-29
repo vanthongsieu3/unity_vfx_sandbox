@@ -554,8 +554,8 @@ Shader "VFX/StylizedWater"
                 // Tạo vệt bọt khí sủi bọt/rẽ sóng hình chữ V nở rộng (Turbulent Expanding Wake Cone) sau đuôi thuyền
                 // Tính khoảng cách lùi dần về phía sau từ đuôi thuyền (stern)
                 float distBehind = max(0.0, -along - 0.7);
-                // Vệt bọt nở rộng dần ra sau đuôi: xuất phát 0.5m nở rộng dần với góc mở tự nhiên
-                float wakeWidth = 0.45 + distBehind * 0.28;
+                // Vệt bọt khí nở rộng phi tuyến tính tỏa rộng thành hình quạt phân rã ra hai bên (quadratic expansion)
+                float wakeWidth = 0.45 + distBehind * 0.45 + distBehind * distBehind * 0.06;
                 // Biên hình nón V-shaped
                 float coneFactor = saturate(1.0 - perp / wakeWidth);
                 
