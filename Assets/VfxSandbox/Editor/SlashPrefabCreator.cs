@@ -138,10 +138,10 @@ namespace VfxSandbox.Editor
 
             var sparksRenderer = sparksGo.GetComponent<ParticleSystemRenderer>();
             sparksRenderer.sharedMaterial = sparksMat;
-            // Stretch Billboard tạo vệt dài tốc độ
-            sparksRenderer.renderMode = ParticleSystemRenderMode.StretchBillboard;
+            // Stretch tạo vệt dài tốc độ
+            sparksRenderer.renderMode = ParticleSystemRenderMode.Stretch;
             sparksRenderer.lengthScale = 2.8f;
-            sparksRenderer.speedScale = 0.08f;
+            sparksRenderer.velocityScale = 0.08f; // Sửa speedScale thành velocityScale
 
             PrefabUtility.SaveAsPrefabAsset(go, path);
             Object.DestroyImmediate(go);
