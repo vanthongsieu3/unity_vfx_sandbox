@@ -58,6 +58,10 @@ namespace VfxSandbox.Editor
             waterMat.SetFloat("_ReflectionStrength", 0.75f);
             waterMat.SetFloat("_Glossiness", 200.0f);
             waterMat.SetFloat("_SpecularIntensity", 3.5f);
+            
+            // Đồng bộ tọa độ các cột đá vào shader để vẽ sóng phản xạ vòng tròn hướng tâm
+            waterMat.SetVector("_Pillar1Pos", new Vector4(1.2f, 1.5f, 0f, 0f));
+            waterMat.SetVector("_Pillar2Pos", new Vector4(-1.8f, 3.2f, 0f, 0f));
 
             // B. Vật liệu cát biển dưới đáy nước (Sand Material)
             string sandMatPath = matDir + "/mat_water_sand.mat";
