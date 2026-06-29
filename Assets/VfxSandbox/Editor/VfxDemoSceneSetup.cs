@@ -53,7 +53,7 @@ namespace VfxSandbox.Editor
             ConfigureTextureImporter("Assets/VfxSandbox/Textures/vfx_tex_circle_01.png", true);
             ConfigureTextureImporter("Assets/VfxSandbox/Textures/vfx_tex_ground_01.png", true);
             ConfigureTextureImporter("Assets/VfxSandbox/Textures/vfx_tex_noise_01.png", false);
-            ConfigureTextureImporter("Assets/VfxSandbox/Textures/vfx_tex_ember_01.png", true);
+            ConfigureTextureImporter("Assets/VfxSandbox/Textures/vfx_tex_ember_01.png", false); // SỬA: Giữ nguyên Alpha gốc của tệp PNG
             ConfigureTextureImporter("Assets/VfxSandbox/Textures/vfx_tex_ramp_01.png", false);
             ConfigureTextureImporter("Assets/VfxSandbox/Textures/vfx_tex_rock_01.png", false);
 
@@ -224,6 +224,10 @@ namespace VfxSandbox.Editor
                 if (alphaFromGrayscale)
                 {
                     importer.alphaSource = TextureImporterAlphaSource.FromGrayScale;
+                }
+                else
+                {
+                    importer.alphaSource = TextureImporterAlphaSource.InputTextureAlpha; // Đọc Alpha từ tệp ảnh gốc
                 }
                 importer.alphaIsTransparency = true;
                 importer.mipmapEnabled = false;
