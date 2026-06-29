@@ -131,8 +131,8 @@ namespace VfxSandbox.Editor
 
                 // Thêm script tự động phóng to và mờ dần
                 var scaleScript = ringGo.AddComponent<VfxScaleAndFade>();
-                scaleScript.startScale = 0.2f;
-                scaleScript.endScale = 7.5f;
+                scaleScript.startScale = Vector3.one * 0.2f;
+                scaleScript.endScale = Vector3.one * 7.5f;
                 scaleScript.duration = 0.8f;
             }
 
