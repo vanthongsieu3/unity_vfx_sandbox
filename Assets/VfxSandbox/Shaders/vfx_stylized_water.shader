@@ -214,13 +214,13 @@ Shader "VFX/StylizedWater"
                 float2 toP1 = positionWS.xz - _Pillar1Pos.xy;
                 float p1Along = dot(toP1, waveDir);
                 float p1Perp = dot(toP1, waveTangent);
-                float p1AlongScale = p1Along > 0.0 ? 0.65 : 1.35; // Downstream kéo giãn sóng dài ra sau, Upstream chặn ép ngắn lại
+                float p1AlongScale = p1Along > 0.0 ? 0.65 : 2.5; // Downstream kéo giãn sóng dài ra sau, Upstream đón sóng chính đè bẹp nén ngắn cực đại
                 float defDist1 = sqrt(p1Perp * p1Perp * 1.3 + p1Along * p1Along * p1AlongScale);
 
                 float2 toP2 = positionWS.xz - _Pillar2Pos.xy;
                 float p2Along = dot(toP2, waveDir);
                 float p2Perp = dot(toP2, waveTangent);
-                float p2AlongScale = p2Along > 0.0 ? 0.65 : 1.35;
+                float p2AlongScale = p2Along > 0.0 ? 0.65 : 2.5;
                 float defDist2 = sqrt(p2Perp * p2Perp * 1.3 + p2Along * p2Along * p2AlongScale);
                 
                 // Khoảng cách hình capsule tới sống thuyền (Boat Keel Segment Projection)
@@ -233,8 +233,12 @@ Shader "VFX/StylizedWater"
                 float2 closestPtBoat = boatA + tSeg * segAB;
                 float distBoat = distance(positionWS.xz, closestPtBoat);
 
-                float ripple1 = sin(defDist1 * _RippleScale - _Time.y * _RippleSpeed) * _RippleHeight * exp(-defDist1 * _RippleDecay);
-                float ripple2 = sin(defDist2 * _RippleScale - _Time.y * _RippleSpeed) * _RippleHeight * exp(-defDist2 * _RippleDecay);
+                float decay1 = p1Along > 0.0 ? _RippleDecay : _RippleDecay * 2.8;
+                float ripple1 = sin(defDist1 * _RippleScale - _Time.y * _RippleSpeed) * _RippleHeight * exp(-defDist1 * decay1);
+
+                float decay2 = p2Along > 0.0 ? _RippleDecay : _RippleDecay * 2.8;
+                float ripple2 = sin(defDist2 * _RippleScale - _Time.y * _RippleSpeed) * _RippleHeight * exp(-defDist2 * decay2);
+
                 float rippleBoat = sin(distBoat * _RippleScale - _Time.y * _RippleSpeed) * (_RippleHeight * 0.8) * exp(-distBoat * (_RippleDecay * 1.2));
 
                 positionWS.y += baseWaveHeight + ripple1 + ripple2 + rippleBoat;
@@ -250,14 +254,14 @@ Shader "VFX/StylizedWater"
                 // Đạo hàm cho sóng phản xạ cọc 1 đã biến dạng dạng wake hình giọt nước
                 float2 rDir1 = waveTangent * p1Perp * 1.3 + waveDir * p1Along * p1AlongScale;
                 rDir1 = normalize(rDir1);
-                float dry1_dx = cos(defDist1 * _RippleScale - _Time.y * _RippleSpeed) * _RippleScale * rDir1.x * _RippleHeight * exp(-defDist1 * _RippleDecay);
-                float dry1_dz = cos(defDist1 * _RippleScale - _Time.y * _RippleSpeed) * _RippleScale * rDir1.y * _RippleHeight * exp(-defDist1 * _RippleDecay);
+                float dry1_dx = cos(defDist1 * _RippleScale - _Time.y * _RippleSpeed) * _RippleScale * rDir1.x * _RippleHeight * exp(-defDist1 * decay1);
+                float dry1_dz = cos(defDist1 * _RippleScale - _Time.y * _RippleSpeed) * _RippleScale * rDir1.y * _RippleHeight * exp(-defDist1 * decay1);
 
                 // Đạo hàm cho sóng phản xạ cọc 2 đã biến dạng dạng wake hình giọt nước
                 float2 rDir2 = waveTangent * p2Perp * 1.3 + waveDir * p2Along * p2AlongScale;
                 rDir2 = normalize(rDir2);
-                float dry2_dx = cos(defDist2 * _RippleScale - _Time.y * _RippleSpeed) * _RippleScale * rDir2.x * _RippleHeight * exp(-defDist2 * _RippleDecay);
-                float dry2_dz = cos(defDist2 * _RippleScale - _Time.y * _RippleSpeed) * _RippleScale * rDir2.y * _RippleHeight * exp(-defDist2 * _RippleDecay);
+                float dry2_dx = cos(defDist2 * _RippleScale - _Time.y * _RippleSpeed) * _RippleScale * rDir2.x * _RippleHeight * exp(-defDist2 * decay2);
+                float dry2_dz = cos(defDist2 * _RippleScale - _Time.y * _RippleSpeed) * _RippleScale * rDir2.y * _RippleHeight * exp(-defDist2 * decay2);
 
                 // Đạo hàm cho sóng phản xạ hình capsule của thuyền (dựa trên điểm gần nhất trên sống thuyền)
                 float2 rDirBoat = (positionWS.xz - closestPtBoat) / max(0.001, distBoat);
@@ -300,6 +304,15 @@ Shader "VFX/StylizedWater"
                 float sceneZ = LinearEyeDepth(rawDepth, _ZBufferParams);
                 float screenZ = input.positionCS.w;
                 float depthDiff = sceneZ - screenZ;
+
+                // KHÔI PHỤC CHIỀU SÂU GIẢI TÍCH (Nếu Depth Texture bị tắt trên máy người dùng hoặc Web/Mobile)
+                if (sceneZ > 500.0 || sceneZ < 0.001)
+                {
+                    // Cát nghiêng 9 độ: Y_cat = -1.0 + (Z - 1.5) * sin(9 độ) (sin(9 độ) ≈ 0.1564)
+                    // Mặt nước ở Y = 0, nên độ sâu nước bằng -Y_cat
+                    float sandY = -1.0 + (input.worldPos.z - 1.5) * 0.1564;
+                    depthDiff = max(0.0, -sandY);
+                }
                 float depthFactor = saturate(depthDiff / _DepthMaxDistance);
 
                 // 3. Khúc xạ đáy nước biến dạng (Refraction Distortion)
@@ -344,19 +357,14 @@ Shader "VFX/StylizedWater"
                 float2 foamUv = input.worldPos.xz * (_FoamNoiseScale * 0.06) + blendedNormalMap.xy * 0.15 + float2(_Time.y * 0.12, _Time.y * 0.06);
                 float foamNoise = _NoiseMap.Sample(sampler_LinearRepeat, foamUv).r;
                 
-                // A. Bọt xô bờ & cọc (Shoreline & Pillar Intersection foam) với hiệu ứng thủy triều nhấp nhô (Lapping)
-                float shoreFoamMask = 0.0;
-                if (rawDepth > 0.0001)
-                {
-                    // Lapping animation: bọt co giãn dâng rút tuần hoàn theo thời gian
-                    float lapping = sin(_Time.y * _FoamLappingSpeed) * _FoamLappingAmplitude;
-                    float dynamicFoamDistance = max(0.05, _FoamDistance + lapping);
+                // A. Bọt xô bờ (Shoreline Foam) - Luôn chạy dựa trên depthDiff (giải tích hoặc thực tế) để vẽ mép cát tiếp xúc
+                float lapping = sin(_Time.y * _FoamLappingSpeed) * _FoamLappingAmplitude;
+                float dynamicFoamDistance = max(0.05, _FoamDistance + lapping);
 
-                    float shoreFoamFactor = saturate(1.0 - max(0.0, depthDiff) / dynamicFoamDistance);
-                    // Thuật toán trừ nhiễu làm bọt rách tạo lỗ bong bóng / viền rách ngẫu nhiên ở mép ngoài bờ
-                    float shoreFoamVal = shoreFoamFactor - (1.0 - shoreFoamFactor) * foamNoise * _FoamNoiseWeight * 1.5;
-                    shoreFoamMask = smoothstep(0.12, 0.22, shoreFoamVal);
-                }
+                float shoreFoamFactor = saturate(1.0 - max(0.0, depthDiff) / dynamicFoamDistance);
+                // Thuật toán trừ nhiễu làm bọt rách tạo lỗ bong bóng / viền rách ngẫu nhiên ở mép ngoài bờ
+                float shoreFoamVal = shoreFoamFactor - (1.0 - shoreFoamFactor) * foamNoise * _FoamNoiseWeight * 1.5;
+                float shoreFoamMask = smoothstep(0.12, 0.22, shoreFoamVal);
 
                 // B. Bọt đỉnh sóng (Wave Crest foam) - Phá vỡ các đường bọt song song dẹt thành các mảng bọt trôi nổi bằng phép nhân nhiễu
                 float waveCrestFactor = saturate((input.waveHeight - _WaveCrestThreshold) / _WaveCrestRange);
@@ -378,13 +386,13 @@ Shader "VFX/StylizedWater"
                 float2 toP1 = input.worldPos.xz - _Pillar1Pos.xy;
                 float p1Along = dot(toP1, waveDir);
                 float p1Perp = dot(toP1, waveTangent);
-                float p1AlongScale = p1Along > 0.0 ? 0.65 : 1.35;
+                float p1AlongScale = p1Along > 0.0 ? 0.65 : 2.5; // Downstream loang vệt, Upstream đón sóng chính đè bẹp nén ngắn
                 float defDist1 = sqrt(p1Perp * p1Perp * 1.3 + p1Along * p1Along * p1AlongScale);
 
                 float2 toP2 = input.worldPos.xz - _Pillar2Pos.xy;
                 float p2Along = dot(toP2, waveDir);
                 float p2Perp = dot(toP2, waveTangent);
-                float p2AlongScale = p2Along > 0.0 ? 0.65 : 1.35;
+                float p2AlongScale = p2Along > 0.0 ? 0.65 : 2.5;
                 float defDist2 = sqrt(p2Perp * p2Perp * 1.3 + p2Along * p2Along * p2AlongScale);
                 
                 // Khoảng cách hình capsule tới sống thuyền (Boat Keel Segment Projection)
@@ -402,27 +410,50 @@ Shader "VFX/StylizedWater"
                 float phase2 = defDist2 * _RippleScale - _Time.y * _RippleSpeed;
                 float phaseBoat = distBoat * _RippleScale - _Time.y * _RippleSpeed;
 
+                // Tăng độ tắt dần cực nhanh khi đi ngược dòng chính (Upstream) để mô phỏng sóng chính đè nát sóng phản chấn
+                float decay1 = p1Along > 0.0 ? _RippleDecay : _RippleDecay * 2.8;
+                float decay2 = p2Along > 0.0 ? _RippleDecay : _RippleDecay * 2.8;
+
                 // Tạo nhiều vòng tròn đồng tâm sắc nét ở các đỉnh sóng (crest) và dập tắt dần theo khoảng cách exp
-                float ring1 = pow(saturate(sin(phase1)), 6.0) * exp(-defDist1 * _RippleDecay);
-                float ring2 = pow(saturate(sin(phase2)), 6.0) * exp(-defDist2 * _RippleDecay);
+                float ring1 = pow(saturate(sin(phase1)), 6.0) * exp(-defDist1 * decay1);
+                float ring2 = pow(saturate(sin(phase2)), 6.0) * exp(-defDist2 * decay2);
                 float ringBoat = pow(saturate(sin(phaseBoat)), 6.0) * exp(-distBoat * (_RippleDecay * 1.2));
 
                 // Gộp chung các vòng bọt phản chấn, nhân với hệ số cường độ và giới hạn bán kính ảnh hưởng
                 float pillarFoam = max(max(ring1, ring2), ringBoat) * 0.85 * smoothstep(4.0, 0.0, min(min(defDist1, defDist2), distBoat));
 
-                // D. Bọt viền ôm khít sát sạt vật thể (Solid outline foam hugging the boat and pillars) - Độc lập góc dốc
+                // D. Bọt viền ôm khít sát sạt vật thể (Solid outline foam hugging the boat and pillars) - Giải tích kết hợp Depth
                 float outlineMask = 0.0;
-                if (rawDepth > 0.0001)
+                
+                // 1. Viền giải tích độc lập (Chống lỗi tắt Depth Texture trên máy người dùng)
+                float distToP1Surf = max(0.0, defDist1 - 0.6); // Bán kính cọc 1 là 0.6m
+                float p1Outline = saturate(1.0 - distToP1Surf / _OutlineDistance);
+                
+                float distToP2Surf = max(0.0, defDist2 - 0.55); // Bán kính cọc 2 là 0.55m
+                float p2Outline = saturate(1.0 - distToP2Surf / _OutlineDistance);
+                
+                float distToBoatSurf = max(0.0, distBoat - 0.45); // Thuyền rộng khoảng 0.45m
+                float boatOutline = saturate(1.0 - distToBoatSurf / _OutlineDistance);
+                
+                float analyticalOutline = max(max(p1Outline, p2Outline), boatOutline);
+
+                // 2. Viền dựa trên chiều sâu thực tế (nếu có bật Depth)
+                float depthOutline = 0.0;
+                if (rawDepth > 0.0001 && sceneZ < 500.0)
                 {
-                    float outlineFactor = saturate(1.0 - max(0.0, depthDiff) / _OutlineDistance);
-                    // Sử dụng vân Voronoi (Caustics Map) cuộn chậm để đục lỗ bong bóng nước tròn trịa giống xà phòng sủi bọt chuẩn Zelda/Genshin
-                    float2 outlineFoamUv = input.worldPos.xz * (_FoamNoiseScale * 0.045) + float2(_Time.y * 0.04, _Time.y * 0.02);
-                    float outlineNoise = _CausticsMap.Sample(sampler_LinearRepeat, outlineFoamUv).r;
-                    
-                    // Lực bọt rách tạo bong bóng: ở gần vật thể bọt đặc trắng tinh, đi xa dần bị đục lỗ và rã thành các mảng trôi nổi nhỏ
-                    float outlineFoamVal = outlineFactor - (1.0 - outlineFactor) * outlineNoise * _FoamNoiseWeight * 1.7;
-                    outlineMask = smoothstep(0.12, 0.22, outlineFoamVal);
+                    depthOutline = saturate(1.0 - max(0.0, depthDiff) / _OutlineDistance);
                 }
+
+                // Gộp cả 2 nguồn viền để đảm bảo luôn hiện viền rõ nét
+                float outlineFactor = max(depthOutline, analyticalOutline);
+                
+                // Sử dụng vân Voronoi (Caustics Map) cuộn chậm để đục lỗ bong bóng nước tròn trịa giống xà phòng sủi bọt chuẩn Zelda/Genshin
+                float2 outlineFoamUv = input.worldPos.xz * (_FoamNoiseScale * 0.045) + float2(_Time.y * 0.04, _Time.y * 0.02);
+                float outlineNoise = _CausticsMap.Sample(sampler_LinearRepeat, outlineFoamUv).r;
+                
+                // Lực bọt rách tạo bong bóng: ở gần vật thể bọt đặc trắng tinh, đi xa dần bị đục lỗ và rã thành các mảng trôi nổi nhỏ
+                float outlineFoamVal = outlineFactor - (1.0 - outlineFactor) * outlineNoise * _FoamNoiseWeight * 1.7;
+                outlineMask = smoothstep(0.12, 0.22, outlineFoamVal);
 
                 // Gộp chung bốn loại bọt nước
                 float foamCutout = max(max(max(shoreFoamMask, waveCrestMask), pillarFoam), outlineMask);
