@@ -470,7 +470,7 @@ Shader "VFX/StylizedWater"
                 float distToBoatSurf = max(0.0, distBoatOutline - 0.4);
                 float boatOutline = saturate(1.0 - distToBoatSurf / dynamicOutlineDistance);
                 
-                float analyticalOutline = max(max(p1Outline, p2Outline), boatOutline);
+                float analyticalOutline = max(maxPillarOutline, boatOutline);
 
                 // 2. Viền dựa trên chiều sâu thực tế (nếu có bật Depth)
                 float depthOutline = 0.0;
