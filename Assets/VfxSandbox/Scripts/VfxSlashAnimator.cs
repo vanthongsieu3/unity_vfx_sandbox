@@ -4,8 +4,8 @@ namespace VfxSandbox
 {
     public class VfxSlashAnimator : MonoBehaviour
     {
-        public float swipeDuration = 0.22f; // Thời gian vung kiếm quét cung chém
-        public float fadeDuration = 0.18f;  // Thời gian mờ dần và tan biến
+        public float swipeDuration = 0.11f; // Thời gian vung kiếm quét cung chém (nhanh gấp đôi để tăng lực)
+        public float fadeDuration = 0.14f;  // Thời gian mờ dần và tan biến
         private float elapsed = 0f;
         private Material matInstance;
         private Transform sparksTrans;

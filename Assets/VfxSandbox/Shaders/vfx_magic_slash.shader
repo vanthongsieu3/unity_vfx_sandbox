@@ -70,8 +70,8 @@ Shader "VFX/MagicSlash"
             {
                 // 1. Tính toán mặt nạ quét chém trăng khuyết (Crescent swipe mask)
                 // Hạn chế chiều rộng vệt chém chỉ nằm từ đầu chém đến đuôi chém
-                float leadMask = smoothstep(_Swipe, _Swipe - 0.05, input.uv.x);
-                float trailMask = smoothstep(_Swipe - _TailLength, _Swipe - _TailLength + 0.15, input.uv.x);
+                float leadMask = smoothstep(_Swipe, _Swipe - 0.03, input.uv.x);
+                float trailMask = smoothstep(_Swipe - _TailLength, _Swipe - _TailLength + 0.12, input.uv.x);
                 float swipeMask = leadMask * trailMask;
 
                 // 2. Tính toán độ co hẹp của đuôi chém (Tapering tail)
@@ -82,19 +82,29 @@ Shader "VFX/MagicSlash"
                 // Mép biên bo tròn co hẹp dần về phía đuôi chém
                 float borderOffset = 0.12 * (2.0 - thickness);
                 float edgeFade = smoothstep(0.0, borderOffset, input.uv.y) * smoothstep(1.0, 1.0 - borderOffset, input.uv.y);
-                float startFade = smoothstep(0.0, 0.08, input.uv.x);
+                float startFade = smoothstep(0.0, 0.06, input.uv.x);
 
-                // 3. Tính toán dịch chuyển UV và mẫu Noise
+                // 3. Đường lưỡi kiếm sắc bén rực sáng ở mũi chém (Sharp Glowing Blade Edge)
+                // Tạo một dải hẹp siêu sáng trắng-cyan ở ngay đầu chém (UV.x sát _Swipe) để tạo lực cắt
+                float edgeLine = smoothstep(_Swipe - 0.06, _Swipe - 0.01, input.uv.x) * leadMask;
+                edgeLine = pow(edgeLine, 2.0); // Làm viền nứt sắc bén hơn
+
+                // 4. Tính toán dịch chuyển UV và mẫu Noise
                 float2 offset = _ScrollSpeed * _Time.y;
                 float2 noiseUv = input.uv * _NoiseMap_ST.xy + _NoiseMap_ST.zw + offset;
                 float noise = _NoiseMap.Sample(sampler_NoiseMap, noiseUv).r;
 
-                // 4. Mẫu màu từ Color Ramp sử dụng Noise
+                // 5. Mẫu màu từ Color Ramp sử dụng Noise
                 float4 rampColor = _RampMap.Sample(sampler_RampMap, float2(noise, 0.5));
 
-                // Tính toán màu và alpha cuối cùng
-                float3 finalColor = rampColor.rgb * _ColorTint.rgb * _Intensity;
-                float alpha = noise * swipeMask * edgeFade * startFade * _Opacity;
+                // 6. Hòa trộn màu: Thân ma thuật (Body) + Đường lưỡi chém sắc bén (Core Line)
+                float3 bodyColor = rampColor.rgb * _ColorTint.rgb * _Intensity;
+                float3 coreColor = float3(1.0, 1.0, 1.0) * _Intensity * 2.5; // Lưỡi chém lõi màu trắng rực sáng
+                
+                float3 finalColor = lerp(bodyColor, coreColor, edgeLine * 0.75);
+                
+                // Tăng alpha mạnh ở đầu lưỡi chém để nhìn sắc nét và đầm tay
+                float alpha = (noise + edgeLine * 1.5) * swipeMask * edgeFade * startFade * _Opacity;
 
                 return float4(finalColor * alpha, alpha);
             }

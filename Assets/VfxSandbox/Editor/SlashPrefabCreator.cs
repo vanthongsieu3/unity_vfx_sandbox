@@ -92,7 +92,7 @@ namespace VfxSandbox.Editor
 
             var sparksPs = sparksGo.AddComponent<ParticleSystem>();
             var sparksMain = sparksPs.main;
-            sparksMain.duration = 0.22f; // Phát tia lửa đúng trong thời gian quét chém
+            sparksMain.duration = 0.11f; // Phát tia lửa đúng trong thời gian quét chém nhanh
             sparksMain.loop = false;
             sparksMain.startLifetime = new ParticleSystem.MinMaxCurve(0.25f, 0.45f);
             sparksMain.startSpeed = new ParticleSystem.MinMaxCurve(4f, 8f);
