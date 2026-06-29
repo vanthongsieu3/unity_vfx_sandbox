@@ -338,6 +338,13 @@ namespace VfxSandbox.Editor
             floatingScript.rippleSpeed = 4.5f;
             floatingScript.rippleDecay = 0.32f; // Đồng pha 32% suy hao để lan tỏa xa nhiều lớp
 
+            // H. Thêm script điều khiển di chuyển bàn phím (BoatController)
+            var controllerScript = boatRoot.AddComponent<BoatController>();
+            controllerScript.moveSpeed = 5.0f;
+            controllerScript.turnSpeed = 120.0f;
+            controllerScript.acceleration = 3.0f;
+            controllerScript.deceleration = 2.5f;
+
             // 8. Tạo hệ thống hạt bọt khí dưới nước cách điệu (Stylized Bubble Particle Systems)
             string bubbleMatPath = matDir + "/mat_particle_bubble.mat";
             Material bubbleMat = AssetDatabase.LoadAssetAtPath<Material>(bubbleMatPath);
