@@ -190,25 +190,56 @@ namespace VfxSandbox
             crack.name = "VFX_Impact_Cracks";
             crack.transform.position = pos + new Vector3(0, 0.02f, 0);
             crack.transform.rotation = Quaternion.Euler(90, 0, 0);
-            crack.transform.localScale = Vector3.one * 9.5f; // Tăng kích thước vết nứt mặt đất lớn hơn
+            crack.transform.localScale = Vector3.one * 0.5f; // Bắt đầu nhỏ để xé rộng ra ngoài
             var crackRenderer = crack.GetComponent<Renderer>();
             crackRenderer.material = groundCracksMaterial;
-            StartCoroutine(FadeOutCracks(crackRenderer, 4.5f));
+            StartCoroutine(FadeOutCracks(crackRenderer, 4.5f, 9.5f));
         }
 
-        private IEnumerator FadeOutCracks(Renderer r, float dur)
+        private IEnumerator FadeOutCracks(Renderer r, float dur, float maxScale)
         {
             float elapsed = 0;
+            Vector3 startScale = Vector3.one * (maxScale * 0.15f);
+            Vector3 targetScale = Vector3.one * maxScale;
+            float propagationDuration = 0.25f; // Thời gian vết nứt xé toạc ra (0.25 giây)
+
             while (elapsed < dur)
             {
                 elapsed += Time.deltaTime;
                 float ratio = elapsed / dur;
-                if (r != null && r.material != null)
+
+                if (r != null)
                 {
-                    // Nguội dần rực sáng
-                    if (r.material.HasProperty("_Color"))
+                    // 1. Hiệu ứng xé nứt lan rộng từ trong ra ngoài (Scale Animation)
+                    if (elapsed < propagationDuration)
                     {
-                        r.material.color = Color.Lerp(Color.red * 2.0f, new Color(0.1f, 0.1f, 0.1f, 0.0f), ratio);
+                        float scaleT = elapsed / propagationDuration;
+                        float easedT = scaleT * (2f - scaleT); // EaseOutQuad giúp xé nứt nhanh lúc đầu
+                        r.transform.localScale = Vector3.Lerp(startScale, targetScale, easedT);
+                    }
+                    else
+                    {
+                        r.transform.localScale = targetScale;
+                    }
+
+                    // 2. Hiệu ứng nguội dung nham đỏ rực -> xám xịt -> mờ dần hẳn (Color Animation)
+                    if (r.material != null)
+                    {
+                        Color hotColor = Color.Lerp(Color.red * 2.5f, new Color(0.2f, 0.05f, 0f, 0.8f), ratio);
+                        if (ratio > 0.6f)
+                        {
+                            float fadeOutT = (ratio - 0.6f) / 0.4f;
+                            hotColor = Color.Lerp(new Color(0.2f, 0.05f, 0f, 0.8f), new Color(0.05f, 0.05f, 0.05f, 0.0f), fadeOutT);
+                        }
+
+                        if (r.material.HasProperty("_Color"))
+                        {
+                            r.material.color = hotColor;
+                        }
+                        else if (r.material.HasProperty("_BaseColor"))
+                        {
+                            r.material.SetColor("_BaseColor", hotColor);
+                        }
                     }
                 }
                 yield return null;
