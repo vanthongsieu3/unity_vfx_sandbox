@@ -19,6 +19,10 @@ namespace VfxSandbox.Editor
             if (!Directory.Exists(matDir)) Directory.CreateDirectory(matDir);
             if (!Directory.Exists(sceneDir)) Directory.CreateDirectory(sceneDir);
 
+            // 0. Tự động sinh Textures và Meshes nếu chưa có để đảm bảo đầy đủ tài nguyên một chạm
+            ProceduralTextureGenerator.Generate();
+            ProceduralMeshGenerator.Generate();
+
             // Cấu hình URP Asset tự động để sửa lỗi vật liệu màu hồng (pink shader error)
             string rendererPath = settingsDir + "/CustomRendererData.asset";
             string urpAssetPath = settingsDir + "/CustomURPAsset.asset";
@@ -136,6 +140,17 @@ namespace VfxSandbox.Editor
             flameMat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
             if (emberTex != null) flameMat.SetTexture("_BaseMap", emberTex);
             AssetDatabase.CreateAsset(flameMat, flameMatPath);
+
+            // E. Debris Rock Material (Volcanic rock with glowing magma parts)
+            string debrisMatPath = matDir + "/mat_debris_rock.mat";
+            Material debrisMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            if (rockTex != null) debrisMat.SetTexture("_BaseMap", rockTex);
+            debrisMat.SetColor("_BaseColor", Color.white);
+            // Kích hoạt Emissive để đá vụn có các điểm dung nham đỏ rực phát sáng
+            debrisMat.EnableKeyword("_EMISSION");
+            debrisMat.SetColor("_EmissionColor", new Color(1.8f, 0.4f, 0f, 1f));
+            if (emberTex != null) debrisMat.SetTexture("_EmissionMap", emberTex);
+            AssetDatabase.CreateAsset(debrisMat, debrisMatPath);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();

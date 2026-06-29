@@ -18,12 +18,13 @@ namespace VfxSandbox.Editor
             Material lavaMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/VfxSandbox/Materials/mat_lava_flow.mat");
             Material flameMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/VfxSandbox/Materials/mat_explosion_flame.mat");
             Material distMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/VfxSandbox/Materials/mat_screen_distortion.mat");
+            Material debrisMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/VfxSandbox/Materials/mat_debris_rock.mat");
             Mesh debrisMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/VfxSandbox/Meshes/vfx_mesh_rock_01.asset");
 
             // Create Prefabs
             CreateTrailPrefab(prefabDir + "/vfx_prefab_trail.prefab", flameMat);
             CreateExplosionPrefab(prefabDir + "/vfx_prefab_explosion.prefab", flameMat);
-            CreateDebrisPrefab(prefabDir + "/vfx_prefab_debris.prefab", lavaMat, debrisMesh);
+            CreateDebrisPrefab(prefabDir + "/vfx_prefab_debris.prefab", debrisMat != null ? debrisMat : lavaMat, debrisMesh);
             CreateShockwavePrefab(prefabDir + "/vfx_prefab_shockwave.prefab", distMat);
             CreateEmbersPrefab(prefabDir + "/vfx_prefab_embers.prefab", flameMat);
 
@@ -111,6 +112,52 @@ namespace VfxSandbox.Editor
 
             var renderer = go.GetComponent<ParticleSystemRenderer>();
             renderer.sharedMaterial = mat;
+
+            // ─── TẠO VÒNG TRÒN LỬA LAN TỎA (FIRE RING SUB-SYSTEM) ───
+            GameObject ringGo = new GameObject("VFX_Fire_Ring");
+            ringGo.transform.parent = go.transform;
+            ringGo.transform.localPosition = Vector3.zero;
+            ringGo.transform.localRotation = Quaternion.Euler(0, 0, 0); // Hướng lên trên
+
+            var ringPs = ringGo.AddComponent<ParticleSystem>();
+            
+            var ringMain = ringPs.main;
+            ringMain.duration = 1f;
+            ringMain.loop = false;
+            ringMain.startLifetime = 0.6f;
+            ringMain.startSpeed = 8f; // Tốc độ lan ra biên
+            ringMain.startSize = new ParticleSystem.MinMaxCurve(1.5f, 2.8f);
+            ringMain.simulationSpace = ParticleSystemSimulationSpace.World;
+
+            var ringEmission = ringPs.emission;
+            ringEmission.rateOverTime = 0f;
+            ringEmission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0.0f, 30) });
+
+            var ringShape = ringPs.shape;
+            ringShape.shapeType = ParticleSystemShapeType.Circle;
+            ringShape.radius = 0.5f;
+            ringShape.arc = 360f;
+            ringShape.rotation = new Vector3(90f, 0f, 0f); // Xoay hình nón nằm ngang song song mặt đất
+
+            var ringSize = ringPs.sizeOverLifetime;
+            ringSize.enabled = true;
+            AnimationCurve ringSizeCurve = new AnimationCurve();
+            ringSizeCurve.AddKey(0f, 0.4f);
+            ringSizeCurve.AddKey(1f, 1.6f);
+            ringSize.size = new ParticleSystem.MinMaxCurve(1f, ringSizeCurve);
+
+            var ringColor = ringPs.colorOverLifetime;
+            ringColor.enabled = true;
+            Gradient ringGrad = new Gradient();
+            ringGrad.SetKeys(
+                new GradientColorKey[] { new GradientColorKey(new Color(1f, 0.6f, 0.1f), 0f), new GradientColorKey(Color.red, 0.4f), new GradientColorKey(Color.black, 1.0f) },
+                new GradientAlphaKey[] { new GradientAlphaKey(1.0f, 0f), new GradientAlphaKey(0.8f, 0.5f), new GradientAlphaKey(0f, 1.0f) }
+            );
+            ringColor.color = ringGrad;
+
+            var ringRenderer = ringGo.GetComponent<ParticleSystemRenderer>();
+            ringRenderer.sharedMaterial = mat;
+            ringRenderer.renderMode = ParticleSystemRenderMode.Billboard;
 
             PrefabUtility.SaveAsPrefabAsset(go, path);
             Object.DestroyImmediate(go);
