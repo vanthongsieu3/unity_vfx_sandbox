@@ -11,11 +11,34 @@ namespace VfxSandbox.Editor
         [MenuItem("Window/VFX/Setup Demo Scene")]
         public static void Setup()
         {
-            // 1. Tạo các thư mục cần thiết
+            // 1. Tạo các thư mục cần thiết và cấu hình URP
+            string settingsDir = "Assets/VfxSandbox/Settings";
             string matDir = "Assets/VfxSandbox/Materials";
             string sceneDir = "Assets/VfxSandbox/Scenes";
+            if (!Directory.Exists(settingsDir)) Directory.CreateDirectory(settingsDir);
             if (!Directory.Exists(matDir)) Directory.CreateDirectory(matDir);
             if (!Directory.Exists(sceneDir)) Directory.CreateDirectory(sceneDir);
+
+            // Cấu hình URP Asset tự động để sửa lỗi vật liệu màu hồng (pink shader error)
+            string rendererPath = Path.Combine(settingsDir, "CustomRendererData.asset");
+            string urpAssetPath = Path.Combine(settingsDir, "CustomURPAsset.asset");
+            
+            var urpAsset = AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset>(urpAssetPath);
+            if (urpAsset == null)
+            {
+                var rendererData = ScriptableObject.CreateInstance<UnityEngine.Rendering.Universal.UniversalRendererData>();
+                AssetDatabase.CreateAsset(rendererData, rendererPath);
+
+                urpAsset = UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset.Create(rendererData);
+                AssetDatabase.CreateAsset(urpAsset, urpAssetPath);
+                
+                EditorUtility.SetDirty(urpAsset);
+                AssetDatabase.SaveAssets();
+            }
+
+            // Gán URP Asset làm render pipeline mặc định cho dự án
+            UnityEngine.Rendering.GraphicsSettings.defaultRenderPipeline = urpAsset;
+            UnityEngine.QualitySettings.renderPipeline = urpAsset;
 
             AssetDatabase.Refresh();
 
