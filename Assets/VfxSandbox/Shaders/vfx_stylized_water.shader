@@ -282,7 +282,7 @@ Shader "VFX/StylizedWater"
                 // Cải tiến uốn cong phi tuyến (quadratic curve) và tạo nếp sóng uốn lượn hình chữ S mềm mại (Kelvin Wake bending)
                 float curvedAlong = along + perp * perp * 0.14;
                 float vWiggle = sin(along * 0.45 + perp * 0.22 + _Time.y * 1.5) * 1.35;
-                float vPhase = (perp * 2.2 + curvedAlong * 0.8 + vWiggle) * _RippleScale - _Time.y * _RippleSpeed;
+                float vPhase = (perp * 0.8 + curvedAlong * 1.8 + vWiggle) * _RippleScale - _Time.y * _RippleSpeed;
                 float vDecay = exp(-(perp * 0.8 - along * 0.4) * _RippleDecay);
                 
                 // Giới hạn vùng ảnh hưởng ở phía sau mũi thuyền và tỏa rộng dần (hoàn toàn triệt tiêu sóng ở trước mũi tàu)
@@ -303,8 +303,8 @@ Shader "VFX/StylizedWater"
                 float d_vWiggle_dx = wCos * (0.45 * d_along_dx + 0.22 * d_perp_dx);
                 float d_vWiggle_dz = wCos * (0.45 * d_along_dz + 0.22 * d_perp_dz);
                 
-                float d_vPhase_dx = (d_perp_dx * 2.2 + d_curvedAlong_dx * 0.8 + d_vWiggle_dx) * _RippleScale;
-                float d_vPhase_dz = (d_perp_dz * 2.2 + d_curvedAlong_dz * 0.8 + d_vWiggle_dz) * _RippleScale;
+                float d_vPhase_dx = (d_perp_dx * 0.8 + d_curvedAlong_dx * 1.8 + d_vWiggle_dx) * _RippleScale;
+                float d_vPhase_dz = (d_perp_dz * 0.8 + d_curvedAlong_dz * 1.8 + d_vWiggle_dz) * _RippleScale;
                 float dvWake_dx = cos(vPhase) * d_vPhase_dx * (_RippleHeight * 1.8) * vDecay * vWeight * speedFactor;
                 float dvWake_dz = cos(vPhase) * d_vPhase_dz * (_RippleHeight * 1.8) * vDecay * vWeight * speedFactor;
 
@@ -523,7 +523,7 @@ Shader "VFX/StylizedWater"
                 float perp = abs(dot(toBoat, boatRight));
                 float curvedAlong = along + perp * perp * 0.14;
                 float vWiggle = sin(along * 0.45 + perp * 0.22 + _Time.y * 1.5) * 1.35;
-                float vPhase = (perp * 2.2 + curvedAlong * 0.8 + vWiggle) * _RippleScale - _Time.y * _RippleSpeed;
+                float vPhase = (perp * 0.8 + curvedAlong * 1.8 + vWiggle) * _RippleScale - _Time.y * _RippleSpeed;
                 float vDecay = exp(-(perp * 0.8 - along * 0.4) * _RippleDecay);
                 
                 // Giới hạn vùng ảnh hưởng ở phía sau mũi thuyền và tỏa rộng dần
@@ -565,15 +565,15 @@ Shader "VFX/StylizedWater"
                 float wakeConeWeight = smoothstep(-0.7, -1.2, along);
                 float wakeFoamBase = coneFactor * wakeDecay * speedFactor * wakeConeWeight;
                 
-                // Trộn thêm 2 lớp nhiễu trôi ngược dòng để đục lỗ rách bong bóng khí sủi bọt chân thực
-                float2 wakeNoiseUv1 = input.worldPos.xz * (_FoamNoiseScale * 0.095) + (waveDir * 0.07 + waveTangent * 0.03) * _Time.y;
-                float2 wakeNoiseUv2 = input.worldPos.xz * (_FoamNoiseScale * 0.045) + (waveDir * 0.035 - waveTangent * 0.02) * _Time.y;
+                // Trộn thêm 2 lớp nhiễu trôi ngược dòng để đục lỗ rách bong bóng khí sủi bọt chân thực (cuộn theo hướng đuôi tàu)
+                float2 wakeNoiseUv1 = input.worldPos.xz * (_FoamNoiseScale * 0.09) - boatForward * _Time.y * 0.18;
+                float2 wakeNoiseUv2 = input.worldPos.xz * (_FoamNoiseScale * 0.045) - boatForward * _Time.y * 0.09;
                 float wakeNoise1 = _NoiseMap.Sample(sampler_LinearRepeat, wakeNoiseUv1).r;
                 float wakeNoise2 = _NoiseMap.Sample(sampler_LinearRepeat, wakeNoiseUv2).r;
-                float combinedWakeNoise = lerp(wakeNoise1, wakeNoise2, 0.4);
+                float combinedWakeNoise = lerp(wakeNoise1, wakeNoise2, 0.45);
                 
-                // Trừ nhiễu làm rã bọt khí ở biên ngoài chữ V
-                float wakeFoamVal = wakeFoamBase * 1.8 - (1.0 - coneFactor * 0.8) * combinedWakeNoise * dynamicNoiseWeight * 1.6;
+                // Trừ nhiễu mạnh trên toàn bộ vệt bọt để tạo lỗ rách bong bóng sủi bọt ngẫu nhiên (không bị đặc ở tâm)
+                float wakeFoamVal = wakeFoamBase * 2.0 - combinedWakeNoise * dynamicNoiseWeight * 1.95;
                 float wakeFoamMask = smoothstep(0.12, 0.25, wakeFoamVal);
                 
                 // Gộp chung viền cứng sát thân và vệt bọt khí sủi kéo dài đằng sau
