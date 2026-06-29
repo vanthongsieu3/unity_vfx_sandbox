@@ -2,67 +2,67 @@ Shader "VFX/StylizedWater"
 {
     Properties
     {
-        [Header(Water Colors)]
-        _ShallowColor("Shallow Color", Color) = (0.0, 0.8, 0.75, 0.6)  // Màu xanh lam ngọc nông
-        _DeepColor("Deep Color", Color) = (0.02, 0.12, 0.35, 0.95)       // Màu xanh đại dương sâu
-        _WaterOpaqueness("Water Opaqueness (Trong/Duc)", Range(0.0, 1.0)) = 0.45 // Độ đục/trong suốt của nước biển nông cơ bản của nước
-        _DepthMaxDistance("Depth Color Blending Distance", Float) = 4.0   // Khoảng cách chuyển màu nông/sâu
+        [Header(Water Colors - Cau Hinh Mau Nuoc)]
+        _ShallowColor("Mau Nuoc Nong (Shallow Color)", Color) = (0.0, 0.8, 0.75, 0.6)  // Màu xanh lam ngọc nông
+        _DeepColor("Mau Nuoc Sau (Deep Color)", Color) = (0.02, 0.12, 0.35, 0.95)       // Màu xanh đại dương sâu
+        _WaterOpaqueness("Do Duc Nuoc Nong (0: Trong Suot - 1: Duc)", Range(0.0, 1.0)) = 0.45 // Tùy chỉnh độ trong suốt/đục của nước
+        _DepthMaxDistance("Khoang Cach Tron Mau Nong/Sau (Met)", Float) = 4.0   // Khoảng cách chuyển màu nông/sâu theo chiều dọc
 
-        [Header(Subsurface Scattering Translucency)]
-        _SssColor("SSS Color (Translucency)", Color) = (0.0, 1.0, 0.65, 1.0) // Màu thấu quang xanh lục bảo rực rỡ
-        _SssStrength("SSS Strength", Float) = 1.5                         // Cường độ phát quang đỉnh sóng
-        _SssPower("SSS Power Angle", Float) = 4.0                         // Độ tụ hướng nhìn ngược sáng
+        [Header(Subsurface Scattering - Than Quang Dinh Song)]
+        _SssColor("Mau Thau Quang Dinh Song (Emerald)", Color) = (0.0, 1.0, 0.65, 1.0) // Màu phát sáng của đỉnh sóng khi ngược nắng
+        _SssStrength("Cuong Do Phat Sang Thau Quang (SSS)", Float) = 1.5                   // Độ sáng rực của đỉnh sóng
+        _SssPower("Do Thu Hep Vien Phat Sang (Mu Pow)", Float) = 4.0                       // Độ tập trung góc nhìn ngược sáng
 
-        [Header(Shoreline and Wave Crest Foam)]
-        _FoamColor("Foam Color", Color) = (1.0, 1.0, 1.0, 1.0)
-        _FoamDistance("Shore Foam Width", Float) = 0.55                   // Độ rộng bọt sóng xô bờ trung bình
-        _FoamLappingSpeed("Foam Lapping Speed", Float) = 1.3              // Tốc độ dâng/rút thủy triều xô bờ
-        _FoamLappingAmplitude("Foam Lapping Amplitude", Float) = 0.16     // Biên độ co giãn dâng rút của bọt bờ
-        _FoamNoiseScale("Foam Noise Scale", Float) = 3.5                  // Tỉ lệ nhiễu bọt sóng
-        _FoamNoiseWeight("Foam Edge Noise Distortion", Range(0.1, 0.8)) = 0.45 // Độ lồi lõm của mép bọt sóng
-        _WaveCrestThreshold("Wave Crest Foam Threshold", Float) = 0.12    // Điểm cao của sóng bắt đầu sinh bọt đỉnh
-        _WaveCrestRange("Wave Crest Foam Range", Float) = 0.15            // Dải chuyển tiếp bọt đỉnh sóng
-        _OutlineDistance("Hugging Outline Width", Float) = 1.35           // Độ dày của viền bọt ôm sát cọc và thuyền
+        [Header(Shoreline and Wave Crest Foam - Bot Song Bap Benh)]
+        _FoamColor("Mau Bot Nuoc (Foam Color)", Color) = (1.0, 1.0, 1.0, 1.0)
+        _FoamDistance("Do Rong Vien Bot Xo Bo (Met)", Float) = 0.55                    // Chiều rộng dải bọt xô vào bờ cát
+        _FoamLappingSpeed("Toc Do Thuy Trieu Co Gian Bot Bo", Float) = 1.3               // Tần số co giãn nhịp thở dâng rút của bọt bờ
+        _FoamLappingAmplitude("Bien Do Thuy Trieu Co Gian (Met)", Float) = 0.16          // Khoảng cách xô lên/rút xuống của bọt bờ
+        _FoamNoiseScale("Kich Thuoc Hat Bot Song (Scale)", Float) = 3.5                  // Độ to nhỏ của nhiễu bọt
+        _FoamNoiseWeight("Do Meo Vien Bot (Noise Weight)", Range(0.1, 0.8)) = 0.45     // Độ lồi lõm zích zắc ở viền bọt
+        _WaveCrestThreshold("Nguong Chieu Cao Sinh Bot Dinh Song", Float) = 0.12         // Độ cao sóng bắt đầu xuất hiện bọt trắng
+        _WaveCrestRange("Do Phuc Vien Bot Tren Dinh Song", Float) = 0.15                 // Dải chuyển tiếp mềm của bọt đỉnh
+        _OutlineDistance("Do Rong Bot Viền Om Coc/Thuyen (Met)", Float) = 1.35            // Độ dày dải bọt sủi tăm ôm sát vật thể
 
-        [Header(Normal Map Ripples)]
-        _NormalMap("Normal Map", 2D) = "bump" {}
-        _NormalScale1("Normal Scale 1", Float) = 0.05
-        _NormalScale2("Normal Scale 2", Float) = 0.08
-        _NormalSpeed1("Normal Speed 1 (X, Y)", Vector) = (0.05, 0.02, 0, 0)
-        _NormalSpeed2("Normal Speed 2 (X, Y)", Vector) = (-0.03, 0.04, 0, 0)
-        _RefractionStrength("Refraction Distortion Strength", Float) = 0.12 // Độ khúc xạ biến dạng đáy nước
-        _PlanarReflectionTexture("Planar Reflection Texture", 2D) = "black" {} // Kết cấu phản chiếu thực tế từ camera phản chiếu
+        [Header(Normal Map Ripples - Gon Song Lan Tan)]
+        _NormalMap("Ban Do Phap Tuyen (Normal Map)", 2D) = "bump" {}
+        _NormalScale1("Ty Le Kich Thuoc Gon Song Lop 1", Float) = 0.05
+        _NormalScale2("Ty Le Kich Thuoc Gon Song Lop 2", Float) = 0.08
+        _NormalSpeed1("Toc Do Cuon Song Lop 1 (Vector2)", Vector) = (0.05, 0.02, 0, 0)
+        _NormalSpeed2("Toc Do Cuon Song Lop 2 (Vector2)", Vector) = (-0.03, 0.04, 0, 0)
+        _RefractionStrength("Cuong Do Khuc Xa Vien Bien Dang Day", Float) = 0.12         // Độ méo khúc xạ nhìn xuyên đáy nước
+        _PlanarReflectionTexture("Anh Phan Chieu Guong (Tu Script Truyen)", 2D) = "black" {}
 
-        [Header(Procedural Gerstner Waves)]
-        _WaveDirection("Wave Propagation Direction (X, Y)", Vector) = (0.0, -1.0, 0, 0) // Hướng truyền sóng (mặc định từ sau ra trước hướng về bờ cát cạn)
-        _WaveHeight("Wave Height", Float) = 0.22                          // Chiều cao nhấp nhô của sóng
-        _WaveScale("Wave Scale/Frequency", Float) = 0.85                  // Tần số sóng
-        _WaveSpeed("Wave Speed", Float) = 1.6                             // Tốc độ sóng
+        [Header(Procedural Gerstner Waves - Song Nhap Nho Chinh)]
+        _WaveDirection("Huong Song Chay (X, Z)", Vector) = (0.0, -1.0, 0, 0)             // Hướng sóng truyền từ khơi vào bờ
+        _WaveHeight("Chieu Cao Sóng Nhap Nho (Met)", Float) = 0.22                        // Độ cao nhấp nhô của đỉnh sóng
+        _WaveScale("Tan So Song (Do Day Giua Cac Song)", Float) = 0.85                   // Số lượng ngọn sóng trên một khoảng cách
+        _WaveSpeed("Toc Do Song Di Chuyen", Float) = 1.6                                 // Tốc độ lướt sóng
 
-        [Header(Concentric Obstacle Ripples)]
-        _Pillar1Pos("Pillar 1 Position (X, Z)", Vector) = (1.2, 1.5, 0, 0)
-        _Pillar2Pos("Pillar 2 Position (X, Z)", Vector) = (-1.8, 3.2, 0, 0)
-        _BoatPos("Boat Position (X, Z)", Vector) = (-0.5, -1.0, 0, 0)     // Vị trí thuyền để tính sóng phản xạ
-        _BoatDir("Boat Forward Direction (X, Z)", Vector) = (0.0, 0.0, 1.0, 0.0) // Hướng mũi thuyền
-        _BoatLength("Boat Keel Length", Float) = 1.5                      // Chiều dài sống thuyền để tạo sóng hình capsule
-        _RippleHeight("Obstacle Ripple Height", Float) = 0.07             // Độ cao của sóng phản xạ từ cọc
-        _RippleScale("Obstacle Ripple Frequency", Float) = 5.5            // Tần số sóng phản xạ từ cọc
-        _RippleSpeed("Obstacle Ripple Speed", Float) = 4.2                // Tốc độ lan tỏa sóng phản xạ từ cọc
-        _RippleDecay("Obstacle Ripple Decay", Float) = 0.75               // Độ tắt dần của sóng phản xạ theo khoảng cách
+        [Header(Concentric Obstacle Ripples - Song Phan Chan Va Dap)]
+        _Pillar1Pos("Toa Do Coc Da 1 (X, Z)", Vector) = (1.2, 1.5, 0, 0)
+        _Pillar2Pos("Toa Do Coc Da 2 (X, Z)", Vector) = (-1.8, 3.2, 0, 0)
+        _BoatPos("Toa Do Con Thuyen (X, Z)", Vector) = (-0.5, -1.0, 0, 0)
+        _BoatDir("Huong Mui Thuyen (X, Z)", Vector) = (0.0, 0.0, 1.0, 0.0)
+        _BoatLength("Chieu Dai Song Thuyen (Tao Song Capsule)", Float) = 1.5              // Kích thước keel tạo sóng kén thon dài
+        _RippleHeight("Chieu Cao Song Phan Chan Va Dap", Float) = 0.07                     // Cường độ sóng phản xạ
+        _RippleScale("Tan So Song Phan Chan (Met)", Float) = 5.5                         // Số lượng vòng sóng phản chấn
+        _RippleSpeed("Toc Do Lan Toa Song Phan Chan", Float) = 4.2                         // Tốc độ loang ra ngoài của vòng sóng
+        _RippleDecay("Do Tat Dan Theo Khoang Cach (Decay)", Float) = 0.75                // Độ cản làm tắt sóng khi đi xa
 
-        [Header(Shimmering Caustics)]
-        _NoiseMap("Seamless Noise Map", 2D) = "gray" {}
-        _CausticsMap("Caustics Map (Voronoi)", 2D) = "black" {}
-        _NoiseScale("Caustics Scale", Float) = 6.0
-        _CausticsColor("Caustics Color", Color) = (0.7, 1.0, 0.95, 1.0)   // Màu vân sóng nắng
-        _CausticsPower("Caustics Power (Sharpness)", Range(1.0, 15.0)) = 5.0 // Cường độ lũy thừa tạo vân nét sắc sảo
-        _CausticsIntensity("Caustics Intensity", Float) = 2.0
+        [Header(Shimmering Caustics - Luoi Nang Lap Lanh)]
+        _NoiseMap("Ban Do Nhieu Seamless Caustics", 2D) = "gray" {}
+        _CausticsMap("Ban Do Voronoi Luoi Nang Lap Lanh", 2D) = "black" {}
+        _NoiseScale("Kich Thuoc Vien Caustics", Float) = 6.0
+        _CausticsColor("Mau Luoi Nang Lap Lanh", Color) = (0.7, 1.0, 0.95, 1.0)
+        _CausticsPower("Do Sac Net Duong Vien Nang (Mu Pow)", Range(1.0, 15.0)) = 5.0    // Lũy thừa làm mỏng đường gợn nắng thành lưới mảnh
+        _CausticsIntensity("Cuong Do Phat Sang Luoi Nang", Float) = 2.0
 
-        [Header(Sky Specular and Reflections)]
-        _SkyColor("Sky Color (Reflection)", Color) = (0.45, 0.68, 0.9, 1.0) // Màu phản chiếu bầu trời
-        _ReflectionStrength("Fresnel Reflection Strength", Range(0, 1)) = 0.75
-        _Glossiness("Specular Glossiness", Float) = 200.0
-        _SpecularIntensity("Specular Intensity", Float) = 3.5
+        [Header(Sky Specular and Reflections - Phuc Xa Specular & Phai Mau Troi)]
+        _SkyColor("Mau Bau Troi Phan Chieu (Goc Nghieng)", Color) = (0.45, 0.68, 0.9, 1.0)  // Màu hòa trộn bầu trời ở góc nhìn Fresnel nghiêng
+        _ReflectionStrength("Cuong Do Phan Chieu Guong & Troi", Range(0, 1)) = 0.75      // Hệ số pha trộn ảnh phản chiếu thật/sky
+        _Glossiness("Do Bong Be Mat Nuoc (Bong Specular)", Float) = 200.0                   // Độ thu hẹp điểm lóa nắng
+        _SpecularIntensity("Cuong Do Diem Loa Specular Mat Troi", Float) = 3.5
     }
 
     SubShader
