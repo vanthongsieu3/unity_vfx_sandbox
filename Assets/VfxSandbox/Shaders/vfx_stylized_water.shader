@@ -462,6 +462,9 @@ Shader "VFX/StylizedWater"
                 
                 float phaseBoat = distBoat * _RippleScale - _Time.y * _RippleSpeed;
                 float ringBoat = pow(saturate(sin(phaseBoat)), 6.0) * exp(-distBoat * (_RippleDecay * 1.2));
+                float boatRippleWeight = smoothstep(4.0, 0.0, distBoat);
+                float pillarFoam = max(maxPillarFoam, ringBoat * 0.85 * boatRippleWeight);
+
                 float2 offsetBoat = _BoatPos.xy - boatForward * 0.55; // Vệt bọt thuyền dạt ra phía sau lái thuyền (sternward) ngược hướng mũi thuyền
                 float2 vecAPOutline = input.worldPos.xz - (offsetBoat - boatForward * (_BoatLength * 0.5));
                 float tSegOutline = saturate(dot(vecAPOutline, segAB) / max(0.001, dot(segAB, segAB)));
