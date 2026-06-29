@@ -85,9 +85,6 @@ Shader "VFX/StylizedWater"
             Texture2D _NoiseMap;
             Texture2D _NormalMap;
 
-            // Sử dụng các SamplerState định sẵn của URP để bắt buộc cơ chế lặp (Repeat) 100% không phụ thuộc thiết lập Import của Texture
-            SamplerState sampler_LinearRepeat;
-
             CBUFFER_START(UnityPerMaterial)
                 float4 _ShallowColor;
                 float4 _DeepColor;
