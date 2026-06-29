@@ -18,6 +18,7 @@ namespace VfxSandbox.Editor
             GenerateFunnelMesh(dir + "/vfx_mesh_funnel_01.asset");
             GenerateRockMesh(dir + "/vfx_mesh_rock_01.asset");
             GenerateConeMesh(dir + "/vfx_mesh_cone_01.asset");
+            GenerateRingMesh(dir + "/vfx_mesh_ring_01.asset"); // Tạo Mesh vòng khuyên/donut
 
             AssetDatabase.Refresh();
             Debug.Log("✓ Procedural meshes generated successfully in Assets/VfxSandbox/Meshes");
@@ -211,6 +212,61 @@ namespace VfxSandbox.Editor
                 triangles[triIdx++] = s + 1;
                 triangles[triIdx++] = centerIdx;
                 triangles[triIdx++] = s;
+            }
+
+            mesh.vertices = vertices;
+            mesh.uv = uvs;
+            mesh.triangles = triangles;
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+
+            AssetDatabase.CreateAsset(mesh, path);
+        }
+
+        private static void GenerateRingMesh(string path)
+        {
+            Mesh mesh = new Mesh();
+            mesh.name = "vfx_mesh_ring_01";
+
+            int segments = 36;
+            float innerRadius = 0.7f;
+            float outerRadius = 1.3f;
+
+            int vertCount = (segments + 1) * 2;
+            Vector3[] vertices = new Vector3[vertCount];
+            Vector2[] uvs = new Vector2[vertCount];
+            int[] triangles = new int[segments * 6];
+
+            for (int i = 0; i <= segments; i++)
+            {
+                float ratio = (float)i / segments;
+                float angle = ratio * Mathf.PI * 2f;
+                float cos = Mathf.Cos(angle);
+                float sin = Mathf.Sin(angle);
+
+                // Inner vertex
+                vertices[i * 2] = new Vector3(cos * innerRadius, 0f, sin * innerRadius);
+                uvs[i * 2] = new Vector2(ratio, 0f);
+
+                // Outer vertex
+                vertices[i * 2 + 1] = new Vector3(cos * outerRadius, 0f, sin * outerRadius);
+                uvs[i * 2 + 1] = new Vector2(ratio, 1f);
+            }
+
+            int triIndex = 0;
+            for (int i = 0; i < segments; i++)
+            {
+                int next = i + 1;
+
+                // Triangle 1
+                triangles[triIndex++] = i * 2;
+                triangles[triIndex++] = i * 2 + 1;
+                triangles[triIndex++] = next * 2;
+
+                // Triangle 2
+                triangles[triIndex++] = next * 2;
+                triangles[triIndex++] = i * 2 + 1;
+                triangles[triIndex++] = next * 2 + 1;
             }
 
             mesh.vertices = vertices;

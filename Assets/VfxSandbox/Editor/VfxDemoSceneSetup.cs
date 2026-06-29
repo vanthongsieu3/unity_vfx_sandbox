@@ -152,6 +152,16 @@ namespace VfxSandbox.Editor
             if (emberTex != null) debrisMat.SetTexture("_EmissionMap", emberTex);
             AssetDatabase.CreateAsset(debrisMat, debrisMatPath);
 
+            // F. Fire Ring Material (Magma scrolling on 3D ring mesh)
+            string fireRingMatPath = matDir + "/mat_fire_ring.mat";
+            Material fireRingMat = new Material(Shader.Find("VFX/LavaFlow"));
+            if (noiseTex != null) fireRingMat.SetTexture("_NoiseMap", noiseTex);
+            if (rampTex != null) fireRingMat.SetTexture("_RampMap", rampTex);
+            fireRingMat.SetVector("_LavaSpeed", new Vector4(1.5f, 0.0f, 0.0f, 0.0f)); // Scrolling speed
+            fireRingMat.SetFloat("_LavaIntensity", 5f);
+            fireRingMat.SetFloat("_DisplacementStrength", 0f);
+            AssetDatabase.CreateAsset(fireRingMat, fireRingMatPath);
+
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 

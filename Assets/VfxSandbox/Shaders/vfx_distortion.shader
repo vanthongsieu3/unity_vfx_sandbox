@@ -80,7 +80,9 @@ Shader "VFX/ScreenDistortion"
                 float alpha = normalSample.a * _ColorTint.a;
                 float3 finalColor = lerp(screenColor, _ColorTint.rgb * 1.5, alpha);
 
-                return float4(finalColor, 1.0);
+                // Chỉ hiện khung hình ở những nơi có hoa văn bẻ cong, nền còn lại trong suốt hoàn toàn
+                float finalAlpha = step(0.01, alpha);
+                return float4(finalColor, finalAlpha);
             }
             ENDHLSL
         }
