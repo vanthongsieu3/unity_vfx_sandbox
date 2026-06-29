@@ -278,21 +278,29 @@ Shader "VFX/StylizedWater"
                 // 1. Sóng rẽ nước chữ V (Wake) chạy dọc hai bên mạn và kéo dài về phía sau
                 float along = dot(toBoat, boatForward);
                 float perp = abs(dot(toBoat, boatRight));
-                float vPhase = (perp * 2.2 - along * 0.8) * _RippleScale - _Time.y * _RippleSpeed;
+                
+                // Thêm độ uốn lượn toán học để sóng rẽ nước cong mềm mại tự nhiên chứ không thẳng tắp
+                float vWiggle = sin(along * 0.9 + perp * 0.5 + _Time.y * 1.5) * 0.7;
+                float vPhase = (perp * 2.2 - along * 0.8 + vWiggle) * _RippleScale - _Time.y * _RippleSpeed;
                 float vDecay = exp(-(perp * 0.8 - along * 0.4) * _RippleDecay);
                 
                 // Giới hạn vùng ảnh hưởng ở phía sau mũi thuyền và tỏa rộng dần
                 float vWeight = smoothstep(1.5, -0.5, along) * smoothstep(5.0, 0.0, perp);
                 float vWake = sin(vPhase) * (_RippleHeight * 1.8) * vDecay * vWeight * speedFactor;
                 
-                // Đạo hàm cho Sóng chữ V
+                // Đạo hàm cho Sóng chữ V (kèm đạo hàm vWiggle)
                 float perpSign = sign(dot(toBoat, boatRight));
                 float d_along_dx = boatForward.x;
                 float d_along_dz = boatForward.y;
                 float d_perp_dx = boatRight.x * perpSign;
                 float d_perp_dz = boatRight.y * perpSign;
-                float d_vPhase_dx = (d_perp_dx * 2.2 - d_along_dx * 0.8) * _RippleScale;
-                float d_vPhase_dz = (d_perp_dz * 2.2 - d_along_dz * 0.8) * _RippleScale;
+                
+                float wCos = cos(along * 0.9 + perp * 0.5 + _Time.y * 1.5) * 0.7;
+                float d_vWiggle_dx = wCos * (0.9 * d_along_dx + 0.5 * d_perp_dx);
+                float d_vWiggle_dz = wCos * (0.9 * d_along_dz + 0.5 * d_perp_dz);
+                
+                float d_vPhase_dx = (d_perp_dx * 2.2 - d_along_dx * 0.8 + d_vWiggle_dx) * _RippleScale;
+                float d_vPhase_dz = (d_perp_dz * 2.2 - d_along_dz * 0.8 + d_vWiggle_dz) * _RippleScale;
                 float dvWake_dx = cos(vPhase) * d_vPhase_dx * (_RippleHeight * 1.8) * vDecay * vWeight * speedFactor;
                 float dvWake_dz = cos(vPhase) * d_vPhase_dz * (_RippleHeight * 1.8) * vDecay * vWeight * speedFactor;
 
@@ -524,21 +532,46 @@ Shader "VFX/StylizedWater"
 
                 float pillarFoam = max(maxPillarFoam, max(vWakeFoam * 0.9, bobbingFoam));
 
-                // Viền giải tích của thuyền kéo dài ra phía sau thành vệt bọt khí (Foam Wake Trail) tăng theo tốc độ
-                float dynamicLength = _BoatLength * (1.0 + speedFactor * 1.8);
-                float2 offsetBoat = _BoatPos.xy - boatForward * (0.55 + speedFactor * 1.0); 
-                float2 boatA_dyn = offsetBoat - boatForward * (dynamicLength * 0.5);
-                float2 boatB_dyn = offsetBoat + boatForward * (dynamicLength * 0.5);
+                // Viền giải tích sát thân thuyền (Hull Outline)
+                float2 offsetBoat = _BoatPos.xy - boatForward * 0.55; 
+                float2 boatA_dyn = offsetBoat - boatForward * (_BoatLength * 0.5);
+                float2 boatB_dyn = offsetBoat + boatForward * (_BoatLength * 0.5);
                 float2 segAB_dyn = boatB_dyn - boatA_dyn;
                 
                 float2 vecAPOutline = input.worldPos.xz - boatA_dyn;
                 float tSegOutline = saturate(dot(vecAPOutline, segAB_dyn) / max(0.001, dot(segAB_dyn, segAB_dyn)));
                 float2 closestPtBoatOutline = boatA_dyn + tSegOutline * segAB_dyn;
                 float distBoatOutline = distance(input.worldPos.xz, closestPtBoatOutline);
-                float distToBoatSurf = max(0.0, distBoatOutline - 0.4);
+                float distToBoatSurf = max(0.0, distBoatOutline - 0.45);
                 float boatOutline = saturate(1.0 - distToBoatSurf / dynamicOutlineDistance);
                 
-                float analyticalOutline = max(maxPillarOutline, boatOutline);
+                // Tạo vệt bọt khí sủi bọt/rẽ sóng hình chữ V nở rộng (Turbulent Expanding Wake Cone) sau đuôi thuyền
+                // Tính khoảng cách lùi dần về phía sau từ đuôi thuyền (stern)
+                float distBehind = max(0.0, -along - 0.7);
+                // Vệt bọt nở rộng dần ra sau đuôi: xuất phát 0.5m nở rộng dần với góc mở tự nhiên
+                float wakeWidth = 0.45 + distBehind * 0.28;
+                // Biên hình nón V-shaped
+                float coneFactor = saturate(1.0 - perp / wakeWidth);
+                
+                // Suy giảm độ dày bọt khi đi xa dần (kéo dài theo tốc độ thuyền)
+                float wakeDecay = exp(-distBehind * (0.35 / (speedFactor + 0.01)));
+                float wakeFoamBase = coneFactor * wakeDecay * speedFactor;
+                
+                // Trộn thêm 2 lớp nhiễu trôi ngược dòng để đục lỗ rách bong bóng khí sủi bọt chân thực
+                float2 wakeNoiseUv1 = input.worldPos.xz * (_FoamNoiseScale * 0.095) + (waveDir * 0.07 + waveTangent * 0.03) * _Time.y;
+                float2 wakeNoiseUv2 = input.worldPos.xz * (_FoamNoiseScale * 0.045) + (waveDir * 0.035 - waveTangent * 0.02) * _Time.y;
+                float wakeNoise1 = _NoiseMap.Sample(sampler_LinearRepeat, wakeNoiseUv1).r;
+                float wakeNoise2 = _NoiseMap.Sample(sampler_LinearRepeat, wakeNoiseUv2).r;
+                float combinedWakeNoise = lerp(wakeNoise1, wakeNoise2, 0.4);
+                
+                // Trừ nhiễu làm rã bọt khí ở biên ngoài chữ V
+                float wakeFoamVal = wakeFoamBase * 1.8 - (1.0 - coneFactor * 0.8) * combinedWakeNoise * dynamicNoiseWeight * 1.6;
+                float wakeFoamMask = smoothstep(0.12, 0.25, wakeFoamVal);
+                
+                // Gộp chung viền cứng sát thân và vệt bọt khí sủi kéo dài đằng sau
+                float totalBoatOutline = max(boatOutline, wakeFoamMask);
+                
+                float analyticalOutline = max(maxPillarOutline, totalBoatOutline);
 
                 // 2. Viền dựa trên chiều sâu thực tế (nếu có bật Depth)
                 float depthOutline = 0.0;
