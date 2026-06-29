@@ -148,23 +148,32 @@ namespace VfxSandbox.Editor
             var main = ps.main;
             main.duration = 1.5f;
             main.loop = false;
-            main.startLifetime = 1.5f;
-            main.startSpeed = new ParticleSystem.MinMaxCurve(8f, 18f);
-            main.startSize = new ParticleSystem.MinMaxCurve(0.4f, 0.9f);
-            main.gravityModifier = 1.8f;
+            main.startLifetime = 1.2f;
+            main.startSpeed = new ParticleSystem.MinMaxCurve(10f, 22f); // Tăng tốc độ bắn văng
+            
+            // Kích hoạt kích thước 3D ngẫu nhiên giúp đá không đồng đều
+            main.startSize3D = true;
+            main.startSizeX = new ParticleSystem.MinMaxCurve(0.3f, 1.2f);
+            main.startSizeY = new ParticleSystem.MinMaxCurve(0.3f, 1.2f);
+            main.startSizeZ = new ParticleSystem.MinMaxCurve(0.3f, 1.2f);
+            main.gravityModifier = 2.2f; // Trọng lực kéo đá rơi xuống nhanh hơn
 
             var emission = ps.emission;
             emission.rateOverTime = 0f;
-            emission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0.0f, 20) });
+            emission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0.0f, 35) }); // Tăng số lượng đá vụn lên 35 hạt
 
             var shape = ps.shape;
             shape.shapeType = ParticleSystemShapeType.Cone;
-            shape.angle = 25f;
-            shape.radius = 0.4f;
+            shape.angle = 35f; // Tăng góc mở hình nón để bắn tỏa rộng ra xung quanh
+            shape.radius = 0.3f;
+            shape.rotation = new Vector3(-90f, 0f, 0f); // Xoay hướng bắn lên trên (Y-axis)
 
             var rotation = ps.rotationOverLifetime;
             rotation.enabled = true;
-            rotation.z = new ParticleSystem.MinMaxCurve(90f, 360f);
+            // Xoay ngẫu nhiên cả 3 trục cho đá 3D sinh động
+            rotation.x = new ParticleSystem.MinMaxCurve(-180f, 180f);
+            rotation.y = new ParticleSystem.MinMaxCurve(-180f, 180f);
+            rotation.z = new ParticleSystem.MinMaxCurve(-180f, 180f);
 
             var renderer = go.GetComponent<ParticleSystemRenderer>();
             if (mesh != null)
