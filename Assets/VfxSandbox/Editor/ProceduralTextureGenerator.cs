@@ -266,6 +266,7 @@ namespace VfxSandbox.Editor
             tex.Apply();
             byte[] bytes = tex.EncodeToPNG();
             File.WriteAllBytes(path, bytes);
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
             DestroyImmediate(tex);
         }
 
@@ -335,6 +336,7 @@ namespace VfxSandbox.Editor
             tex.Apply();
             byte[] bytes = tex.EncodeToPNG();
             File.WriteAllBytes(path, bytes);
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
             DestroyImmediate(tex);
         }
     }

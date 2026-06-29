@@ -49,7 +49,7 @@ Shader "VFX/StylizedWater"
 
         [Header(Shimmering Caustics)]
         _NoiseMap("Seamless Noise Map", 2D) = "gray" {}
-        _CausticsMap("Caustics Map (Voronoi)", 2D) = "white" {}
+        _CausticsMap("Caustics Map (Voronoi)", 2D) = "black" {}
         _NoiseScale("Caustics Scale", Float) = 6.0
         _CausticsColor("Caustics Color", Color) = (0.7, 1.0, 0.95, 1.0)   // Màu vân sóng nắng
         _CausticsPower("Caustics Power (Sharpness)", Range(1.0, 15.0)) = 5.0 // Cường độ lũy thừa tạo vân nét sắc sảo
