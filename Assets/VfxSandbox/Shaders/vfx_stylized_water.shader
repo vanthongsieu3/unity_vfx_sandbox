@@ -103,6 +103,7 @@ Shader "VFX/StylizedWater"
                 float3 viewDirWS    : TEXCOORD3;
                 float3 worldPos     : TEXCOORD4;
                 float waveHeight    : TEXCOORD5;
+                float waveSlope     : TEXCOORD6;
             };
 
             Texture2D _NoiseMap;
@@ -326,6 +327,7 @@ Shader "VFX/StylizedWater"
                 output.worldNormal = waveNormal;
                 output.viewDirWS = GetWorldSpaceViewDir(positionWS);
                 output.worldPos = positionWS;
+                output.waveSlope = cos(wavePos * k1 - w1);
 
                 return output;
             }
@@ -335,9 +337,21 @@ Shader "VFX/StylizedWater"
                 // Tọa độ màn hình (Screen UV)
                 float2 screenUv = input.positionCS.xy / _ScreenParams.xy;
 
-                // 1. Đọc và hòa trộn 2 lớp Map Pháp tuyến (Normal Map) chuyển động chéo nhau (Ép Sampler Repeat)
-                float2 normalUv1 = input.worldPos.xz * _NormalScale1 + _NormalSpeed1.xy * _Time.y;
-                float2 normalUv2 = input.worldPos.xz * _NormalScale2 + _NormalSpeed2.xy * _Time.y;
+                // Tính hướng sóng đồng bộ để cuộn cấu trúc gợn sóng và bọt trôi theo chiều sóng
+                float2 waveDir = _WaveDirection.xy;
+                if (dot(waveDir, waveDir) < 0.001)
+                {
+                    waveDir = float2(0.0, -1.0);
+                }
+                else
+                {
+                    waveDir = normalize(waveDir);
+                }
+                float2 waveTangent = float2(-waveDir.y, waveDir.x);
+
+                // 1. Đọc và hòa trộn 2 lớp Map Pháp tuyến (Normal Map) cuộn xuôi dòng hướng bờ (shoreward)
+                float2 normalUv1 = input.worldPos.xz * _NormalScale1 + (waveDir * 0.045 + waveTangent * 0.025) * _Time.y;
+                float2 normalUv2 = input.worldPos.xz * _NormalScale2 + (waveDir * 0.035 - waveTangent * 0.035) * _Time.y;
                 
                 float3 normal1 = UnpackNormal(_NormalMap.Sample(sampler_LinearRepeat, normalUv1));
                 float3 normal2 = UnpackNormal(_NormalMap.Sample(sampler_LinearRepeat, normalUv2));
@@ -402,11 +416,10 @@ Shader "VFX/StylizedWater"
                 float opacity = lerp(_WaterOpaqueness, _DeepColor.a, depthFactor);
 
                 // 6. Tạo bọt nước xô bờ gợn sóng cách điệu (Stylized Shoreline Foam)
-                float2 foamUv = input.worldPos.xz * (_FoamNoiseScale * 0.06) + blendedNormalMap.xy * 0.15 + float2(_Time.y * 0.12, _Time.y * 0.06);
+                float2 foamUv = input.worldPos.xz * (_FoamNoiseScale * 0.06) + blendedNormalMap.xy * 0.15 + (waveDir * 0.09 + waveTangent * 0.03) * _Time.y;
                 float foamNoise = _NoiseMap.Sample(sampler_LinearRepeat, foamUv).r;
                 
                 // Tính chu kỳ triều dâng/rút (Tide Cycle) để tăng bọt khi sóng vỗ bờ, giảm bọt khi rút ra xa
-                // sin(Time) nằm trong khoảng [-1, 1], chuyển đổi thành [0, 1]
                 float tide = sin(_Time.y * _FoamLappingSpeed) * 0.5 + 0.5;
                 
                 // Khoảng cách bọt xô bờ tự động co giãn mạnh theo triều dâng
@@ -418,28 +431,20 @@ Shader "VFX/StylizedWater"
                 // Độ đục lỗ bong bóng nước (độ rách bọt): khi nước rút thì bọt rách/tan cực mạnh (noise weight cao hơn)
                 float dynamicNoiseWeight = _FoamNoiseWeight * (1.35 - tide * 0.55);
 
+                // Hệ số tăng bọt khi sóng vỗ bờ dốc tiến tới (crashing slope) và giảm bọt khi rút ngược ra biển (retreating slope)
+                float waveFrontFactor = saturate(-input.waveSlope * 0.7 + 0.65);
+
                 // A. Bọt xô bờ (Shoreline Foam) - Luôn chạy dựa trên depthDiff (giải tích hoặc thực tế) để vẽ mép cát tiếp xúc
                 float shoreFoamFactor = saturate(1.0 - max(0.0, depthDiff) / dynamicFoamDistance);
-                // Thuật toán trừ nhiễu làm bọt rách tạo lỗ bong bóng / viền rách ngẫu nhiên ở mép ngoài bờ
                 float shoreFoamVal = shoreFoamFactor - (1.0 - shoreFoamFactor) * foamNoise * dynamicNoiseWeight * 1.5;
-                float shoreFoamMask = smoothstep(0.12, 0.22, shoreFoamVal);
+                float shoreFoamMask = smoothstep(0.12, 0.22, shoreFoamVal) * waveFrontFactor;
 
                 // B. Bọt đỉnh sóng (Wave Crest foam) - Phá vỡ các đường bọt song song dẹt thành các mảng bọt trôi nổi bằng phép nhân nhiễu
                 float waveCrestFactor = saturate((input.waveHeight - _WaveCrestThreshold) / _WaveCrestRange);
                 float waveCrestNoise = _NoiseMap.Sample(sampler_LinearRepeat, foamUv * 1.6).r;
-                float waveCrestMask = smoothstep(0.48, 0.55, waveCrestFactor * waveCrestNoise * 2.3);
+                float waveCrestMask = smoothstep(0.48, 0.55, waveCrestFactor * waveCrestNoise * 2.3) * waveFrontFactor;
 
                 // C. Bọt sóng phản xạ uốn theo dòng sóng chạy lan tỏa từ các cọc và thuyền (Pulsing Wake-shaped Foam Rings)
-                float2 waveDir = _WaveDirection.xy;
-                if (dot(waveDir, waveDir) < 0.001)
-                {
-                    waveDir = float2(0.0, -1.0);
-                }
-                else
-                {
-                    waveDir = normalize(waveDir);
-                }
-                float2 waveTangent = float2(-waveDir.y, waveDir.x);
                 
                 // Loop qua 10 cọc đá vôi Vịnh Hạ Long để tính sóng phản xạ và viền bọt giải tích
                 float maxPillarFoam = 0.0;
@@ -541,16 +546,19 @@ Shader "VFX/StylizedWater"
                 // Gộp cả 2 nguồn viền để đảm bảo luôn hiện viền rõ nét
                 float outlineFactor = max(depthOutline, analyticalOutline);
                 
-                // Sử dụng vân Voronoi (Caustics Map) cuộn chậm để đục lỗ bong bóng nước tròn trịa giống xà phòng sủi bọt chuẩn Zelda/Genshin
-                float2 outlineFoamUv = input.worldPos.xz * (_FoamNoiseScale * 0.045) + float2(_Time.y * 0.04, _Time.y * 0.02);
+                // Sử dụng vân Voronoi (Caustics Map) cuộn xuôi dòng hướng bờ để đục lỗ bong bóng nước tròn trịa
+                float2 outlineFoamUv = input.worldPos.xz * (_FoamNoiseScale * 0.045) + (waveDir * 0.04 + waveTangent * 0.025) * _Time.y;
                 float outlineNoise = _CausticsMap.Sample(sampler_LinearRepeat, outlineFoamUv).r;
                 
                 // Lực bọt rách tạo bong bóng: ở gần vật thể bọt đặc trắng tinh, đi xa dần bị đục lỗ và rã thành các mảng trôi nổi nhỏ
                 float outlineFoamVal = outlineFactor - (1.0 - outlineFactor) * outlineNoise * dynamicNoiseWeight * 1.7;
-                float outlineMask = smoothstep(0.12, 0.22, outlineFoamVal);
+                float outlineMask = smoothstep(0.12, 0.22, outlineFoamVal) * waveFrontFactor;
+
+                // Đồng bộ bọt sóng phản chấn cọc/thuyền theo sườn sóng dốc đón bờ
+                float finalPillarFoam = pillarFoam * waveFrontFactor;
 
                 // Gộp chung bốn loại bọt nước
-                float foamCutout = max(max(max(shoreFoamMask, waveCrestMask), pillarFoam), outlineMask);
+                float foamCutout = max(max(max(shoreFoamMask, waveCrestMask), finalPillarFoam), outlineMask);
 
                 // Xử lý ẩn hoàn toàn nước và bọt trên bãi cát khô (khi depthDiff < 0.0)
                 if (depthDiff < 0.0)
