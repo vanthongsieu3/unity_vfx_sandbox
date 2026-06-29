@@ -18,6 +18,13 @@ namespace VfxSandbox
         public Mesh debrisMesh;
         public Mesh funnelMesh;
 
+        [Header("VFX Prefabs (Gán Prefabs có sẵn)")]
+        public GameObject trailPrefab;
+        public GameObject explosionPrefab;
+        public GameObject debrisPrefab;
+        public GameObject shockwavePrefab;
+        public GameObject embersPrefab;
+
         [Header("VFX Parameters")]
         public float nạpThờiGian = 1.2f;
         public float tốcĐộRơi = 35f;
@@ -101,13 +108,13 @@ namespace VfxSandbox
             var meshRenderer = meteor.AddComponent<MeshRenderer>();
             meshRenderer.sharedMaterial = meteorMaterial;
 
-            // Đuôi khói & lửa (Trail Particle)
-            GameObject trailObj = new GameObject("VFX_Meteor_Trail");
-            trailObj.transform.parent = meteor.transform;
-            trailObj.transform.localPosition = Vector3.zero;
-            
-            var trailParticles = trailObj.AddComponent<ParticleSystem>();
-            ConfigureTrailParticleSystem(trailParticles);
+            // Đuôi khói & lửa (Trail Particle) từ Prefab
+            if (trailPrefab != null)
+            {
+                GameObject trailObj = Instantiate(trailPrefab, meteor.transform);
+                trailObj.transform.localPosition = Vector3.zero;
+                trailObj.transform.localRotation = Quaternion.identity;
+            }
 
             // Di chuyển thiên thạch tới mục tiêu
             float distance = Vector3.Distance(startPos, targetPos);
@@ -141,21 +148,35 @@ namespace VfxSandbox
 
         private void TriggerImpactEffects(Vector3 pos)
         {
-            // A. Explosion Explosion (Hiệu ứng lửa bùng nổ)
-            GameObject exp = new GameObject("VFX_Impact_Explosion");
-            exp.transform.position = pos;
-            var expPs = exp.AddComponent<ParticleSystem>();
-            ConfigureExplosionParticleSystem(expPs);
-            Destroy(exp, 4f);
+            // A. Explosion (Hiệu ứng lửa bùng nổ) từ Prefab
+            if (explosionPrefab != null)
+            {
+                GameObject exp = Instantiate(explosionPrefab, pos, Quaternion.identity);
+                Destroy(exp, 4f);
+            }
 
-            // B. Debris (Đá vỡ văng tung tóe)
-            GameObject deb = new GameObject("VFX_Impact_Debris");
-            deb.transform.position = pos;
-            var debPs = deb.AddComponent<ParticleSystem>();
-            ConfigureDebrisParticleSystem(debPs);
-            Destroy(deb, 3f);
+            // B. Debris (Đá vỡ văng tung tóe) từ Prefab
+            if (debrisPrefab != null)
+            {
+                GameObject deb = Instantiate(debrisPrefab, pos, Quaternion.identity);
+                Destroy(deb, 3f);
+            }
 
-            // C. Ground Cracks Decal
+            // C. Shockwave (Sóng xung kích distortion) từ Prefab
+            if (shockwavePrefab != null)
+            {
+                GameObject sw = Instantiate(shockwavePrefab, pos + new Vector3(0, 0.05f, 0), Quaternion.Euler(90, 0, 0));
+                Destroy(sw, 1.5f);
+            }
+
+            // D. Embers (Tàn lửa bốc lên sau nổ) từ Prefab
+            if (embersPrefab != null)
+            {
+                GameObject emb = Instantiate(embersPrefab, pos, Quaternion.identity);
+                Destroy(emb, 6f);
+            }
+
+            // E. Ground Cracks Decal
             GameObject crack = GameObject.CreatePrimitive(PrimitiveType.Quad);
             Destroy(crack.GetComponent<Collider>());
             crack.name = "VFX_Impact_Cracks";
@@ -203,88 +224,6 @@ namespace VfxSandbox
                 yield return null;
             }
             mainCamera.transform.position = originalCameraPos;
-        }
-
-        // ---------------------------------------------------- Particle Configurations
-
-        private void ConfigureTrailParticleSystem(ParticleSystem ps)
-        {
-            var main = ps.main;
-            main.duration = 2f;
-            main.loop = true;
-            main.startLifetime = 0.5f;
-            main.startSpeed = 0f;
-            main.startSize = 1.5f;
-            main.simulationSpace = ParticleSystemSimulationSpace.World;
-
-            var emission = ps.emission;
-            emission.rateOverTime = 40f;
-
-            var renderer = ps.GetComponent<ParticleSystemRenderer>();
-            renderer.sharedMaterial = trailSmokeMaterial;
-            renderer.renderMode = ParticleSystemRenderMode.Billboard;
-        }
-
-        private void ConfigureExplosionParticleSystem(ParticleSystem ps)
-        {
-            var main = ps.main;
-            main.duration = 1f;
-            main.loop = false;
-            main.startLifetime = 1.0f;
-            main.startSpeed = new ParticleSystem.MinMaxCurve(5f, 12f);
-            main.startSize = new ParticleSystem.MinMaxCurve(1.5f, 3f);
-            main.simulationSpace = ParticleSystemSimulationSpace.World;
-
-            var emission = ps.emission;
-            emission.rateOverTime = 0f;
-            emission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0.0f, 35) });
-
-            var shape = ps.shape;
-            shape.shapeType = ParticleSystemShapeType.Sphere;
-            shape.radius = 1.0f;
-
-            var col = ps.colorOverLifetime;
-            col.enabled = true;
-            Gradient grad = new Gradient();
-            grad.SetKeys(
-                new GradientColorKey[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.red, 0.4f), new GradientColorKey(Color.black, 1.0f) },
-                new GradientAlphaKey[] { new GradientAlphaKey(1.0f, 0f), new GradientAlphaKey(0.8f, 0.7f), new GradientAlphaKey(0f, 1.0f) }
-            );
-            col.color = grad;
-
-            var renderer = ps.GetComponent<ParticleSystemRenderer>();
-            renderer.sharedMaterial = explosionMaterial;
-        }
-
-        private void ConfigureDebrisParticleSystem(ParticleSystem ps)
-        {
-            var main = ps.main;
-            main.duration = 1.5f;
-            main.loop = false;
-            main.startLifetime = 1.5f;
-            main.startSpeed = new ParticleSystem.MinMaxCurve(10f, 22f);
-            main.startSize = new ParticleSystem.MinMaxCurve(0.3f, 0.8f);
-            main.gravityModifier = 1.6f;
-
-            var emission = ps.emission;
-            emission.rateOverTime = 0f;
-            emission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0.0f, 15) });
-
-            var shape = ps.shape;
-            shape.shapeType = ParticleSystemShapeType.Cone;
-            shape.angle = 20f;
-            shape.radius = 0.5f;
-            
-            // Xoay hình nón hướng thẳng lên trên
-            ps.transform.rotation = Quaternion.Euler(-90, 0, 0);
-
-            var renderer = ps.GetComponent<ParticleSystemRenderer>();
-            if (debrisMesh != null)
-            {
-                renderer.renderMode = ParticleSystemRenderMode.Mesh;
-                renderer.mesh = debrisMesh;
-            }
-            renderer.sharedMaterial = meteorMaterial; // Dùng vật liệu dung nham đá đen
         }
     }
 }

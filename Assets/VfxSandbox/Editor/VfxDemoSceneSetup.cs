@@ -99,6 +99,19 @@ namespace VfxSandbox.Editor
             if (emberTex != null) flameMat.SetTexture("_BaseMap", emberTex);
             AssetDatabase.CreateAsset(flameMat, flameMatPath);
 
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            // ─── TỰ ĐỘNG TẠO PREFABS HỆ THỐNG HẠT ───
+            VfxPrefabCreator.GeneratePrefabs();
+            
+            // Nạp các Prefabs đã sinh
+            GameObject trailPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/VfxSandbox/Prefabs/vfx_prefab_trail.prefab");
+            GameObject explosionPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/VfxSandbox/Prefabs/vfx_prefab_explosion.prefab");
+            GameObject debrisPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/VfxSandbox/Prefabs/vfx_prefab_debris.prefab");
+            GameObject shockwavePrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/VfxSandbox/Prefabs/vfx_prefab_shockwave.prefab");
+            GameObject embersPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/VfxSandbox/Prefabs/vfx_prefab_embers.prefab");
+
             // 3. Tạo Scene mới
             Scene demoScene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             demoScene.name = "VfxDemoScene";
@@ -146,6 +159,13 @@ namespace VfxSandbox.Editor
             controller.meteorMesh = meteorMesh;
             controller.debrisMesh = meteorMesh;
             controller.funnelMesh = funnelMesh;
+
+            // Gán các Prefabs cho Controller
+            controller.trailPrefab = trailPrefab;
+            controller.explosionPrefab = explosionPrefab;
+            controller.debrisPrefab = debrisPrefab;
+            controller.shockwavePrefab = shockwavePrefab;
+            controller.embersPrefab = embersPrefab;
 
             // Lưu Scene
             string scenePath = Path.Combine(sceneDir, "VfxDemoScene.unity");
