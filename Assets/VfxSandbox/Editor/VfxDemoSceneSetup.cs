@@ -162,6 +162,20 @@ namespace VfxSandbox.Editor
             fireRingMat.SetFloat("_DisplacementStrength", 0f);
             AssetDatabase.CreateAsset(fireRingMat, fireRingMatPath);
 
+            // G. Dark Smoke Material (Transparent Alpha Blended Particles)
+            string smokeMatPath = matDir + "/mat_explosion_smoke.mat";
+            Material smokeMat = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit"));
+            smokeMat.SetFloat("_Surface", 1.0f); // Transparent
+            smokeMat.SetFloat("_Blend", 0.0f);   // 0.0 is Alpha Blended
+            smokeMat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            smokeMat.DisableKeyword("_BLENDMODE_ADDITIVE");      // Khói đen không dùng cộng sáng
+            smokeMat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            smokeMat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            smokeMat.SetInt("_ZWrite", 0);
+            smokeMat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+            if (emberTex != null) smokeMat.SetTexture("_BaseMap", emberTex);
+            AssetDatabase.CreateAsset(smokeMat, smokeMatPath);
+
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 

@@ -20,12 +20,13 @@ namespace VfxSandbox.Editor
             Material distMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/VfxSandbox/Materials/mat_screen_distortion.mat");
             Material debrisMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/VfxSandbox/Materials/mat_debris_rock.mat");
             Material fireRingMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/VfxSandbox/Materials/mat_fire_ring.mat");
+            Material smokeMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/VfxSandbox/Materials/mat_explosion_smoke.mat");
             Mesh debrisMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/VfxSandbox/Meshes/vfx_mesh_rock_01.asset");
             Mesh ringMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/VfxSandbox/Meshes/vfx_mesh_ring_01.asset");
 
             // Create Prefabs
-            CreateTrailPrefab(prefabDir + "/vfx_prefab_trail.prefab", flameMat);
-            CreateExplosionPrefab(prefabDir + "/vfx_prefab_explosion.prefab", flameMat, fireRingMat, ringMesh);
+            CreateTrailPrefab(prefabDir + "/vfx_prefab_trail.prefab", flameMat, smokeMat);
+            CreateExplosionPrefab(prefabDir + "/vfx_prefab_explosion.prefab", flameMat, fireRingMat, smokeMat, ringMesh);
             CreateDebrisPrefab(prefabDir + "/vfx_prefab_debris.prefab", debrisMat != null ? debrisMat : lavaMat, debrisMesh);
             CreateShockwavePrefab(prefabDir + "/vfx_prefab_shockwave.prefab", distMat);
             CreateEmbersPrefab(prefabDir + "/vfx_prefab_embers.prefab", flameMat);
@@ -34,7 +35,7 @@ namespace VfxSandbox.Editor
             Debug.Log("✓ VFX Prefabs generated successfully in Assets/VfxSandbox/Prefabs");
         }
 
-        private static void CreateTrailPrefab(string path, Material mat)
+        private static void CreateTrailPrefab(string path, Material mat, Material smokeMat)
         {
             GameObject go = new GameObject("VFX_Trail_Particles");
             var ps = go.AddComponent<ParticleSystem>();
@@ -70,11 +71,58 @@ namespace VfxSandbox.Editor
             renderer.sharedMaterial = mat;
             renderer.renderMode = ParticleSystemRenderMode.Billboard;
 
+            // ─── TẠO ĐUÔI KHÓI ĐEN (DARK SMOKE TRAIL SUB-SYSTEM) ───
+            if (smokeMat != null)
+            {
+                GameObject smokeGo = new GameObject("VFX_Trail_Dark_Smoke");
+                smokeGo.transform.parent = go.transform;
+                smokeGo.transform.localPosition = Vector3.zero;
+                smokeGo.transform.localRotation = Quaternion.identity;
+
+                var smokePs = smokeGo.AddComponent<ParticleSystem>();
+                var smokeMain = smokePs.main;
+                smokeMain.duration = 2f;
+                smokeMain.loop = true;
+                smokeMain.startLifetime = 1.0f; // Khói bay lâu hơn để tạo vệt
+                smokeMain.startSpeed = 0.5f;
+                smokeMain.startSize = new ParticleSystem.MinMaxCurve(1.2f, 2.2f);
+                smokeMain.simulationSpace = ParticleSystemSimulationSpace.World;
+                smokeMain.gravityModifier = -0.02f; // Khói nhẹ bay bốc lên trên
+
+                var smokeEmission = smokePs.emission;
+                smokeEmission.rateOverTime = 20f;
+
+                var smokeShape = smokePs.shape;
+                smokeShape.shapeType = ParticleSystemShapeType.Sphere;
+                smokeShape.radius = 0.4f;
+
+                var smokeSize = smokePs.sizeOverLifetime;
+                smokeSize.enabled = true;
+                AnimationCurve smokeCurve = new AnimationCurve();
+                smokeCurve.AddKey(0f, 0.4f);
+                smokeCurve.AddKey(1f, 1.8f);
+                smokeSize.size = new ParticleSystem.MinMaxCurve(1f, smokeCurve);
+
+                var smokeColor = smokePs.colorOverLifetime;
+                smokeColor.enabled = true;
+                Gradient smokeGrad = new Gradient();
+                Color charcoal = new Color(0.12f, 0.12f, 0.12f, 1f);
+                smokeGrad.SetKeys(
+                    new GradientColorKey[] { new GradientColorKey(charcoal, 0f), new GradientColorKey(new Color(0.05f, 0.05f, 0.05f), 1.0f) },
+                    new GradientAlphaKey[] { new GradientAlphaKey(0.7f, 0f), new GradientAlphaKey(0.4f, 0.6f), new GradientAlphaKey(0f, 1.0f) }
+                );
+                smokeColor.color = smokeGrad;
+
+                var smokeRenderer = smokeGo.GetComponent<ParticleSystemRenderer>();
+                smokeRenderer.sharedMaterial = smokeMat;
+                smokeRenderer.renderMode = ParticleSystemRenderMode.Billboard;
+            }
+
             PrefabUtility.SaveAsPrefabAsset(go, path);
             Object.DestroyImmediate(go);
         }
 
-        private static void CreateExplosionPrefab(string path, Material mat, Material fireRingMat, Mesh ringMesh)
+        private static void CreateExplosionPrefab(string path, Material mat, Material fireRingMat, Material smokeMat, Mesh ringMesh)
         {
             GameObject go = new GameObject("VFX_Explosion_Particles");
             var ps = go.AddComponent<ParticleSystem>();
@@ -134,6 +182,55 @@ namespace VfxSandbox.Editor
                 scaleScript.startScale = Vector3.one * 0.2f;
                 scaleScript.endScale = Vector3.one * 7.5f;
                 scaleScript.duration = 0.8f;
+            }
+
+            // ─── TẠO BÙNG NỔ KHÓI ĐEN (DARK SMOKE EXPLOSION SUB-SYSTEM) ───
+            if (smokeMat != null)
+            {
+                GameObject smokeGo = new GameObject("VFX_Dark_Smoke");
+                smokeGo.transform.parent = go.transform;
+                smokeGo.transform.localPosition = Vector3.zero;
+                smokeGo.transform.localRotation = Quaternion.identity;
+
+                var smokePs = smokeGo.AddComponent<ParticleSystem>();
+                var smokeMain = smokePs.main;
+                smokeMain.duration = 1f;
+                smokeMain.loop = false;
+                smokeMain.startLifetime = new ParticleSystem.MinMaxCurve(1.2f, 2.0f);
+                smokeMain.startSpeed = new ParticleSystem.MinMaxCurve(2f, 5f); // bay chậm tỏa rộng
+                smokeMain.startSize = new ParticleSystem.MinMaxCurve(2.0f, 3.5f); // khói to
+                smokeMain.startRotation = new ParticleSystem.MinMaxCurve(0f, 360f);
+                smokeMain.simulationSpace = ParticleSystemSimulationSpace.World;
+                smokeMain.gravityModifier = -0.05f; // Khói bốc ngược lên trên
+
+                var smokeEmission = smokePs.emission;
+                smokeEmission.rateOverTime = 0f;
+                smokeEmission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0.0f, 25) });
+
+                var smokeShape = smokePs.shape;
+                smokeShape.shapeType = ParticleSystemShapeType.Sphere;
+                smokeShape.radius = 0.5f;
+
+                var smokeSize = smokePs.sizeOverLifetime;
+                smokeSize.enabled = true;
+                AnimationCurve smokeCurve = new AnimationCurve();
+                smokeCurve.AddKey(0f, 0.5f);
+                smokeCurve.AddKey(1f, 1.8f);
+                smokeSize.size = new ParticleSystem.MinMaxCurve(1f, smokeCurve);
+
+                var smokeColor = smokePs.colorOverLifetime;
+                smokeColor.enabled = true;
+                Gradient smokeGrad = new Gradient();
+                Color charcoal = new Color(0.12f, 0.12f, 0.12f, 1f);
+                smokeGrad.SetKeys(
+                    new GradientColorKey[] { new GradientColorKey(charcoal, 0f), new GradientColorKey(new Color(0.05f, 0.05f, 0.05f), 1.0f) },
+                    new GradientAlphaKey[] { new GradientAlphaKey(0.8f, 0f), new GradientAlphaKey(0.6f, 0.3f), new GradientAlphaKey(0f, 1.0f) }
+                );
+                smokeColor.color = smokeGrad;
+
+                var smokeRenderer = smokeGo.GetComponent<ParticleSystemRenderer>();
+                smokeRenderer.sharedMaterial = smokeMat;
+                smokeRenderer.renderMode = ParticleSystemRenderMode.Billboard;
             }
 
             PrefabUtility.SaveAsPrefabAsset(go, path);
