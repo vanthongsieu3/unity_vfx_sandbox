@@ -48,6 +48,7 @@ namespace VfxSandbox.Editor
             ConfigureTextureImporter("Assets/VfxSandbox/Textures/vfx_tex_noise_01.png", false);
             ConfigureTextureImporter("Assets/VfxSandbox/Textures/vfx_tex_ember_01.png", true);
             ConfigureTextureImporter("Assets/VfxSandbox/Textures/vfx_tex_ramp_01.png", false);
+            ConfigureTextureImporter("Assets/VfxSandbox/Textures/vfx_tex_rock_01.png", false);
 
             AssetDatabase.Refresh();
 
@@ -57,6 +58,7 @@ namespace VfxSandbox.Editor
             Texture2D noiseTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_noise_01.png");
             Texture2D emberTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_ember_01.png");
             Texture2D rampTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_ramp_01.png");
+            Texture2D rockTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_rock_01.png");
 
             Mesh meteorMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/VfxSandbox/Meshes/vfx_mesh_rock_01.asset");
             Mesh funnelMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/VfxSandbox/Meshes/vfx_mesh_funnel_01.asset");
@@ -66,6 +68,7 @@ namespace VfxSandbox.Editor
             // A. Lava Flow Material
             string lavaMatPath = matDir + "/mat_lava_flow.mat";
             Material lavaMat = new Material(Shader.Find("VFX/LavaFlow"));
+            if (rockTex != null) lavaMat.SetTexture("_BaseMap", rockTex);
             if (noiseTex != null) lavaMat.SetTexture("_NoiseMap", noiseTex);
             if (rampTex != null) lavaMat.SetTexture("_RampMap", rampTex);
             lavaMat.SetFloat("_LavaIntensity", 3f);

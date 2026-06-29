@@ -18,6 +18,7 @@ namespace VfxSandbox.Editor
             GenerateNoiseTexture(Path.Combine(dir, "vfx_tex_noise_01.png"), 256);
             GenerateEmberTexture(Path.Combine(dir, "vfx_tex_ember_01.png"), 256);
             GenerateRampTexture(Path.Combine(dir, "vfx_tex_ramp_01.png"), 256);
+            GenerateRockTexture(Path.Combine(dir, "vfx_tex_rock_01.png"), 256);
 
             AssetDatabase.Refresh();
             Debug.Log("✓ Procedural textures generated successfully in Assets/VfxSandbox/Textures");
@@ -108,6 +109,33 @@ namespace VfxSandbox.Editor
             {
                 float t = (float)x / (size - 1);
                 tex.SetPixel(x, 0, grad.Evaluate(t));
+            }
+
+            tex.Apply();
+            byte[] bytes = tex.EncodeToPNG();
+            File.WriteAllBytes(path, bytes);
+            DestroyImmediate(tex);
+        }
+
+        private static void GenerateRockTexture(string path, int size)
+        {
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, true);
+            float scale = 8f;
+
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float u = (float)x / size;
+                    float v = (float)y / size;
+                    
+                    // Simple Perlin Noise for rock bump/detail
+                    float n = Mathf.PerlinNoise(u * scale, v * scale);
+                    
+                    // Volcanic rock coloring (dark charcoal grey with slight variations)
+                    float colVal = Mathf.Lerp(0.08f, 0.22f, n);
+                    tex.SetPixel(x, y, new Color(colVal, colVal, colVal, 1.0f));
+                }
             }
 
             tex.Apply();
