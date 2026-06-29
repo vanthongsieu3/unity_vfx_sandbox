@@ -532,7 +532,7 @@ Shader "VFX/StylizedWater"
 
                 // 2. Sóng dập dềnh đồng tâm (Bobbing) khi thuyền đứng yên hoặc di chuyển rất chậm
                 float phaseBoat = distBoat * _RippleScale - _Time.y * _RippleSpeed;
-                float ringBoat = pow(saturate(sin(phaseBoat)), 6.0) * exp(-distBoat * (_RippleDecay * 1.2));
+                float ringBoat = pow(saturate(sin(phaseBoat)), 5.0) * exp(-distBoat * (_RippleDecay * 1.2));
                 float boatRippleWeight = smoothstep(4.0, 0.0, distBoat);
                 
                 float pillarFoam = maxPillarFoam;
@@ -605,7 +605,6 @@ Shader "VFX/StylizedWater"
                 float boatWakeFoamRaw = smoothstep(0.18, 0.28, vWakeRaw * (0.45 + combinedWakeNoise * 1.15)) * 1.5;
                 
                 // Sóng dập dềnh đồng tâm (Bobbing) khi thuyền đứng yên hoặc di chuyển rất chậm
-                float ringBoat = pow(saturate(sin(phaseBoat)), 5.0) * exp(-distBoat * (_RippleDecay * 1.2));
                 float bobbingFoam = ringBoat * 0.85 * boatRippleWeight * (1.0 - speedFactor) * (0.6 + combinedWakeNoise * 0.8);
                 
                 float boatWakeFoam = max(boatWakeFoamRaw, bobbingFoam);
