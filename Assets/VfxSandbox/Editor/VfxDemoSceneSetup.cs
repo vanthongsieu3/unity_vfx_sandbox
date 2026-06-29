@@ -42,6 +42,15 @@ namespace VfxSandbox.Editor
 
             AssetDatabase.Refresh();
 
+            // Cấu hình Texture Importer để tạo Alpha Channel từ kênh màu xám (Grayscale)
+            ConfigureTextureImporter("Assets/VfxSandbox/Textures/vfx_tex_circle_01.png", true);
+            ConfigureTextureImporter("Assets/VfxSandbox/Textures/vfx_tex_ground_01.png", true);
+            ConfigureTextureImporter("Assets/VfxSandbox/Textures/vfx_tex_noise_01.png", false);
+            ConfigureTextureImporter("Assets/VfxSandbox/Textures/vfx_tex_ember_01.png", true);
+            ConfigureTextureImporter("Assets/VfxSandbox/Textures/vfx_tex_ramp_01.png", false);
+
+            AssetDatabase.Refresh();
+
             // Nạp các Texture và Mesh đã tạo
             Texture2D circleTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_circle_01.png");
             Texture2D cracksTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_ground_01.png");
@@ -175,6 +184,21 @@ namespace VfxSandbox.Editor
             AssetDatabase.Refresh();
             Debug.Log($"✓ Setup Demo Scene completed: {scenePath}");
             EditorUtility.DisplayDialog("VFX Setup", "Đã khởi tạo xong dự án VFX!\n\nHãy nhấn vào menu:\n1. Window ▸ VFX ▸ Generate Procedural Textures\n2. Window ▸ VFX ▸ Generate Procedural Meshes\n3. Mở scene VfxDemoScene và nhấn Play, ấn phím SPACE để xem thiên thạch rơi!", "OK");
+        }
+
+        private static void ConfigureTextureImporter(string path, bool alphaFromGrayscale)
+        {
+            TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer != null)
+            {
+                if (alphaFromGrayscale)
+                {
+                    importer.alphaSource = TextureImporterAlphaSource.FromGrayScale;
+                }
+                importer.alphaIsTransparency = true;
+                importer.mipmapEnabled = false;
+                importer.SaveAndReimport();
+            }
         }
     }
 }
