@@ -7,7 +7,8 @@ Shader "VFX/MagicSlash"
         _RampMap("Color Ramp", 2D) = "white" {}
         _ScrollSpeed("Scroll Speed (X, Y)", Vector) = (-1.5, 0.5, 0, 0)
         _Intensity("Glow Intensity", Float) = 4.0
-        _Swipe("Swipe Progress", Range(0, 1.1)) = 0.0
+        _Swipe("Swipe Progress", Range(0, 1.5)) = 0.0
+        _TailLength("Tail Length", Range(0.1, 0.8)) = 0.45
         _Opacity("Opacity", Range(0, 1)) = 1.0
     }
 
@@ -53,6 +54,7 @@ Shader "VFX/MagicSlash"
                 float2 _ScrollSpeed;
                 float _Intensity;
                 float _Swipe;
+                float _TailLength;
                 float _Opacity;
             CBUFFER_END
 
@@ -66,22 +68,29 @@ Shader "VFX/MagicSlash"
 
             float4 frag(Varyings input) : SV_Target
             {
-                // 1. Tính toán mặt nạ chém quét (Swipe mask)
-                // Cung chém quét từ U = 0 đến U = 1. Khi _Swipe tăng từ 0.0 đến 1.1, cung nứt xé rộng dần
-                float swipeMask = smoothstep(_Swipe, _Swipe - 0.1, input.uv.x);
+                // 1. Tính toán mặt nạ quét chém trăng khuyết (Crescent swipe mask)
+                // Hạn chế chiều rộng vệt chém chỉ nằm từ đầu chém đến đuôi chém
+                float leadMask = smoothstep(_Swipe, _Swipe - 0.05, input.uv.x);
+                float trailMask = smoothstep(_Swipe - _TailLength, _Swipe - _TailLength + 0.15, input.uv.x);
+                float swipeMask = leadMask * trailMask;
 
-                // 2. Tính toán dịch chuyển UV và mẫu Noise
+                // 2. Tính toán độ co hẹp của đuôi chém (Tapering tail)
+                // Càng xa đầu chém (U gần _Swipe), độ dày kiếm càng nhỏ lại
+                float distFromHead = clamp(_Swipe - input.uv.x, 0.0, 1.0);
+                float thickness = saturate(1.0 - distFromHead / _TailLength);
+                
+                // Mép biên bo tròn co hẹp dần về phía đuôi chém
+                float borderOffset = 0.12 * (2.0 - thickness);
+                float edgeFade = smoothstep(0.0, borderOffset, input.uv.y) * smoothstep(1.0, 1.0 - borderOffset, input.uv.y);
+                float startFade = smoothstep(0.0, 0.08, input.uv.x);
+
+                // 3. Tính toán dịch chuyển UV và mẫu Noise
                 float2 offset = _ScrollSpeed * _Time.y;
                 float2 noiseUv = input.uv * _NoiseMap_ST.xy + _NoiseMap_ST.zw + offset;
                 float noise = _NoiseMap.Sample(sampler_NoiseMap, noiseUv).r;
 
-                // 3. Mẫu màu từ Color Ramp sử dụng Noise
+                // 4. Mẫu màu từ Color Ramp sử dụng Noise
                 float4 rampColor = _RampMap.Sample(sampler_RampMap, float2(noise, 0.5));
-
-                // 4. Khử nét cắt cứng ở viền (Edge Fading)
-                // Bo mờ ở mép trong & mép ngoài (UV.y) và mờ dần ở điểm đầu của cung chém (UV.x)
-                float edgeFade = smoothstep(0.0, 0.12, input.uv.y) * smoothstep(1.0, 0.88, input.uv.y);
-                float startFade = smoothstep(0.0, 0.08, input.uv.x); // Mờ nhẹ ở đầu cung chém
 
                 // Tính toán màu và alpha cuối cùng
                 float3 finalColor = rampColor.rgb * _ColorTint.rgb * _Intensity;

@@ -8,6 +8,11 @@ namespace VfxSandbox
         public float fadeDuration = 0.18f;  // Thời gian mờ dần và tan biến
         private float elapsed = 0f;
         private Material matInstance;
+        private Transform sparksTrans;
+
+        // Cấu trúc hình học của cung chém để đồng bộ vị trí phát tia lửa (Sparks) ở mũi chém
+        private float arcAngleRad = 140f * Mathf.Deg2Rad;
+        private float outerRadius = 3.2f;
 
         private void Start()
         {
@@ -17,6 +22,12 @@ namespace VfxSandbox
                 matInstance = renderer.material; // Tạo bản sao vật liệu để chỉnh sửa cục bộ không bị tràn
                 matInstance.SetFloat("_Swipe", 0f);
                 matInstance.SetFloat("_Opacity", 1f);
+            }
+
+            // Tìm đối tượng con chứa tia lửa
+            if (transform.parent != null)
+            {
+                sparksTrans = transform.parent.Find("Slash_Sparks");
             }
         }
 
@@ -31,11 +42,22 @@ namespace VfxSandbox
                 {
                     float swipeRatio = elapsed / swipeDuration;
                     float easedSwipe = swipeRatio * (2f - swipeRatio); // EaseOutQuad cho cảm giác vung mạnh lúc đầu
-                    matInstance.SetFloat("_Swipe", Mathf.Lerp(0f, 1.1f, easedSwipe));
+                    
+                    float swipeProgress = Mathf.Lerp(0f, 1.15f, easedSwipe);
+                    matInstance.SetFloat("_Swipe", swipeProgress);
+
+                    // Đồng bộ di chuyển bộ phát tia lửa ở mũi chém dọc theo viền ngoài của cung chém
+                    if (sparksTrans != null)
+                    {
+                        float currentAngle = -arcAngleRad * 0.5f + Mathf.Clamp01(swipeProgress) * arcAngleRad;
+                        float x = Mathf.Sin(currentAngle) * outerRadius;
+                        float z = Mathf.Cos(currentAngle) * outerRadius;
+                        sparksTrans.localPosition = new Vector3(x, 0.02f, z);
+                    }
                 }
                 else
                 {
-                    matInstance.SetFloat("_Swipe", 1.1f);
+                    matInstance.SetFloat("_Swipe", 1.5f); // Quét sạch hoàn toàn
 
                     // Giai đoạn 2: Phai nhòa (Fade Out)
                     float fadeElapsed = elapsed - swipeDuration;

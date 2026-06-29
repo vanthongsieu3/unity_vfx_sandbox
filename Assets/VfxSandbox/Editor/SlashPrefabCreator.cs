@@ -92,7 +92,7 @@ namespace VfxSandbox.Editor
 
             var sparksPs = sparksGo.AddComponent<ParticleSystem>();
             var sparksMain = sparksPs.main;
-            sparksMain.duration = 1.0f;
+            sparksMain.duration = 0.22f; // Phát tia lửa đúng trong thời gian quét chém
             sparksMain.loop = false;
             sparksMain.startLifetime = new ParticleSystem.MinMaxCurve(0.25f, 0.45f);
             sparksMain.startSpeed = new ParticleSystem.MinMaxCurve(4f, 8f);
@@ -101,23 +101,13 @@ namespace VfxSandbox.Editor
             sparksMain.simulationSpace = ParticleSystemSimulationSpace.World;
 
             var sparksEmission = sparksPs.emission;
-            sparksEmission.rateOverTime = 0f;
-            sparksEmission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0.0f, 35) }); // Bắn 35 tia lửa
+            sparksEmission.rateOverTime = 160f; // Phun liên tục cực đại dọc đường đi của mũi chém
+            sparksEmission.SetBursts(new ParticleSystem.Burst[] { }); // Không dùng Burst tĩnh
 
             var sparksShape = sparksPs.shape;
-            if (slashMesh != null)
-            {
-                sparksShape.shapeType = ParticleSystemShapeType.Mesh;
-                sparksShape.mesh = slashMesh;
-                sparksShape.meshShapeType = ParticleSystemMeshShapeType.Vertex;
-                sparksShape.randomDirectionAmount = 0.4f; // Hơi bung ra ngẫu nhiên
-            }
-            else
-            {
-                sparksShape.shapeType = ParticleSystemShapeType.Cone;
-                sparksShape.angle = 45f;
-                sparksShape.radius = 0.5f;
-            }
+            sparksShape.shapeType = ParticleSystemShapeType.Sphere; // Emitter dạng khối cầu nhỏ di động
+            sparksShape.radius = 0.08f;
+            sparksShape.randomDirectionAmount = 0.6f; // Hướng bung tia lửa mạnh mẽ
 
             var sparksSize = sparksPs.sizeOverLifetime;
             sparksSize.enabled = true;
