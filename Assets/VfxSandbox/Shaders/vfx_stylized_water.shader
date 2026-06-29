@@ -172,7 +172,18 @@ Shader "VFX/StylizedWater"
                 {
                     waveDir = normalize(waveDir);
                 }
-                float wavePos = dot(positionWS.xz, waveDir);
+
+                // Thực hiện biến dạng (Wiggle/Curve distortion) uốn lượn sóng theo phương vuông góc (phương ngang)
+                float2 waveTangent = float2(-waveDir.y, waveDir.x);
+                float tangentPos = dot(positionWS.xz, waveTangent);
+                float kPerp = _WaveScale * 0.45;
+                float phasePerp = tangentPos * kPerp + _Time.y * 0.8;
+                float distVal = sin(phasePerp) * 1.2;
+                float wavePos = dot(positionWS.xz, waveDir) + distVal;
+
+                // Tính toán đạo hàm của wavePos theo X và Z để cập nhật vào Pháp tuyến (Normal)
+                float d_wavePos_dx = waveDir.x + kPerp * waveTangent.x * cos(phasePerp) * 1.2;
+                float d_wavePos_dz = waveDir.y + kPerp * waveTangent.y * cos(phasePerp) * 1.2;
 
                 // Phép dựng sóng Gerstner giải tích hướng tâm
                 float k1 = _WaveScale;
@@ -181,7 +192,18 @@ Shader "VFX/StylizedWater"
 
                 // Tạo sóng phụ chéo góc 37 độ để dập dềnh tự nhiên
                 float2 waveDir2 = float2(waveDir.x * 0.8 - waveDir.y * 0.6, waveDir.y * 0.8 + waveDir.x * 0.6);
-                float wavePos2 = dot(positionWS.xz, waveDir2);
+                
+                float2 waveTangent2 = float2(-waveDir2.y, waveDir2.x);
+                float tangentPos2 = dot(positionWS.xz, waveTangent2);
+                float kPerp2 = _WaveScale * 1.35 * 0.4;
+                float phasePerp2 = tangentPos2 * kPerp2 + _Time.y * 0.6;
+                float distVal2 = cos(phasePerp2) * 0.8;
+                float wavePos2 = dot(positionWS.xz, waveDir2) + distVal2;
+
+                // Tính toán đạo hàm của wavePos2 theo X và Z
+                float d_wavePos2_dx = waveDir2.x - kPerp2 * waveTangent2.x * sin(phasePerp2) * 0.8;
+                float d_wavePos2_dz = waveDir2.y - kPerp2 * waveTangent2.y * sin(phasePerp2) * 0.8;
+
                 float k2 = _WaveScale * 1.35;
                 float w2 = _Time.y * _WaveSpeed * 1.15;
                 float wave2 = cos(wavePos2 * k2 + w2) * (_WaveHeight * 0.55);
@@ -210,11 +232,11 @@ Shader "VFX/StylizedWater"
                 output.waveHeight = baseWaveHeight + ripple1 + ripple2 + rippleBoat;
 
                 // 3. Tính toán Vector Pháp tuyến (Normal Vector) chính xác dựa trên đạo hàm sóng chiếu theo hướng và sóng phản xạ
-                float dy1_dx = k1 * waveDir.x * cos(wavePos * k1 + w1) * _WaveHeight;
-                float dy1_dz = k1 * waveDir.y * cos(wavePos * k1 + w1) * _WaveHeight;
+                float dy1_dx = k1 * d_wavePos_dx * cos(wavePos * k1 + w1) * _WaveHeight;
+                float dy1_dz = k1 * d_wavePos_dz * cos(wavePos * k1 + w1) * _WaveHeight;
 
-                float dy2_dx = -k2 * waveDir2.x * sin(wavePos2 * k2 + w2) * (_WaveHeight * 0.55);
-                float dy2_dz = -k2 * waveDir2.y * sin(wavePos2 * k2 + w2) * (_WaveHeight * 0.55);
+                float dy2_dx = -k2 * d_wavePos2_dx * sin(wavePos2 * k2 + w2) * (_WaveHeight * 0.55);
+                float dy2_dz = -k2 * d_wavePos2_dz * sin(wavePos2 * k2 + w2) * (_WaveHeight * 0.55);
 
                 // Đạo hàm cho sóng phản xạ cọc 1
                 float2 rDir1 = (positionWS.xz - _Pillar1Pos.xy) / max(0.001, dist1);

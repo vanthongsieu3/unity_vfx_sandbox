@@ -81,14 +81,24 @@ namespace VfxSandbox
         {
             float time = Time.time;
 
-            // A. Sóng Gerstner chính
+            // A. Sóng Gerstner chính có biến dạng uốn lượn (Wiggle) uốn cong theo phương ngang
             Vector2 waveDir = waveDirection.normalized;
-            float wavePos = pos.x * waveDir.x + pos.z * waveDir.y;
+            Vector2 waveTangent = new Vector2(-waveDir.y, waveDir.x);
+            float tangentPos = pos.x * waveTangent.x + pos.z * waveTangent.y;
+            float kPerp = waveScale * 0.45f;
+            float phasePerp = tangentPos * kPerp + time * 0.8f;
+            float distVal = Mathf.Sin(phasePerp) * 1.2f;
+            float wavePos = (pos.x * waveDir.x + pos.z * waveDir.y) + distVal;
             float wave1 = Mathf.Sin(wavePos * waveScale + time * waveSpeed) * waveHeight;
 
-            // Sóng phụ chéo góc
+            // Sóng phụ chéo góc cũng được uốn cong
             Vector2 waveDir2 = new Vector2(waveDir.x * 0.8f - waveDir.y * 0.6f, waveDir.y * 0.8f + waveDir.x * 0.6f);
-            float wavePos2 = pos.x * waveDir2.x + pos.z * waveDir2.y;
+            Vector2 waveTangent2 = new Vector2(-waveDir2.y, waveDir2.x);
+            float tangentPos2 = pos.x * waveTangent2.x + pos.z * waveTangent2.y;
+            float kPerp2 = waveScale * 1.35f * 0.4f;
+            float phasePerp2 = tangentPos2 * kPerp2 + time * 0.6f;
+            float distVal2 = Mathf.Cos(phasePerp2) * 0.8f;
+            float wavePos2 = (pos.x * waveDir2.x + pos.z * waveDir2.y) + distVal2;
             float wave2 = Mathf.Cos(wavePos2 * (waveScale * 1.35f) + time * (waveSpeed * 1.15f)) * (waveHeight * 0.55f);
 
             float baseHeight = wave1 + wave2;
