@@ -103,12 +103,21 @@ namespace VfxSandbox
 
             float baseHeight = wave1 + wave2;
 
-            // B. Sóng phản xạ đồng tâm từ 2 cột đá
-            float dist1 = Vector2.Distance(new Vector2(pos.x, pos.z), pillar1Pos);
-            float dist2 = Vector2.Distance(new Vector2(pos.x, pos.z), pillar2Pos);
+            // B. Sóng phản xạ dạng vệt nước (Wake) uốn cong theo dòng chảy của sóng chính từ 2 cột đá
+            Vector2 toP1 = new Vector2(pos.x, pos.z) - pillar1Pos;
+            float p1Along = Vector2.Dot(toP1, waveDir);
+            float p1Perp = Vector2.Dot(toP1, waveTangent);
+            float p1AlongScale = p1Along > 0.0f ? 0.65f : 1.35f;
+            float defDist1 = Mathf.Sqrt(p1Perp * p1Perp * 1.3f + p1Along * p1Along * p1AlongScale);
 
-            float ripple1 = Mathf.Sin(dist1 * rippleScale - time * rippleSpeed) * rippleHeight * Mathf.Exp(-dist1 * rippleDecay);
-            float ripple2 = Mathf.Sin(dist2 * rippleScale - time * rippleSpeed) * rippleHeight * Mathf.Exp(-dist2 * rippleDecay);
+            Vector2 toP2 = new Vector2(pos.x, pos.z) - pillar2Pos;
+            float p2Along = Vector2.Dot(toP2, waveDir);
+            float p2Perp = Vector2.Dot(toP2, waveTangent);
+            float p2AlongScale = p2Along > 0.0f ? 0.65f : 1.35f;
+            float defDist2 = Mathf.Sqrt(p2Perp * p2Perp * 1.3f + p2Along * p2Along * p2AlongScale);
+
+            float ripple1 = Mathf.Sin(defDist1 * rippleScale - time * rippleSpeed) * rippleHeight * Mathf.Exp(-defDist1 * rippleDecay);
+            float ripple2 = Mathf.Sin(defDist2 * rippleScale - time * rippleSpeed) * rippleHeight * Mathf.Exp(-defDist2 * rippleDecay);
 
             // Bổ sung sóng phản xạ hình capsule từ chính con thuyền để khớp 100% với mặt nước biến dạng của shader
             Vector2 boatForward = new Vector2(transform.forward.x, transform.forward.z);
