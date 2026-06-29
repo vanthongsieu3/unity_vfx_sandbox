@@ -385,6 +385,15 @@ namespace VfxSandbox.Editor
             // D. Bọt khí rẽ sóng dưới đáy thuyền (Boat Churning Bubbles) - sủi bọt và tan ngay dưới lườn thuyền
             AddBubbleParticleSystem(boatRoot, "Boat_Churn_Bubbles", new Vector3(0f, -0.05f, -0.2f), new Vector3(0.8f, 0.1f, 1.8f), 16f, 0.015f, 0.07f, 0.02f, 0.08f, 0.6f, 1.3f, -0.02f, bubbleMat);
 
+            // 8.5. Tạo Game Object quản lý thời tiết và tương tác HUD (WeatherController)
+            GameObject weatherCtrlObj = new GameObject("Weather_Controller");
+            var weatherCtrl = weatherCtrlObj.AddComponent<WeatherController>();
+            weatherCtrl.waterRenderer = waterRenderer;
+            weatherCtrl.boatFloating = floatingScript;
+            weatherCtrl.sunLight = light;
+            weatherCtrl.mainCamera = camera;
+            weatherCtrl.transitionSpeed = 2.0f;
+
             // --- DIAGNOSTICS PRINT ---
             Debug.Log("--- WATER SETUP DIAGNOSTICS ---");
             Debug.Log($"Active Scene: {UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}");
