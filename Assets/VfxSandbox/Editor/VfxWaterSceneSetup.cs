@@ -333,6 +333,30 @@ namespace VfxSandbox.Editor
             // D. Bọt khí rẽ sóng dưới đáy thuyền (Boat Churning Bubbles) - sủi bọt và tan ngay dưới lườn thuyền
             AddBubbleParticleSystem(boatRoot, "Boat_Churn_Bubbles", new Vector3(0f, -0.05f, -0.2f), new Vector3(0.8f, 0.1f, 1.8f), 16f, 0.015f, 0.07f, 0.02f, 0.08f, 0.6f, 1.3f, -0.02f, bubbleMat);
 
+            // --- DIAGNOSTICS PRINT ---
+            Debug.Log("--- WATER SETUP DIAGNOSTICS ---");
+            Debug.Log($"Active Scene: {UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}");
+            var roots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
+            Debug.Log($"Root GameObjects count: {roots.Length}");
+            foreach (var root in roots)
+            {
+                Debug.Log($"Root: {root.name}, Active: {root.activeSelf}");
+                var renderers = root.GetComponentsInChildren<Renderer>(true);
+                foreach (var r in renderers)
+                {
+                    Debug.Log($"  Renderer: {r.gameObject.name}, ActiveInHierarchy: {r.gameObject.activeInHierarchy}, Mat: {r.sharedMaterial?.name}, Shader: {r.sharedMaterial?.shader?.name}");
+                }
+            }
+            var activeURP = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
+            if (activeURP == null) activeURP = UnityEngine.QualitySettings.renderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
+            Debug.Log($"Active URP Asset: {(activeURP != null ? activeURP.name : "NULL")}");
+            if (activeURP != null)
+            {
+                Debug.Log($"  Depth Texture: {activeURP.supportsCameraDepthTexture}");
+                Debug.Log($"  Opaque Texture: {activeURP.supportsCameraOpaqueTexture}");
+            }
+            Debug.Log("--------------------------------");
+
             // 9. Lưu Scene
             string scenePath = sceneDir + "/VfxWaterDemoScene.unity";
             EditorSceneManager.SaveScene(waterScene, scenePath);
