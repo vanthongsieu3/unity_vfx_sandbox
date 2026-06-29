@@ -188,6 +188,11 @@ namespace VfxSandbox.Editor
             camObj.transform.position = new Vector3(0, 10, -14);
             camObj.transform.rotation = Quaternion.Euler(35, 0, 0);
 
+            // Cấu hình URP Camera Data để cho phép chụp ảnh nền màn hình (Opaque Texture)
+            var cameraData = camObj.GetComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+            if (cameraData == null) cameraData = camObj.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+            cameraData.requiresColorTexture = true;
+
             // Thêm Directional Light
             GameObject lightObj = new GameObject("Directional Light");
             var light = lightObj.AddComponent<Light>();
