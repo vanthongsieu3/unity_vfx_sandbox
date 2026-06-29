@@ -528,15 +528,14 @@ Shader "VFX/StylizedWater"
                 
                 // Giới hạn vùng ảnh hưởng ở phía sau mũi thuyền và tỏa rộng dần
                 float vWeight = smoothstep(0.2, -0.6, along) * smoothstep(6.0, 0.0, perp);
-                float vWakeFoam = pow(saturate(sin(vPhase)), 6.0) * vDecay * vWeight * speedFactor;
+                float vWakeRaw = pow(saturate(sin(vPhase)), 4.0) * vDecay * vWeight * speedFactor;
 
                 // 2. Sóng dập dềnh đồng tâm (Bobbing) khi thuyền đứng yên hoặc di chuyển rất chậm
                 float phaseBoat = distBoat * _RippleScale - _Time.y * _RippleSpeed;
                 float ringBoat = pow(saturate(sin(phaseBoat)), 6.0) * exp(-distBoat * (_RippleDecay * 1.2));
                 float boatRippleWeight = smoothstep(4.0, 0.0, distBoat);
-                float bobbingFoam = ringBoat * 0.85 * boatRippleWeight * (1.0 - speedFactor);
-
-                float pillarFoam = max(maxPillarFoam, max(vWakeFoam * 0.9, bobbingFoam));
+                
+                float pillarFoam = maxPillarFoam;
 
                 // Viền giải tích sát thân thuyền (Hull Outline)
                 float2 offsetBoat = _BoatPos.xy - boatForward * 0.55; 
@@ -599,11 +598,20 @@ Shader "VFX/StylizedWater"
                 float outlineFoamVal = outlineFactor - (1.0 - outlineFactor) * outlineNoise * dynamicNoiseWeight * 1.7;
                 float outlineMask = smoothstep(0.12, 0.22, outlineFoamVal) * waveFrontFactor;
 
-                // Đồng bộ bọt sóng phản chấn cọc/thuyền theo sườn sóng dốc đón bờ
+                // Đồng bộ bọt sóng phản chấn cọc theo sườn sóng dốc đón bờ
                 float finalPillarFoam = pillarFoam * waveFrontFactor;
 
-                // Gộp chung bốn loại bọt nước
-                float foamCutout = max(max(max(shoreFoamMask, waveCrestMask), finalPillarFoam), outlineMask);
+                // Áp nhiễu và làm rách bọt sóng chữ V cho đồng bộ style nghệ thuật vẽ tay
+                float boatWakeFoamRaw = smoothstep(0.18, 0.28, vWakeRaw * (0.45 + combinedWakeNoise * 1.15)) * 1.5;
+                
+                // Sóng dập dềnh đồng tâm (Bobbing) khi thuyền đứng yên hoặc di chuyển rất chậm
+                float ringBoat = pow(saturate(sin(phaseBoat)), 5.0) * exp(-distBoat * (_RippleDecay * 1.2));
+                float bobbingFoam = ringBoat * 0.85 * boatRippleWeight * (1.0 - speedFactor) * (0.6 + combinedWakeNoise * 0.8);
+                
+                float boatWakeFoam = max(boatWakeFoamRaw, bobbingFoam);
+
+                // Gộp chung năm loại bọt nước
+                float foamCutout = max(max(max(max(shoreFoamMask, waveCrestMask), finalPillarFoam), outlineMask), boatWakeFoam);
 
                 // Xử lý ẩn hoàn toàn nước và bọt trên bãi cát khô (khi dynamicDepthDiff < 0.0)
                 if (dynamicDepthDiff < 0.0)
