@@ -47,6 +47,8 @@ Material:
     - _RefractionStrength: 0.12
     - _SpecularIntensity: 3.5
     - _WaterOpacity: 0.45
+    - _WaveCrestRange: 0.18
+    - _WaveCrestThreshold: 0.08
     - _WaveHeight: 0.22
     - _WaveScale: 0.85
     - _WaveSpeed: 1.6

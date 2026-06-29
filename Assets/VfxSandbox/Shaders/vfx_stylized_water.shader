@@ -25,6 +25,7 @@ Shader "VFX/StylizedWater"
         _RefractionStrength("Refraction Distortion Strength", Float) = 0.12 // Độ khúc xạ biến dạng đáy nước
 
         [Header(Procedural Gerstner Waves)]
+        _WaveDirection("Wave Propagation Direction (X, Z)", Vector) = (-1.0, 0.0, 0, 0) // Hướng truyền sóng (mặc định từ phải sang trái về phía bờ cát)
         _WaveHeight("Wave Height", Float) = 0.22                          // Chiều cao nhấp nhô của sóng
         _WaveScale("Wave Scale/Frequency", Float) = 0.85                  // Tần số sóng
         _WaveSpeed("Wave Speed", Float) = 1.6                             // Tốc độ sóng
@@ -85,6 +86,8 @@ Shader "VFX/StylizedWater"
             Texture2D _NoiseMap;
             Texture2D _NormalMap;
 
+            SamplerState sampler_LinearRepeat;
+
             CBUFFER_START(UnityPerMaterial)
                 float4 _ShallowColor;
                 float4 _DeepColor;
@@ -101,6 +104,7 @@ Shader "VFX/StylizedWater"
                 float4 _NormalSpeed1;
                 float4 _NormalSpeed2;
                 float _RefractionStrength;
+                float4 _WaveDirection; // Thêm hướng truyền sóng
                 float _WaveHeight;
                 float _WaveScale;
                 float _WaveSpeed;
@@ -119,24 +123,37 @@ Shader "VFX/StylizedWater"
             {
                 Varyings output;
                 
-                // Tính toán vị trí thế giới của đỉnh nước (World Position)
+                // Vị trí thế giới của đỉnh nước (World Position)
                 float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
 
-                // 1. Phép dựng sóng Gerstner giải tích
+                // Chuẩn hóa hướng truyền sóng waveDir (X, Z)
+                float2 waveDir = normalize(_WaveDirection.xz);
+                float wavePos = dot(positionWS.xz, waveDir);
+
+                // 1. Phép dựng sóng Gerstner giải tích hướng tâm
                 float k1 = _WaveScale;
                 float w1 = _Time.y * _WaveSpeed;
-                float wave1 = sin(positionWS.x * k1 + w1) * _WaveHeight;
+                float wave1 = sin(wavePos * k1 + w1) * _WaveHeight;
 
+                // Tạo sóng phụ chéo góc 37 độ để dập dềnh tự nhiên
+                float2 waveDir2 = float2(waveDir.x * 0.8 - waveDir.y * 0.6, waveDir.y * 0.8 + waveDir.x * 0.6);
+                float wavePos2 = dot(positionWS.xz, waveDir2);
                 float k2 = _WaveScale * 1.35;
                 float w2 = _Time.y * _WaveSpeed * 1.15;
-                float wave2 = cos(positionWS.z * k2 + w2) * (_WaveHeight * 0.55);
+                float wave2 = cos(wavePos2 * k2 + w2) * (_WaveHeight * 0.55);
 
                 positionWS.y += wave1 + wave2;
-                output.waveHeight = wave1 + wave2; // Truyền chiều cao sóng sang fragment
+                output.waveHeight = wave1 + wave2;
 
-                // 2. Tính toán Vector Pháp tuyến (Normal Vector) dựa trên đạo hàm sóng
-                float dy_dx = k1 * cos(positionWS.x * k1 + w1) * _WaveHeight;
-                float dy_dz = -k2 * sin(positionWS.z * k2 + w2) * (_WaveHeight * 0.55);
+                // 2. Tính toán Vector Pháp tuyến (Normal Vector) chính xác dựa trên đạo hàm sóng chiếu theo hướng
+                float dy1_dx = k1 * waveDir.x * cos(wavePos * k1 + w1) * _WaveHeight;
+                float dy1_dz = k1 * waveDir.y * cos(wavePos * k1 + w1) * _WaveHeight;
+
+                float dy2_dx = -k2 * waveDir2.x * sin(wavePos2 * k2 + w2) * (_WaveHeight * 0.55);
+                float dy2_dz = -k2 * waveDir2.y * sin(wavePos2 * k2 + w2) * (_WaveHeight * 0.55);
+
+                float dy_dx = dy1_dx + dy2_dx;
+                float dy_dz = dy1_dz + dy2_dz;
                 float3 waveNormal = normalize(float3(-dy_dx, 1.0, -dy_dz));
 
                 output.positionCS = TransformWorldToHClip(positionWS);
@@ -150,7 +167,7 @@ Shader "VFX/StylizedWater"
 
             float4 frag(Varyings input) : SV_Target
             {
-                // Tính toán tọa độ màn hình (Screen UV)
+                // Tọa độ màn hình (Screen UV)
                 float2 screenUv = input.positionCS.xy / _ScreenParams.xy;
 
                 // 1. Đọc và hòa trộn 2 lớp Map Pháp tuyến (Normal Map) chuyển động chéo nhau (Ép Sampler Repeat)
@@ -174,16 +191,15 @@ Shader "VFX/StylizedWater"
                 float depthFactor = saturate(depthDiff / _DepthMaxDistance);
 
                 // 3. Khúc xạ đáy nước biến dạng (Refraction Distortion)
-                // Dùng thông số pháp tuyến chi tiết dịch chuyển tọa độ đọc ảnh nền
                 float2 distort = blendedNormalMap.xy * _RefractionStrength * saturate(depthDiff * 1.5);
                 float2 refractUv = screenUv + distort;
 
-                // Kiểm tra an toàn để không vẽ vật cản phía trước đè lên nước
+                // Kiểm tra an toàn
                 float rawDepthDist = SampleSceneDepth(refractUv);
                 float sceneZDist = LinearEyeDepth(rawDepthDist, _ZBufferParams);
                 if (sceneZDist < screenZ)
                 {
-                    refractUv = screenUv; // Fallback nếu tọa độ khúc xạ lồi ra ngoài vật cản trước nước
+                    refractUv = screenUv;
                 }
                 float3 sceneColor = SampleSceneColor(refractUv);
 
@@ -193,7 +209,6 @@ Shader "VFX/StylizedWater"
                 float3 waterBaseColor = lerp(shallowColor, deepColor, depthFactor);
 
                 // 5. Phản chiếu Bầu Trời dựa trên góc nhìn Fresnel (Fresnel Reflection)
-                // Góc nhìn càng nghiêng, nước càng phản chiếu bầu trời nhiều; góc vuông nhìn xuyên thấu xuống cát
                 float3 viewDir = SafeNormalize(input.viewDirWS);
                 float fresnel = pow(1.0 - saturate(dot(viewDir, worldNormal)), 4.0);
                 float3 reflectedColor = lerp(waterBaseColor, _SkyColor.rgb, fresnel * _ReflectionStrength);
@@ -205,9 +220,9 @@ Shader "VFX/StylizedWater"
                 float2 foamUv = input.worldPos.xz * _FoamNoiseScale + blendedNormalMap.xy * 0.15 + float2(_Time.y * 0.12, _Time.y * 0.06);
                 float foamNoise = _NoiseMap.Sample(sampler_LinearRepeat, foamUv).r;
                 
-                // A. Bọt xô bờ (Shoreline foam) - Sửa lỗi viền bọt răng cưa rách nát ở rìa không có đáy nước (Skybox)
+                // A. Bọt xô bờ (Shoreline foam)
                 float shoreFoamMask = 0.0;
-                if (sceneZ > screenZ) // Chỉ sinh bọt nếu có thực thể nằm DƯỚI mặt nước (tránh lỗi mép bầu trời)
+                if (sceneZ > screenZ)
                 {
                     float shoreFoamFactor = saturate(1.0 - depthDiff / _FoamDistance);
                     shoreFoamMask = smoothstep(0.42, 0.48, shoreFoamFactor + foamNoise * _FoamNoiseWeight);
@@ -216,14 +231,13 @@ Shader "VFX/StylizedWater"
                 // B. Bọt đỉnh sóng (Wave Crest foam) - Phá vỡ các đường bọt song song dẹt thành các mảng bọt trôi nổi bằng phép nhân nhiễu
                 float waveCrestFactor = saturate((input.waveHeight - _WaveCrestThreshold) / _WaveCrestRange);
                 float waveCrestNoise = _NoiseMap.Sample(sampler_LinearRepeat, foamUv * 1.6).r;
-                float waveCrestMask = smoothstep(0.48, 0.55, waveCrestFactor * waveCrestNoise * 2.3); // Nhân tỉ lệ xé nhỏ
+                float waveCrestMask = smoothstep(0.48, 0.55, waveCrestFactor * waveCrestNoise * 2.3);
 
                 // Gộp chung hai loại bọt nước
                 float foamCutout = max(shoreFoamMask, waveCrestMask);
                 finalWaterColor = lerp(finalWaterColor, _FoamColor.rgb, foamCutout * _FoamColor.a);
 
                 // 7. Tạo vân nắng lung linh khúc xạ (Distorted Caustics)
-                // Dùng chính véc-tơ pháp tuyến bẻ cong UV vân nắng tạo hình rực sáng hữu cơ uốn lượn
                 float2 causticsUv1 = input.worldPos.xz * _NoiseScale * 0.06 + blendedNormalMap.xy * 0.12 + float2(_Time.y * 0.04, _Time.y * 0.02);
                 float2 causticsUv2 = input.worldPos.xz * _NoiseScale * 0.082 - blendedNormalMap.xy * 0.1 + float2(_Time.y * -0.03, _Time.y * 0.05);
                 float noiseVal1 = _NoiseMap.Sample(sampler_LinearRepeat, causticsUv1).r;
@@ -231,7 +245,7 @@ Shader "VFX/StylizedWater"
                 float caustics = noiseVal1 * noiseVal2;
                 
                 float causticsMask = smoothstep(_CausticsCutoff, _CausticsCutoff + 0.1, caustics);
-                float causticsFade = smoothstep(0.08, 0.35, depthDiff); // Tắt vân nắng ở sát mép nước cực nông
+                float causticsFade = smoothstep(0.08, 0.35, depthDiff);
                 finalWaterColor += causticsMask * _CausticsColor.rgb * _CausticsIntensity * causticsFade * (1.0 - foamCutout);
 
                 // 8. Tính toán phản xạ mặt trời chói mắt (Stylized Specular Highlight)
