@@ -30,8 +30,15 @@ namespace VfxSandbox.Editor
                 AssetDatabase.CreateAsset(rendererData, rendererPath);
 
                 urpAsset = UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset.Create(rendererData);
+                urpAsset.supportsCameraOpaqueTexture = true; // Kích hoạt Opaque Texture để cho phép bẻ cong màn hình
                 AssetDatabase.CreateAsset(urpAsset, urpAssetPath);
                 
+                EditorUtility.SetDirty(urpAsset);
+                AssetDatabase.SaveAssets();
+            }
+            else if (!urpAsset.supportsCameraOpaqueTexture)
+            {
+                urpAsset.supportsCameraOpaqueTexture = true;
                 EditorUtility.SetDirty(urpAsset);
                 AssetDatabase.SaveAssets();
             }
