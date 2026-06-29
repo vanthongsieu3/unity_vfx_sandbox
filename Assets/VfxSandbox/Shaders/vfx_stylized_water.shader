@@ -86,8 +86,6 @@ Shader "VFX/StylizedWater"
             Texture2D _NoiseMap;
             Texture2D _NormalMap;
 
-            SamplerState sampler_LinearRepeat;
-
             CBUFFER_START(UnityPerMaterial)
                 float4 _ShallowColor;
                 float4 _DeepColor;
