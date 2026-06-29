@@ -35,8 +35,13 @@ Material:
         m_Texture: {fileID: 2800000, guid: 9031a1454999d264f9b71cf96b251de7, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _PlanarReflectionTexture:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _BoatLength: 1.5
     - _CausticsCutoff: 0.3
     - _CausticsIntensity: 2.2
     - _CausticsPower: 6.5
@@ -53,20 +58,22 @@ Material:
     - _OutlineDistance: 0.32
     - _ReflectionStrength: 0.75
     - _RefractionStrength: 0.12
-    - _RippleDecay: 0.75
-    - _RippleHeight: 0.07
-    - _RippleScale: 5.5
-    - _RippleSpeed: 4.2
+    - _RippleDecay: 0.32
+    - _RippleHeight: 0.08
+    - _RippleScale: 6
+    - _RippleSpeed: 4.5
     - _SpecularIntensity: 3.5
     - _SssPower: 4
     - _SssStrength: 1.5
     - _WaterOpacity: 0.45
+    - _WaterOpaqueness: 0.45
     - _WaveCrestRange: 0.18
     - _WaveCrestThreshold: 0.08
     - _WaveHeight: 0.22
     - _WaveScale: 0.85
     - _WaveSpeed: 1.6
     m_Colors:
+    - _BoatDir: {r: 0, g: 0, b: 1, a: 0}
     - _BoatPos: {r: -0.5, g: -1, b: 0, a: 0}
     - _CausticsColor: {r: 0.65, g: 1, b: 0.92, a: 1}
     - _DeepColor: {r: 0.01, g: 0.12, b: 0.38, a: 0.98}

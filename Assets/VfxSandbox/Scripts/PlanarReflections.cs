@@ -123,7 +123,7 @@ namespace VfxSandbox
                 }
 
                 m_ReflectionTexture = new RenderTexture(textureSize, textureSize, 16, RenderTextureFormat.ARGB32);
-                m_ReflectionTexture.name = "_PlanarReflection" + GetInstanceID();
+                m_ReflectionTexture.name = "_PlanarReflection" + GetHashCode();
                 m_ReflectionTexture.isPowerOfTwo = true;
                 m_ReflectionTexture.hideFlags = HideFlags.DontSave;
                 m_OldTextureSize = textureSize;
