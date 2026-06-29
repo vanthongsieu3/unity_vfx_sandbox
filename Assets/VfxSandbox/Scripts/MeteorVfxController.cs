@@ -190,10 +190,10 @@ namespace VfxSandbox
             crack.name = "VFX_Impact_Cracks";
             crack.transform.position = pos + new Vector3(0, 0.02f, 0);
             crack.transform.rotation = Quaternion.Euler(90, 0, 0);
-            crack.transform.localScale = Vector3.one * 5.5f;
+            crack.transform.localScale = Vector3.one * 9.5f; // Tăng kích thước vết nứt mặt đất lớn hơn
             var crackRenderer = crack.GetComponent<Renderer>();
             crackRenderer.material = groundCracksMaterial;
-            StartCoroutine(FadeOutCracks(crackRenderer, 4f));
+            StartCoroutine(FadeOutCracks(crackRenderer, 4.5f));
         }
 
         private IEnumerator FadeOutCracks(Renderer r, float dur)
