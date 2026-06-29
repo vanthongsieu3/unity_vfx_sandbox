@@ -2,16 +2,23 @@ Shader "VFX/MagicSlash"
 {
     Properties
     {
-        [MainColor] _ColorTint("Color Tint", Color) = (1, 0.5, 0.2, 1)
+        [MainColor] _ColorTint("Color Tint (Edges)", Color) = (0.75, 0.0, 1.0, 1) // Màu tím hồng rìa ngoài
+        _VoidColor("Void Color (Core)", Color) = (0.05, 0.0, 0.15, 1)        // Màu lõi đen hư vô
+        _CoreColor("Core Color (Blade)", Color) = (0.0, 0.95, 1.0, 1)         // Màu đường cắt chớp lam/cyan
         _NoiseMap("Noise Map", 2D) = "white" {}
         _RampMap("Color Ramp", 2D) = "white" {}
         _ScrollSpeed("Scroll Speed (X, Y)", Vector) = (-1.5, 0.5, 0, 0)
         _ScrollSpeed2("Scroll Speed 2 (Distortion)", Vector) = (1.2, -0.6, 0, 0)
         _DistortionStrength("Distortion Strength", Range(0, 0.5)) = 0.16
-        _Intensity("Glow Intensity", Float) = 4.0
+        _Intensity("Glow Intensity", Float) = 4.5
         _Swipe("Swipe Progress", Range(0, 1.5)) = 0.0
         _TailLength("Tail Length", Range(0.1, 0.8)) = 0.45
         _Opacity("Opacity", Range(0, 1)) = 1.0
+
+        // Thông số cấu hình sóng răng cưa ma thuật (Kassadin saw-tooth waves)
+        _WaveCount("Wave Count", Float) = 4.0
+        _WaveSpeed("Wave Speed", Float) = -8.0
+        _WaveAmplitude("Wave Amplitude", Range(0, 0.4)) = 0.14
     }
 
     SubShader
@@ -53,6 +60,8 @@ Shader "VFX/MagicSlash"
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _ColorTint;
+                float4 _VoidColor;
+                float4 _CoreColor;
                 float4 _NoiseMap_ST;
                 float2 _ScrollSpeed;
                 float2 _ScrollSpeed2;
@@ -61,6 +70,9 @@ Shader "VFX/MagicSlash"
                 float _Swipe;
                 float _TailLength;
                 float _Opacity;
+                float _WaveCount;
+                float _WaveSpeed;
+                float _WaveAmplitude;
             CBUFFER_END
 
             Varyings vert(Attributes input)
@@ -91,48 +103,61 @@ Shader "VFX/MagicSlash"
 
                 float tearMask = swipeMask * edgeFade * startFade * _Opacity;
 
-                // 3. Nhiễu biến dạng UV (Noise-on-Noise UV Distortion - Kassadin style)
-                // Mẫu nhiễu thứ nhất cuộn theo speed 2 để bẻ cong UV trước khi lấy nhiễu chính
+                // 3. Nhiễu biến dạng UV (Noise-on-Noise UV Distortion)
                 float2 offset2 = _ScrollSpeed2 * _Time.y;
                 float2 distUv = input.uv * _NoiseMap_ST.xy + _NoiseMap_ST.zw + offset2;
                 float distNoise = _NoiseMap.Sample(sampler_NoiseMap, distUv).r;
 
-                // Bẻ cong UV bằng nhiễu biến dạng
-                float2 distortedUv = input.uv;
-                distortedUv += float2(distNoise - 0.5, (1.0 - distNoise) - 0.5) * _DistortionStrength;
-
-                // 4. Mẫu nhiễu năng lượng chính bằng UV đã biến dạng
-                float2 offset1 = _ScrollSpeed * _Time.y;
-                float2 noiseUv = distortedUv * _NoiseMap_ST.xy + _NoiseMap_ST.zw + offset1;
-                float noise = _NoiseMap.Sample(sampler_NoiseMap, noiseUv).r;
-
-                // 5. Biến dạng không gian màn hình nền (Spatial Tear Refraction)
-                // Dùng nhiễu kết hợp mặt nạ vệt chém để bẻ cong không gian xung quanh vết rách
-                float2 distOffset = float2(noise - 0.5, (1.0 - noise) - 0.5) * 0.09 * tearMask;
+                // Bẻ cong không gian cục bộ xung quanh vệt kiếm
+                float2 distOffset = float2(distNoise - 0.5, (1.0 - distNoise) - 0.5) * 0.09 * tearMask;
                 float3 sceneColor = SampleSceneColor(screenUv + distOffset);
+
+                // 4. Sinh Sóng Răng Cưa Ma Thuật (Procedural Zig-Zag / Sawtooth Wave)
+                // Lập trình sóng tam giác chuyển động dọc theo chiều dài cung chém (UV.x)
+                float wave1 = abs(frac(input.uv.x * _WaveCount + _Time.y * _WaveSpeed) - 0.5) * 2.0;
+                float wave2 = abs(frac(input.uv.x * (_WaveCount * 1.65) + _Time.y * (_WaveSpeed * 1.35) + 0.35) - 0.5) * 2.0;
+
+                // Dùng sóng để xê dịch trọng tâm chiều rộng cung chém (UV.y) tạo nét răng cưa sắc nhọn
+                float yOffset1 = (wave1 - 0.5) * _WaveAmplitude;
+                float yOffset2 = (wave2 - 0.5) * (_WaveAmplitude * 0.55);
+
+                float distCenter1 = abs(input.uv.y - 0.5 + yOffset1);
+                float distCenter2 = abs(input.uv.y - 0.5 + yOffset2);
+
+                // Tạo các đường chớp năng lượng răng cưa sắc nét
+                float energyWave = smoothstep(0.18, 0.0, distCenter1);
+                float coreWave = smoothstep(0.06, 0.0, distCenter2);
 
                 // 5. Đường lưỡi kiếm sắc bén rực sáng ở mũi chém (Sharp Glowing Blade Edge)
                 float edgeLine = smoothstep(_Swipe - 0.06, _Swipe - 0.01, input.uv.x) * leadMask;
                 edgeLine = pow(edgeLine, 2.0);
 
                 // 6. Lõi hố đen không gian (Cosmic Void Rift Center)
-                // Tạo một khe nứt màu tím tối ở trung tâm vệt chém, thể hiện không gian bị rách toác
                 float riftCenter = smoothstep(borderOffset * 1.5, borderOffset * 2.8, input.uv.y) * 
                                    smoothstep(1.0 - borderOffset * 1.5, 1.0 - borderOffset * 2.8, input.uv.y);
                 riftCenter *= swipeMask * startFade * _Opacity;
-                float3 voidColor = float3(0.02, 0.0, 0.08) * _Intensity; // Màu tím đen vũ trụ tối tăm
+                float3 voidColor = _VoidColor.rgb * _Intensity; 
 
-                // 7. Hòa trộn màu: Nền biến dạng + Lõi hố đen rách + Lửa ma thuật cuộn và Lưỡi sáng
-                float4 rampColor = _RampMap.Sample(sampler_RampMap, float2(noise, 0.5));
-                float3 energyColor = rampColor.rgb * _ColorTint.rgb * _Intensity;
-                float3 coreColor = float3(1.0, 1.0, 1.0) * _Intensity * 2.8;
+                // 7. Nhiễu lửa nền lấy từ Color Ramp cuộn xoáy
+                float2 noiseUv = (input.uv + float2(distNoise - 0.5, 0.0) * 0.08) * _NoiseMap_ST.xy + _ScrollSpeed * _Time.y;
+                float noiseVal = _NoiseMap.Sample(sampler_NoiseMap, noiseUv).r;
+                float4 rampColor = _RampMap.Sample(sampler_RampMap, float2(noiseVal, 0.5));
+                float3 energyBase = rampColor.rgb * _Intensity;
 
-                // Hòa trộn từng lớp
-                float3 finalColor = sceneColor; // Bắt đầu bằng ảnh nền đã biến dạng
-                finalColor = lerp(finalColor, voidColor, riftCenter * 0.9); // Đè lõi hư vô đen tối lên trung tâm vết rách
+                // 8. Hòa trộn tổng hợp màu sắc (Refraction background + Void core + Stylized Zig-zag + Glowing Core)
+                float3 finalColor = sceneColor; // Lớp nền biến dạng khúc xạ
+                finalColor = lerp(finalColor, voidColor, riftCenter * 0.95); // Đè lõi tím đen vũ trụ tối lên center
+
+                // Màu chớp răng cưa chuyển đổi từ tím hồng sang xanh lam rực rỡ
+                float3 waveColor = lerp(_ColorTint.rgb, _CoreColor.rgb, coreWave);
+                float3 stylizedEnergy = (energyWave * 0.85 + coreWave * 2.6) * waveColor * _Intensity;
                 
-                float3 glowColor = lerp(energyColor, coreColor, edgeLine * 0.75);
-                finalColor += glowColor * tearMask; // Cộng sáng viền lửa ma thuật xung quanh vết rách
+                // Viền trắng nóng rực chém cắt ở mũi chém
+                float3 edgeGlow = float3(1.0, 1.0, 1.0) * _Intensity * 3.0;
+                stylizedEnergy = lerp(stylizedEnergy, edgeGlow, edgeLine * 0.85);
+
+                // Hòa vào năng lượng
+                finalColor += (energyBase * 0.35 + stylizedEnergy) * tearMask;
 
                 return float4(finalColor, 1.0);
             }

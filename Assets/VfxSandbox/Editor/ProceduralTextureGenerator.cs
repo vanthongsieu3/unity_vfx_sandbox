@@ -17,6 +17,7 @@ namespace VfxSandbox.Editor
 
             GenerateNoiseTexture(dir + "/vfx_tex_noise_01.png", 256);
             GenerateEmberTexture(dir + "/vfx_tex_ember_01.png", 256);
+            GenerateStarTexture(dir + "/vfx_tex_star_01.png", 256); // Sinh hình ngôi sao 4 cánh rực sáng
             GenerateRampTexture(dir + "/vfx_tex_ramp_01.png", 256);
             GenerateRampVoidTexture(dir + "/vfx_tex_ramp_void.png", 256); // Sinh màu chuyển Void/Kassadin
             GenerateRockTexture(dir + "/vfx_tex_rock_01.png", 256);
@@ -171,6 +172,39 @@ namespace VfxSandbox.Editor
                 }
             }
 
+            tex.Apply();
+            byte[] bytes = tex.EncodeToPNG();
+            File.WriteAllBytes(path, bytes);
+            DestroyImmediate(tex);
+        }
+
+        private static void GenerateStarTexture(string path, int size)
+        {
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            Vector2 center = new Vector2(size / 2f, size / 2f);
+            
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = Mathf.Abs(x - center.x) / (size / 2f);
+                    float dy = Mathf.Abs(y - center.y) / (size / 2f);
+                    
+                    // Phương trình vẽ hình ngôi sao 4 cánh nhọn hoắt (pinch axes)
+                    float valX = Mathf.Max(0f, 1f - dx * 8f) * Mathf.Max(0f, 1f - dy * 1.5f);
+                    float valY = Mathf.Max(0f, 1f - dy * 8f) * Mathf.Max(0f, 1f - dx * 1.5f);
+                    
+                    // Quầng sáng mềm ở trung tâm ngôi sao
+                    float dist = Vector2.Distance(new Vector2(x, y), center) / (size / 2f);
+                    float glow = Mathf.Max(0f, 1f - dist * 4f);
+                    
+                    float finalVal = Mathf.Clamp01(valX + valY + glow);
+                    finalVal = finalVal * finalVal; // Tăng độ tương phản mịn
+                    
+                    tex.SetPixel(x, y, new Color(1, 1, 1, finalVal));
+                }
+            }
+            
             tex.Apply();
             byte[] bytes = tex.EncodeToPNG();
             File.WriteAllBytes(path, bytes);

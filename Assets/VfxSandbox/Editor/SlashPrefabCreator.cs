@@ -17,7 +17,7 @@ namespace VfxSandbox.Editor
             // 1. Tạo Vật liệu (Materials)
             Texture2D noiseTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_noise_01.png");
             Texture2D voidRampTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_ramp_void.png");
-            Texture2D emberTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_ember_01.png");
+            Texture2D starTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_star_01.png");
             Mesh slashMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/VfxSandbox/Meshes/vfx_mesh_slash_01.asset");
 
             // A. Magic Slash Material (Custom Slash Shader)
@@ -50,7 +50,7 @@ namespace VfxSandbox.Editor
             sparksMat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.One);
             sparksMat.SetInt("_ZWrite", 0);
             sparksMat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
-            if (emberTex != null) sparksMat.SetTexture("_BaseMap", emberTex);
+            if (starTex != null) sparksMat.SetTexture("_BaseMap", starTex);
 
             AssetDatabase.SaveAssets();
 
@@ -137,6 +137,52 @@ namespace VfxSandbox.Editor
             sparksRenderer.renderMode = ParticleSystemRenderMode.Stretch;
             sparksRenderer.lengthScale = 2.8f;
             sparksRenderer.velocityScale = 0.08f; // Sửa speedScale thành velocityScale
+
+            // C. Đối tượng con sinh Ngôi Sao 4 Cánh Lấp Lánh (Star Flares) bay lơ lửng bám theo mũi chém
+            GameObject flaresGo = new GameObject("Slash_StarFlares");
+            flaresGo.transform.parent = sparksGo.transform; // Làm con của sparksGo để tự động di chuyển đồng bộ
+            flaresGo.transform.localPosition = Vector3.zero;
+            flaresGo.transform.localRotation = Quaternion.identity;
+
+            var flaresPs = flaresGo.AddComponent<ParticleSystem>();
+            var flaresMain = flaresPs.main;
+            flaresMain.duration = 0.11f; // Đồng bộ thời gian quét chém
+            flaresMain.loop = false;
+            flaresMain.startLifetime = new ParticleSystem.MinMaxCurve(0.35f, 0.55f);
+            flaresMain.startSpeed = new ParticleSystem.MinMaxCurve(1.5f, 3.5f);
+            flaresMain.startSize = new ParticleSystem.MinMaxCurve(0.18f, 0.35f);
+            flaresMain.startRotation = new ParticleSystem.MinMaxCurve(0f, 360f * Mathf.Deg2Rad); // Xoay ngẫu nhiên ngôi sao
+            flaresMain.simulationSpace = ParticleSystemSimulationSpace.World; // Bay lơ lửng lại trong thế giới
+
+            var flaresEmission = flaresPs.emission;
+            flaresEmission.rateOverTime = 80f; // Phun liên tục rực rỡ lấp lánh
+            flaresEmission.SetBursts(new ParticleSystem.Burst[] { });
+
+            var flaresShape = flaresPs.shape;
+            flaresShape.shapeType = ParticleSystemShapeType.Sphere;
+            flaresShape.radius = 0.05f;
+
+            var flaresRot = flaresPs.rotationOverLifetime;
+            flaresRot.enabled = true;
+            flaresRot.z = new ParticleSystem.MinMaxCurve(90f * Mathf.Deg2Rad, 270f * Mathf.Deg2Rad); // Xoay tự động lấp lánh
+
+            var flaresSize = flaresPs.sizeOverLifetime;
+            flaresSize.enabled = true;
+            flaresSize.size = new ParticleSystem.MinMaxCurve(1f, sizeCurve);
+
+            var flaresColor = flaresPs.colorOverLifetime;
+            flaresColor.enabled = true;
+            Gradient flaresGrad = new Gradient();
+            // Lấp lánh màu vàng/cam chuyển sang hồng tím ma thuật rực rỡ
+            flaresGrad.SetKeys(
+                new GradientColorKey[] { new GradientColorKey(new Color(1f, 0.9f, 0f), 0f), new GradientColorKey(new Color(0.9f, 0f, 0.7f), 0.6f) },
+                new GradientAlphaKey[] { new GradientAlphaKey(1.0f, 0f), new GradientAlphaKey(0f, 1.0f) }
+            );
+            flaresColor.color = flaresGrad;
+
+            var flaresRenderer = flaresGo.GetComponent<ParticleSystemRenderer>();
+            flaresRenderer.sharedMaterial = sparksMat;
+            flaresRenderer.renderMode = ParticleSystemRenderMode.Billboard; // Giữ nguyên hình dáng sao 4 cánh, không kéo giãn dẹt
 
             PrefabUtility.SaveAsPrefabAsset(go, path);
             Object.DestroyImmediate(go);

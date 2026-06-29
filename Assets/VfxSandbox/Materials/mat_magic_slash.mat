@@ -28,16 +28,19 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _RampMap:
-        m_Texture: {fileID: 2800000, guid: 4fbcbf4cb55288145a74f33c11cbd413, type: 3}
+        m_Texture: {fileID: 2800000, guid: d8460e25aa08662478542a483a766666, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _DistortionStrength: 0.16
     - _Intensity: 4.5
     - _Opacity: 1
     - _Swipe: 0
+    - _TailLength: 0.45
     m_Colors:
-    - _ColorTint: {r: 0, g: 0.65, b: 1, a: 1}
+    - _ColorTint: {r: 1, g: 1, b: 1, a: 1}
     - _ScrollSpeed: {r: -2, g: 0.4, b: 0, a: 0}
+    - _ScrollSpeed2: {r: 1.2, g: -0.6, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
