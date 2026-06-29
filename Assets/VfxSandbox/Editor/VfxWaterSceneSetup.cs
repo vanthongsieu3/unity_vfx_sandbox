@@ -23,7 +23,7 @@ namespace VfxSandbox.Editor
             var pipelineAsset = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
             if (pipelineAsset == null)
             {
-                pipelineAsset = UnityEngine.Rendering.QualitySettings.renderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
+                pipelineAsset = UnityEngine.QualitySettings.renderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
             }
             if (pipelineAsset != null)
             {
