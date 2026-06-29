@@ -39,12 +39,31 @@ namespace VfxSandbox
                 }
             }
 
-            // Đồng bộ vị trí, hướng mũi thuyền và chiều dài vào vật liệu nước để vẽ sóng phản chấn hình capsule
+            // Tự động đồng bộ hóa toàn bộ thông số từ Material sang C# để làm Single Source of Truth
             if (waterRenderer != null && waterRenderer.sharedMaterial != null)
             {
-                waterRenderer.sharedMaterial.SetVector("_BoatPos", new Vector4(transform.position.x, transform.position.z, 0f, 0f));
-                waterRenderer.sharedMaterial.SetVector("_BoatDir", new Vector4(transform.forward.x, transform.forward.z, 0f, 0f));
-                waterRenderer.sharedMaterial.SetFloat("_BoatLength", boatLength);
+                Material mat = waterRenderer.sharedMaterial;
+                waveHeight = mat.GetFloat("_WaveHeight");
+                waveScale = mat.GetFloat("_WaveScale");
+                waveSpeed = mat.GetFloat("_WaveSpeed");
+                
+                Vector4 wDir = mat.GetVector("_WaveDirection");
+                waveDirection = new Vector2(wDir.x, wDir.y);
+                
+                Vector4 p1 = mat.GetVector("_Pillar1Pos");
+                pillar1Pos = new Vector2(p1.x, p1.y);
+                Vector4 p2 = mat.GetVector("_Pillar2Pos");
+                pillar2Pos = new Vector2(p2.x, p2.y);
+                
+                rippleHeight = mat.GetFloat("_RippleHeight");
+                rippleScale = mat.GetFloat("_RippleScale");
+                rippleSpeed = mat.GetFloat("_RippleSpeed");
+                rippleDecay = mat.GetFloat("_RippleDecay");
+                boatLength = mat.GetFloat("_BoatLength");
+
+                // Đẩy tọa độ động của thuyền lên shader để vẽ sóng phản chấn hình capsule
+                mat.SetVector("_BoatPos", new Vector4(transform.position.x, transform.position.z, 0f, 0f));
+                mat.SetVector("_BoatDir", new Vector4(transform.forward.x, transform.forward.z, 0f, 0f));
             }
 
             Vector3 currentPos = transform.position;
