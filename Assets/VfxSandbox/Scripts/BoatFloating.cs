@@ -28,9 +28,23 @@ namespace VfxSandbox
         public Renderer waterRenderer;
 
         private Vector4[] pillarPositionsArray = new Vector4[10];
+        private Vector3 lastPosition;
+        private float smoothSpeed = 0f;
+
+        private void Start()
+        {
+            lastPosition = transform.position;
+        }
 
         private void Update()
         {
+            // Tính toán tốc độ phẳng của thuyền
+            Vector3 velocity = (transform.position - lastPosition) / Mathf.Max(0.0001f, Time.deltaTime);
+            velocity.y = 0f; 
+            float currentSpeed = velocity.magnitude;
+            smoothSpeed = Mathf.Lerp(smoothSpeed, currentSpeed, Time.deltaTime * 3.5f);
+            lastPosition = transform.position;
+
             // Tự động tìm kiếm mặt nước nếu chưa gán
             if (waterRenderer == null)
             {
@@ -86,6 +100,7 @@ namespace VfxSandbox
                 // Đẩy tọa độ động của thuyền và mảng 10 cọc đá lên shader
                 mat.SetVector("_BoatPos", new Vector4(transform.position.x, transform.position.z, 0f, 0f));
                 mat.SetVector("_BoatDir", new Vector4(transform.forward.x, transform.forward.z, 0f, 0f));
+                mat.SetFloat("_BoatSpeed", smoothSpeed);
                 mat.SetVectorArray("_PillarPositions", pillarPositions);
             }
 
@@ -177,11 +192,30 @@ namespace VfxSandbox
                 }
             }
 
-            // Bổ sung sóng phản xạ hình capsule từ chính con thuyền để khớp 100% với mặt nước biến dạng của shader
+            // Bổ sung sóng phản xạ hình chữ V (Wake) hoặc nhấp nhô đứng yên (Bobbing) từ chính con thuyền để khớp 100% với mặt nước biến dạng của shader
             Vector2 boatForward = new Vector2(transform.forward.x, transform.forward.z);
             if (boatForward.sqrMagnitude < 0.001f) boatForward = new Vector2(0f, 1f);
             else boatForward.Normalize();
 
+            float speedFactor = Mathf.Clamp01(smoothSpeed * 1.5f);
+            Vector2 boatRight = new Vector2(-boatForward.y, boatForward.x);
+            Vector2 toBoat = new Vector2(pos.x, pos.z) - new Vector2(transform.position.x, transform.position.z);
+            
+            // 1. Sóng chữ V (Wake)
+            float along = Vector2.Dot(toBoat, boatForward);
+            float perp = Mathf.Abs(Vector2.Dot(toBoat, boatRight));
+            float vPhase = (perp * 2.2f - along * 0.8f) * rippleScale - time * rippleSpeed;
+            float vDecay = Mathf.Exp(-(perp * 0.8f - along * 0.4f) * rippleDecay);
+            
+            // Hàm smoothstep thủ công cho trọng số chữ V
+            float tAlong = Mathf.Clamp01((along - (-0.5f)) / (1.5f - (-0.5f)));
+            float wAlong = tAlong * tAlong * (3f - 2f * tAlong);
+            float tPerp = Mathf.Clamp01((5.0f - perp) / 5.0f);
+            float wPerp = tPerp * tPerp * (3f - 2f * tPerp);
+            
+            float vWake = Mathf.Sin(vPhase) * (rippleHeight * 1.8f) * vDecay * (wAlong * wPerp) * speedFactor;
+
+            // 2. Sóng dập dềnh đứng yên (Bobbing)
             Vector2 boatA = new Vector2(transform.position.x, transform.position.z) - boatForward * (boatLength * 0.5f);
             Vector2 boatB = new Vector2(transform.position.x, transform.position.z) + boatForward * (boatLength * 0.5f);
             Vector2 segAB = boatB - boatA;
@@ -190,7 +224,12 @@ namespace VfxSandbox
             Vector2 closestPtBoat = boatA + tSeg * segAB;
             float distBoat = Vector2.Distance(new Vector2(pos.x, pos.z), closestPtBoat);
 
-            float rippleBoat = Mathf.Sin(distBoat * rippleScale - time * rippleSpeed) * (rippleHeight * 0.8f) * Mathf.Exp(-distBoat * (rippleDecay * 1.2f));
+            float bobbingWake = Mathf.Sin(distBoat * rippleScale - time * rippleSpeed) * (rippleHeight * 0.8f) * Mathf.Exp(-distBoat * (rippleDecay * 1.2f)) * (1.0f - speedFactor);
+            
+            float tBoatDist = Mathf.Clamp01((3.5f - distBoat) / 3.5f);
+            float weightBoat = tBoatDist * tBoatDist * (3f - 2f * tBoatDist);
+
+            float rippleBoat = vWake + bobbingWake * weightBoat;
 
             return baseHeight + totalPillarRipple + rippleBoat;
         }

@@ -45,6 +45,7 @@ Shader "VFX/StylizedWater"
         _BoatPos("Toa Do Con Thuyen (X, Z)", Vector) = (-0.5, -1.0, 0, 0)
         _BoatDir("Huong Mui Thuyen (X, Z)", Vector) = (0.0, 0.0, 1.0, 0.0)
         _BoatLength("Chieu Dai Song Thuyen (Tao Song Capsule)", Float) = 1.5              // Kích thước keel tạo sóng kén thon dài
+        _BoatSpeed("Toc Do Chay Cua Thuyen (m/s)", Float) = 0.0                          // Tốc độ hiện tại của thuyền
         _RippleHeight("Chieu Cao Song Phan Chan Va Dap", Float) = 0.07                     // Cường độ sóng phản xạ
         _RippleScale("Tan So Song Phan Chan (Met)", Float) = 5.5                         // Số lượng vòng sóng phản chấn
         _RippleSpeed("Toc Do Lan Toa Song Phan Chan", Float) = 4.2                         // Tốc độ loang ra ngoài của vòng sóng
@@ -141,6 +142,7 @@ Shader "VFX/StylizedWater"
                 float4 _BoatPos;
                 float4 _BoatDir;
                 float _BoatLength;
+                float _BoatSpeed;
                 float _RippleHeight;
                 float _RippleScale;
                 float _RippleSpeed;
@@ -267,8 +269,43 @@ Shader "VFX/StylizedWater"
                 float2 closestPtBoat = boatA + tSeg * segAB;
                 float distBoat = distance(positionWS.xz, closestPtBoat);
                 
-                float rippleBoat = sin(distBoat * _RippleScale - _Time.y * _RippleSpeed) * (_RippleHeight * 0.8) * exp(-distBoat * (_RippleDecay * 1.2));
+                // Phân tách Sóng rẽ nước chữ V (Kelvin Wake) khi di chuyển và Sóng nhấp nhô đứng yên (Stationary Bobbing)
+                float speedFactor = saturate(_BoatSpeed * 1.5);
+                float2 boatRight = float2(-boatForward.y, boatForward.x);
+                float2 toBoat = positionWS.xz - _BoatPos.xy;
+                
+                // 1. Sóng rẽ nước chữ V (Wake) chạy dọc hai bên mạn và kéo dài về phía sau
+                float along = dot(toBoat, boatForward);
+                float perp = abs(dot(toBoat, boatRight));
+                float vPhase = (perp * 2.2 - along * 0.8) * _RippleScale - _Time.y * _RippleSpeed;
+                float vDecay = exp(-(perp * 0.8 - along * 0.4) * _RippleDecay);
+                
+                // Giới hạn vùng ảnh hưởng ở phía sau mũi thuyền và tỏa rộng dần
+                float vWeight = smoothstep(1.5, -0.5, along) * smoothstep(5.0, 0.0, perp);
+                float vWake = sin(vPhase) * (_RippleHeight * 1.8) * vDecay * vWeight * speedFactor;
+                
+                // Đạo hàm cho Sóng chữ V
+                float perpSign = sign(dot(toBoat, boatRight));
+                float d_along_dx = boatForward.x;
+                float d_along_dz = boatForward.y;
+                float d_perp_dx = boatRight.x * perpSign;
+                float d_perp_dz = boatRight.y * perpSign;
+                float d_vPhase_dx = (d_perp_dx * 2.2 - d_along_dx * 0.8) * _RippleScale;
+                float d_vPhase_dz = (d_perp_dz * 2.2 - d_along_dz * 0.8) * _RippleScale;
+                float dvWake_dx = cos(vPhase) * d_vPhase_dx * (_RippleHeight * 1.8) * vDecay * vWeight * speedFactor;
+                float dvWake_dz = cos(vPhase) * d_vPhase_dz * (_RippleHeight * 1.8) * vDecay * vWeight * speedFactor;
+
+                // 2. Sóng dập dềnh đồng tâm (Bobbing) khi thuyền đứng yên hoặc di chuyển rất chậm
+                float bobbingWake = sin(distBoat * _RippleScale - _Time.y * _RippleSpeed) * (_RippleHeight * 0.8) * exp(-distBoat * (_RippleDecay * 1.2)) * (1.0 - speedFactor);
                 float weightBoat = smoothstep(3.5, 0.0, distBoat);
+                
+                float2 rDirBoat = (positionWS.xz - closestPtBoat) / max(0.001, distBoat);
+                float dbobbing_dx = cos(distBoat * _RippleScale - _Time.y * _RippleSpeed) * _RippleScale * rDirBoat.x * (_RippleHeight * 0.8) * exp(-distBoat * (_RippleDecay * 1.2)) * (1.0 - speedFactor);
+                float dbobbing_dz = cos(distBoat * _RippleScale - _Time.y * _RippleSpeed) * _RippleScale * rDirBoat.y * (_RippleHeight * 0.8) * exp(-distBoat * (_RippleDecay * 1.2)) * (1.0 - speedFactor);
+
+                float rippleBoat = vWake + bobbingWake * weightBoat;
+                float dryBoat_dx = dvWake_dx + dbobbing_dx * weightBoat;
+                float dryBoat_dz = dvWake_dz + dbobbing_dz * weightBoat;
 
                 positionWS.y += baseWaveHeight + totalPillarRipple + rippleBoat;
                 output.waveHeight = baseWaveHeight + totalPillarRipple + rippleBoat;
@@ -280,13 +317,8 @@ Shader "VFX/StylizedWater"
                 float dy2_dx = -k2 * d_wavePos2_dx * sin(wavePos2 * k2 - w2) * (_WaveHeight * 0.55);
                 float dy2_dz = -k2 * d_wavePos2_dz * sin(wavePos2 * k2 - w2) * (_WaveHeight * 0.55);
 
-                // Đạo hàm cho sóng phản xạ hình capsule của thuyền (dựa trên điểm gần nhất trên sống thuyền)
-                float2 rDirBoat = (positionWS.xz - closestPtBoat) / max(0.001, distBoat);
-                float dryBoat_dx = cos(distBoat * _RippleScale - _Time.y * _RippleSpeed) * _RippleScale * rDirBoat.x * (_RippleHeight * 0.8) * exp(-distBoat * (_RippleDecay * 1.2));
-                float dryBoat_dz = cos(distBoat * _RippleScale - _Time.y * _RippleSpeed) * _RippleScale * rDirBoat.y * (_RippleHeight * 0.8) * exp(-distBoat * (_RippleDecay * 1.2));
-
-                float dy_dx = dy1_dx + dy2_dx + totalPillarDry_dx + dryBoat_dx * weightBoat;
-                float dy_dz = dy1_dz + dy2_dz + totalPillarDry_dz + dryBoat_dz * weightBoat;
+                float dy_dx = dy1_dx + dy2_dx + totalPillarDry_dx + dryBoat_dx;
+                float dy_dz = dy1_dz + dy2_dz + totalPillarDry_dz + dryBoat_dz;
                 float3 waveNormal = normalize(float3(-dy_dx, 1.0, -dy_dz));
 
                 output.positionCS = TransformWorldToHClip(positionWS);
@@ -459,16 +491,40 @@ Shader "VFX/StylizedWater"
                 float tSeg = saturate(dot(vecAP, segAB) / max(0.001, dot(segAB, segAB)));
                 float2 closestPtBoat = boatA + tSeg * segAB;
                 float distBoat = distance(input.worldPos.xz, closestPtBoat);
+
+                // Phân tách Sóng rẽ nước chữ V (Kelvin Wake) khi di chuyển và Sóng nhấp nhô đứng yên (Stationary Bobbing)
+                float speedFactor = saturate(_BoatSpeed * 1.5);
+                float2 boatRight = float2(-boatForward.y, boatForward.x);
+                float2 toBoat = input.worldPos.xz - _BoatPos.xy;
                 
+                // 1. Sóng rẽ nước chữ V (Wake) chạy dọc hai bên mạn và kéo dài về phía sau
+                float along = dot(toBoat, boatForward);
+                float perp = abs(dot(toBoat, boatRight));
+                float vPhase = (perp * 2.2 - along * 0.8) * _RippleScale - _Time.y * _RippleSpeed;
+                float vDecay = exp(-(perp * 0.8 - along * 0.4) * _RippleDecay);
+                
+                // Giới hạn vùng ảnh hưởng ở phía sau mũi thuyền và tỏa rộng dần
+                float vWeight = smoothstep(1.5, -0.5, along) * smoothstep(5.0, 0.0, perp);
+                float vWakeFoam = pow(saturate(sin(vPhase)), 6.0) * vDecay * vWeight * speedFactor;
+
+                // 2. Sóng dập dềnh đồng tâm (Bobbing) khi thuyền đứng yên hoặc di chuyển rất chậm
                 float phaseBoat = distBoat * _RippleScale - _Time.y * _RippleSpeed;
                 float ringBoat = pow(saturate(sin(phaseBoat)), 6.0) * exp(-distBoat * (_RippleDecay * 1.2));
                 float boatRippleWeight = smoothstep(4.0, 0.0, distBoat);
-                float pillarFoam = max(maxPillarFoam, ringBoat * 0.85 * boatRippleWeight);
+                float bobbingFoam = ringBoat * 0.85 * boatRippleWeight * (1.0 - speedFactor);
 
-                float2 offsetBoat = _BoatPos.xy - boatForward * 0.55; // Vệt bọt thuyền dạt ra phía sau lái thuyền (sternward) ngược hướng mũi thuyền
-                float2 vecAPOutline = input.worldPos.xz - (offsetBoat - boatForward * (_BoatLength * 0.5));
-                float tSegOutline = saturate(dot(vecAPOutline, segAB) / max(0.001, dot(segAB, segAB)));
-                float2 closestPtBoatOutline = (offsetBoat - boatForward * (_BoatLength * 0.5)) + tSegOutline * segAB;
+                float pillarFoam = max(maxPillarFoam, max(vWakeFoam * 0.9, bobbingFoam));
+
+                // Viền giải tích của thuyền kéo dài ra phía sau thành vệt bọt khí (Foam Wake Trail) tăng theo tốc độ
+                float dynamicLength = _BoatLength * (1.0 + speedFactor * 1.8);
+                float2 offsetBoat = _BoatPos.xy - boatForward * (0.55 + speedFactor * 1.0); 
+                float2 boatA_dyn = offsetBoat - boatForward * (dynamicLength * 0.5);
+                float2 boatB_dyn = offsetBoat + boatForward * (dynamicLength * 0.5);
+                float2 segAB_dyn = boatB_dyn - boatA_dyn;
+                
+                float2 vecAPOutline = input.worldPos.xz - boatA_dyn;
+                float tSegOutline = saturate(dot(vecAPOutline, segAB_dyn) / max(0.001, dot(segAB_dyn, segAB_dyn)));
+                float2 closestPtBoatOutline = boatA_dyn + tSegOutline * segAB_dyn;
                 float distBoatOutline = distance(input.worldPos.xz, closestPtBoatOutline);
                 float distToBoatSurf = max(0.0, distBoatOutline - 0.4);
                 float boatOutline = saturate(1.0 - distToBoatSurf / dynamicOutlineDistance);
