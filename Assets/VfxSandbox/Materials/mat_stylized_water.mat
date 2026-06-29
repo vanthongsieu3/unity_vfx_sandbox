@@ -23,29 +23,43 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _CausticsMap:
+        m_Texture: {fileID: 2800000, guid: b9d4ce4d41e7a7643b71536202f452fd, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _NoiseMap:
         m_Texture: {fileID: 2800000, guid: abe644640f1e258439e4b1d9fc5d39b0, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _NormalMap:
-        m_Texture: {fileID: 2800000, guid: bc75e275fb0d9e241af945af8aabf0bc, type: 3}
+        m_Texture: {fileID: 2800000, guid: 9031a1454999d264f9b71cf96b251de7, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _CausticsCutoff: 0.3
-    - _CausticsIntensity: 2
+    - _CausticsIntensity: 2.2
+    - _CausticsPower: 6.5
     - _DepthMaxDistance: 3.2
     - _FoamDistance: 0.55
+    - _FoamLappingAmplitude: 0.16
+    - _FoamLappingSpeed: 1.3
     - _FoamNoiseScale: 4
     - _FoamNoiseWeight: 0.45
     - _Glossiness: 200
     - _NoiseScale: 4
     - _NormalScale1: 0.05
     - _NormalScale2: 0.08
+    - _OutlineDistance: 0.32
     - _ReflectionStrength: 0.75
     - _RefractionStrength: 0.12
+    - _RippleDecay: 0.75
+    - _RippleHeight: 0.07
+    - _RippleScale: 5.5
+    - _RippleSpeed: 4.2
     - _SpecularIntensity: 3.5
+    - _SssPower: 4
+    - _SssStrength: 1.5
     - _WaterOpacity: 0.45
     - _WaveCrestRange: 0.18
     - _WaveCrestThreshold: 0.08
@@ -53,14 +67,18 @@ Material:
     - _WaveScale: 0.85
     - _WaveSpeed: 1.6
     m_Colors:
+    - _BoatPos: {r: -0.5, g: -1, b: 0, a: 0}
     - _CausticsColor: {r: 0.65, g: 1, b: 0.92, a: 1}
     - _DeepColor: {r: 0.01, g: 0.12, b: 0.38, a: 0.98}
     - _FlowSpeed: {r: 0.05, g: 0.03, b: 0, a: 0}
     - _FoamColor: {r: 1, g: 1, b: 1, a: 1}
     - _NormalSpeed1: {r: 0.05, g: 0.02, b: 0, a: 0}
     - _NormalSpeed2: {r: -0.03, g: 0.04, b: 0, a: 0}
+    - _Pillar1Pos: {r: 1.2, g: 1.5, b: 0, a: 0}
+    - _Pillar2Pos: {r: -1.8, g: 3.2, b: 0, a: 0}
     - _ShallowColor: {r: 0, g: 0.82, b: 0.78, a: 0.5}
     - _SkyColor: {r: 0.45, g: 0.68, b: 0.9, a: 1}
+    - _SssColor: {r: 0, g: 1, b: 0.65, a: 1}
     - _WaveDirection: {r: 0, g: -1, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

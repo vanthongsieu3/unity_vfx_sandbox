@@ -23,9 +23,66 @@ namespace VfxSandbox.Editor
             GenerateRockTexture(dir + "/vfx_tex_rock_01.png", 256);
             GenerateWaterNormal(dir + "/vfx_tex_water_normal.png", 256); // Sinh map pháp tuyến nước cuộn sóng mịn màng
             GenerateWaterCaustics(dir + "/vfx_tex_water_caustics.png", 256); // Sinh map vân caustics (gợn nắng tròn Voronoi) sắc sảo
+            GenerateBubbleTexture(dir + "/vfx_tex_bubble_01.png", 256); // Sinh sprite bọt khí tròn long lanh có highlight
 
             AssetDatabase.Refresh();
             Debug.Log("✓ Procedural textures generated successfully in Assets/VfxSandbox/Textures");
+        }
+
+        private static void GenerateBubbleTexture(string path, int size)
+        {
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, true);
+            float center = size * 0.5f;
+            float radius = size * 0.44f;
+            
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = x - center;
+                    float dy = y - center;
+                    float d = Mathf.Sqrt(dx * dx + dy * dy);
+                    
+                    float color = 0.0f;
+                    float alpha = 0.0f;
+                    
+                    if (d <= radius)
+                    {
+                        // Viền bong bóng sắc nét ở rìa
+                        float edgeWidth = size * 0.035f;
+                        if (d > radius - edgeWidth)
+                        {
+                            float factor = (d - (radius - edgeWidth)) / edgeWidth;
+                            alpha = Mathf.Lerp(0.2f, 0.95f, factor);
+                            color = 1.0f;
+                        }
+                        else
+                        {
+                            // Lòng bong bóng trong suốt nhẹ
+                            alpha = 0.05f;
+                            color = 0.85f;
+                        }
+                        
+                        // Điểm lấp lánh (Highlight glint) ở góc trên bên trái
+                        float hdx = x - (center - radius * 0.35f);
+                        float hdy = y - (center - radius * 0.35f); // Sửa dấu để glint ở góc trên trái
+                        float hd = Mathf.Sqrt(hdx * hdx + hdy * hdy);
+                        if (hd < size * 0.07f)
+                        {
+                            float hFactor = 1.0f - (hd / (size * 0.07f));
+                            alpha = Mathf.Max(alpha, hFactor * 0.92f);
+                            color = 1.0f;
+                        }
+                    }
+                    
+                    tex.SetPixel(x, y, new Color(color, color, color, alpha));
+                }
+            }
+            tex.Apply();
+            byte[] bytes = tex.EncodeToPNG();
+            File.WriteAllBytes(path, bytes);
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+            DestroyImmediate(tex);
         }
 
         private static void GenerateNoiseTexture(string path, int size)

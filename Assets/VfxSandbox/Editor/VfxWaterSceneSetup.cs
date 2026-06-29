@@ -263,13 +263,92 @@ namespace VfxSandbox.Editor
             floatingScript.pillar1Pos = new Vector2(1.2f, 1.5f);
             floatingScript.pillar2Pos = new Vector2(-1.8f, 3.2f);
 
+            // 8. Tạo hệ thống hạt bọt khí dưới nước cách điệu (Stylized Bubble Particle Systems)
+            string bubbleMatPath = matDir + "/mat_particle_bubble.mat";
+            Material bubbleMat = AssetDatabase.LoadAssetAtPath<Material>(bubbleMatPath);
+            if (bubbleMat == null)
+            {
+                bubbleMat = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit"));
+                AssetDatabase.CreateAsset(bubbleMat, bubbleMatPath);
+            }
+            Texture2D bubbleTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_bubble_01.png");
+            if (bubbleTex != null)
+            {
+                bubbleMat.SetTexture("_BaseMap", bubbleTex);
+            }
+
+            // A. Bọt khí nền trôi nổi tự do (Ambient Ocean Bubbles)
+            AddBubbleParticleSystem(waterPlane, "Ambient_Ocean_Bubbles", new Vector3(0f, -0.4f, 1.5f), new Vector3(12f, 0.5f, 12f), 35f, 0.05f, 0.16f, 0.05f, 0.15f, 2.5f, 4.5f, -0.04f, bubbleMat);
+
+            // B. Bọt khí sục sôi sủi bọt quanh cọc đá 1 (Rock 1 Churning Bubbles)
+            AddBubbleParticleSystem(rock1, "Rock1_Churn_Bubbles", new Vector3(0f, -0.4f, 0f), new Vector3(1.5f, 0.2f, 1.5f), 15f, 0.03f, 0.12f, 0.08f, 0.25f, 1.5f, 2.8f, -0.06f, bubbleMat);
+
+            // C. Bọt khí sục sôi sủi bọt quanh cọc đá 2 (Rock 2 Churning Bubbles)
+            AddBubbleParticleSystem(rock2, "Rock2_Churn_Bubbles", new Vector3(0f, -0.4f, 0f), new Vector3(1.5f, 0.2f, 1.5f), 15f, 0.03f, 0.12f, 0.08f, 0.25f, 1.5f, 2.8f, -0.06f, bubbleMat);
+
+            // D. Bọt khí rẽ sóng dưới đáy thuyền (Boat Churning Bubbles)
+            AddBubbleParticleSystem(boatRoot, "Boat_Churn_Bubbles", new Vector3(0f, -0.2f, -0.2f), new Vector3(1.0f, 0.2f, 2.0f), 20f, 0.04f, 0.14f, 0.05f, 0.18f, 1.8f, 3.2f, -0.05f, bubbleMat);
+
             // 9. Lưu Scene
             string scenePath = sceneDir + "/VfxWaterDemoScene.unity";
             EditorSceneManager.SaveScene(waterScene, scenePath);
 
             AssetDatabase.Refresh();
             Debug.Log($"✓ Setup Stylized Water Scene completed successfully: {scenePath}");
-            EditorUtility.DisplayDialog("VFX Water Setup", "Đã khởi tạo xong Scene Nước cách điệu Stylized Water!\n\n1. Mở Scene mới tại: Assets/VfxSandbox/Scenes/VfxWaterDemoScene.unity\n2. Nhấn Play để chiêm ngưỡng mặt nước dập dềnh sóng Gerstner, màu nước nông lam ngọc loang dần sang xanh sâu thẳm, và các viền bọt sóng trắng xô bờ quấn quanh các tảng đá tảng tự động cực đẹp!", "OK");
+            EditorUtility.DisplayDialog("VFX Water Setup", "Đã khởi tạo xong Scene Nước cách điệu Stylized Water!\n\n1. Mở Scene mới tại: Assets/VfxSandbox/Scenes/VfxWaterDemoScene.unity\n2. Nhấn Play để chiêm ngưỡng sóng Gerstner, thấu quang ngọc lục bảo, thủy triều bờ cát, bọt viền ôm vật thể, gợn nắng caustics long lanh và hệ thống hạt bọt khí sủi bọt sinh động xung quanh cọc và thuyền!", "OK");
+        }
+
+        private static void AddBubbleParticleSystem(GameObject parent, string name, Vector3 localPos, Vector3 localScale, float emissionRate, float startSizeMin, float startSizeMax, float speedMin, float speedMax, float lifeMin, float lifeMax, float gravity, Material mat)
+        {
+            GameObject bubbleObj = new GameObject(name);
+            bubbleObj.transform.SetParent(parent.transform);
+            bubbleObj.transform.localPosition = localPos;
+            bubbleObj.transform.localScale = Vector3.one;
+
+            ParticleSystem ps = bubbleObj.AddComponent<ParticleSystem>();
+            
+            // Main Module
+            var main = ps.main;
+            main.duration = 5f;
+            main.loop = true;
+            main.startSize = new ParticleSystem.MinMaxCurve(startSizeMin, startSizeMax);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(speedMin, speedMax);
+            main.startLifetime = new ParticleSystem.MinMaxCurve(lifeMin, lifeMax);
+            main.gravityModifier = gravity;
+            main.simulationSpace = ParticleSystemSimulationSpace.World; // Trôi nổi tự do trong không gian thế giới
+            main.playOnAwake = true;
+
+            // Color over Lifetime (Fade in & Fade out mượt mà)
+            var col = ps.colorOverLifetime;
+            col.enabled = true;
+            Gradient grad = new Gradient();
+            grad.SetKeys(
+                new GradientColorKey[] { new GradientColorKey(Color.white, 0.0f), new GradientColorKey(Color.white, 1.0f) },
+                new GradientAlphaKey[] { new GradientAlphaKey(0.0f, 0.0f), new GradientAlphaKey(0.75f, 0.15f), new GradientAlphaKey(0.75f, 0.75f), new GradientAlphaKey(0.0f, 1.0f) }
+            );
+            col.gradient = grad;
+
+            // Size over Lifetime (Bọt nở phình nhẹ khi nổi gần mặt nước)
+            var sz = ps.sizeOverLifetime;
+            sz.enabled = true;
+            Keyframe[] keys = new Keyframe[] { new Keyframe(0f, 0.5f), new Keyframe(0.2f, 1.0f), new Keyframe(1.0f, 1.15f) };
+            sz.size = new ParticleSystem.MinMaxCurve(new AnimationCurve(keys));
+
+            // Emission
+            var emission = ps.emission;
+            emission.enabled = true;
+            emission.rateOverTime = emissionRate;
+
+            // Shape
+            var shape = ps.shape;
+            shape.enabled = true;
+            shape.shapeType = ParticleSystemShapeType.Box;
+            shape.scale = localScale;
+
+            // Renderer
+            var psr = bubbleObj.GetComponent<ParticleSystemRenderer>();
+            psr.sharedMaterial = mat;
+            psr.renderMode = ParticleSystemRenderMode.Billboard;
         }
     }
 }
