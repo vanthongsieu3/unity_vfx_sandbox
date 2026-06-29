@@ -308,10 +308,10 @@ Shader "VFX/StylizedWater"
                 // KHÔI PHỤC CHIỀU SÂU GIẢI TÍCH (Nếu Depth Texture bị tắt trên máy người dùng hoặc Web/Mobile)
                 if (sceneZ > 500.0 || sceneZ < 0.001)
                 {
-                    // Cát nghiêng 9 độ: Y_cat = -1.0 + (Z - 1.5) * sin(9 độ) (sin(9 độ) ≈ 0.1564)
-                    // Mặt nước ở Y = 0, nên độ sâu nước bằng -Y_cat
-                    float sandY = -1.0 + (input.worldPos.z - 1.5) * 0.1564;
-                    depthDiff = max(0.0, -sandY);
+                    // Cát nghiêng 9 độ: Y_cat = -1.0 - (Z - 1.5) * sin(9 độ) (sin(9 độ) ≈ 0.1564)
+                    // Mặt nước ở Y = 0, nên độ sâu nước bằng -Y_cat (cho phép giá trị âm để ẩn nước trên bờ cát khô)
+                    float sandY = -1.0 - (input.worldPos.z - 1.5) * 0.1564;
+                    depthDiff = -sandY;
                 }
                 float depthFactor = saturate(depthDiff / _DepthMaxDistance);
 

@@ -73,7 +73,7 @@ Material:
     - _WaveScale: 0.85
     - _WaveSpeed: 1.6
     m_Colors:
-    - _BoatDir: {r: 0.584598, g: 0.8101182, b: 0, a: 0}
+    - _BoatDir: {r: 0.68897206, g: 0.722835, b: 0, a: 0}
     - _BoatPos: {r: -0.5, g: -1, b: 0, a: 0}
     - _CausticsColor: {r: 0.65, g: 1, b: 0.92, a: 1}
     - _DeepColor: {r: 0.01, g: 0.12, b: 0.38, a: 0.98}
