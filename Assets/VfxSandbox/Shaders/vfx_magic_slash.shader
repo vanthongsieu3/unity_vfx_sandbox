@@ -6,6 +6,8 @@ Shader "VFX/MagicSlash"
         _NoiseMap("Noise Map", 2D) = "white" {}
         _RampMap("Color Ramp", 2D) = "white" {}
         _ScrollSpeed("Scroll Speed (X, Y)", Vector) = (-1.5, 0.5, 0, 0)
+        _ScrollSpeed2("Scroll Speed 2 (Distortion)", Vector) = (1.2, -0.6, 0, 0)
+        _DistortionStrength("Distortion Strength", Range(0, 0.5)) = 0.16
         _Intensity("Glow Intensity", Float) = 4.0
         _Swipe("Swipe Progress", Range(0, 1.5)) = 0.0
         _TailLength("Tail Length", Range(0.1, 0.8)) = 0.45
@@ -53,6 +55,8 @@ Shader "VFX/MagicSlash"
                 float4 _ColorTint;
                 float4 _NoiseMap_ST;
                 float2 _ScrollSpeed;
+                float2 _ScrollSpeed2;
+                float _DistortionStrength;
                 float _Intensity;
                 float _Swipe;
                 float _TailLength;
@@ -87,12 +91,22 @@ Shader "VFX/MagicSlash"
 
                 float tearMask = swipeMask * edgeFade * startFade * _Opacity;
 
-                // 3. Tính toán dịch chuyển UV và mẫu Noise
-                float2 offset = _ScrollSpeed * _Time.y;
-                float2 noiseUv = input.uv * _NoiseMap_ST.xy + _NoiseMap_ST.zw + offset;
+                // 3. Nhiễu biến dạng UV (Noise-on-Noise UV Distortion - Kassadin style)
+                // Mẫu nhiễu thứ nhất cuộn theo speed 2 để bẻ cong UV trước khi lấy nhiễu chính
+                float2 offset2 = _ScrollSpeed2 * _Time.y;
+                float2 distUv = input.uv * _NoiseMap_ST.xy + _NoiseMap_ST.zw + offset2;
+                float distNoise = _NoiseMap.Sample(sampler_NoiseMap, distUv).r;
+
+                // Bẻ cong UV bằng nhiễu biến dạng
+                float2 distortedUv = input.uv;
+                distortedUv += float2(distNoise - 0.5, (1.0 - distNoise) - 0.5) * _DistortionStrength;
+
+                // 4. Mẫu nhiễu năng lượng chính bằng UV đã biến dạng
+                float2 offset1 = _ScrollSpeed * _Time.y;
+                float2 noiseUv = distortedUv * _NoiseMap_ST.xy + _NoiseMap_ST.zw + offset1;
                 float noise = _NoiseMap.Sample(sampler_NoiseMap, noiseUv).r;
 
-                // 4. Biến dạng không gian (Spatial Tear Refraction)
+                // 5. Biến dạng không gian màn hình nền (Spatial Tear Refraction)
                 // Dùng nhiễu kết hợp mặt nạ vệt chém để bẻ cong không gian xung quanh vết rách
                 float2 distOffset = float2(noise - 0.5, (1.0 - noise) - 0.5) * 0.09 * tearMask;
                 float3 sceneColor = SampleSceneColor(screenUv + distOffset);

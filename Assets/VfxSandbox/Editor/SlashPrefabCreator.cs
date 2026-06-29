@@ -16,7 +16,7 @@ namespace VfxSandbox.Editor
 
             // 1. Tạo Vật liệu (Materials)
             Texture2D noiseTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_noise_01.png");
-            Texture2D rampTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_ramp_01.png");
+            Texture2D voidRampTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_ramp_void.png");
             Texture2D emberTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_ember_01.png");
             Mesh slashMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/VfxSandbox/Meshes/vfx_mesh_slash_01.asset");
 
@@ -28,9 +28,9 @@ namespace VfxSandbox.Editor
                 slashMat = new Material(Shader.Find("VFX/MagicSlash"));
                 AssetDatabase.CreateAsset(slashMat, slashMatPath);
             }
-            slashMat.SetColor("_ColorTint", new Color(0f, 0.65f, 1f, 1f)); // Màu lam ma thuật rực rỡ
+            slashMat.SetColor("_ColorTint", Color.white); // Đặt Tint là trắng vì Ramp Void đã chứa sẵn dải màu đa sắc tím-lam cực đẹp
             if (noiseTex != null) slashMat.SetTexture("_NoiseMap", noiseTex);
-            if (rampTex != null) slashMat.SetTexture("_RampMap", rampTex);
+            if (voidRampTex != null) slashMat.SetTexture("_RampMap", voidRampTex);
             slashMat.SetFloat("_Intensity", 4.5f);
             slashMat.SetVector("_ScrollSpeed", new Vector4(-2f, 0.4f, 0f, 0f));
 

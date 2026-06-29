@@ -18,6 +18,7 @@ namespace VfxSandbox.Editor
             GenerateNoiseTexture(dir + "/vfx_tex_noise_01.png", 256);
             GenerateEmberTexture(dir + "/vfx_tex_ember_01.png", 256);
             GenerateRampTexture(dir + "/vfx_tex_ramp_01.png", 256);
+            GenerateRampVoidTexture(dir + "/vfx_tex_ramp_void.png", 256); // Sinh màu chuyển Void/Kassadin
             GenerateRockTexture(dir + "/vfx_tex_rock_01.png", 256);
 
             AssetDatabase.Refresh();
@@ -98,6 +99,38 @@ namespace VfxSandbox.Editor
                     new GradientColorKey(new Color(1.0f, 0.4f, 0.0f), 0.5f),
                     new GradientColorKey(new Color(1.0f, 0.95f, 0.1f), 0.75f),
                     new GradientColorKey(Color.white, 1.0f)
+                },
+                new GradientAlphaKey[] {
+                    new GradientAlphaKey(1.0f, 0.0f),
+                    new GradientAlphaKey(1.0f, 1.0f)
+                }
+            );
+
+            for (int x = 0; x < size; x++)
+            {
+                float t = (float)x / (size - 1);
+                tex.SetPixel(x, 0, grad.Evaluate(t));
+            }
+
+            tex.Apply();
+            byte[] bytes = tex.EncodeToPNG();
+            File.WriteAllBytes(path, bytes);
+            DestroyImmediate(tex);
+        }
+
+        private static void GenerateRampVoidTexture(string path, int size)
+        {
+            var tex = new Texture2D(size, 1, TextureFormat.RGBA32, false);
+            
+            // Void/Kassadin ramp: Black -> Dark Purple -> Magenta -> Electric Cyan -> White-Cyan
+            Gradient grad = new Gradient();
+            grad.SetKeys(
+                new GradientColorKey[] {
+                    new GradientColorKey(Color.black, 0.0f),
+                    new GradientColorKey(new Color(0.12f, 0.0f, 0.28f), 0.22f), // Tím sẫm hư vô
+                    new GradientColorKey(new Color(0.85f, 0.0f, 0.65f), 0.52f), // Hồng tím rực (Magenta)
+                    new GradientColorKey(new Color(0.0f, 0.85f, 1.0f), 0.82f),  // Xanh lam điện (Electric Cyan)
+                    new GradientColorKey(new Color(0.85f, 1.0f, 1.0f), 1.0f)    // Lõi trắng cyan siêu sáng
                 },
                 new GradientAlphaKey[] {
                     new GradientAlphaKey(1.0f, 0.0f),
