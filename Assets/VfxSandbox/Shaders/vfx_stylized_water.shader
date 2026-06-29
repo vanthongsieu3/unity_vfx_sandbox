@@ -282,7 +282,7 @@ Shader "VFX/StylizedWater"
                 // Cải tiến uốn cong phi tuyến (quadratic curve) và tạo nếp sóng uốn lượn hình chữ S mềm mại (Kelvin Wake bending)
                 float curvedAlong = along + perp * perp * 0.14;
                 float vWiggle = sin(along * 0.45 + perp * 0.22 + _Time.y * 1.5) * 1.35;
-                float vPhase = (perp * 0.8 + curvedAlong * 1.8 + vWiggle) * _RippleScale - _Time.y * _RippleSpeed;
+                float vPhase = (perp * 0.8 - curvedAlong * 1.8 + vWiggle) * _RippleScale - _Time.y * _RippleSpeed;
                 float vDecay = exp(-(perp * 0.8 - along * 0.4) * _RippleDecay);
                 
                 // Giới hạn vùng ảnh hưởng ở phía sau mũi thuyền và tỏa rộng dần (hoàn toàn triệt tiêu sóng ở trước mũi tàu)
@@ -303,8 +303,8 @@ Shader "VFX/StylizedWater"
                 float d_vWiggle_dx = wCos * (0.45 * d_along_dx + 0.22 * d_perp_dx);
                 float d_vWiggle_dz = wCos * (0.45 * d_along_dz + 0.22 * d_perp_dz);
                 
-                float d_vPhase_dx = (d_perp_dx * 0.8 + d_curvedAlong_dx * 1.8 + d_vWiggle_dx) * _RippleScale;
-                float d_vPhase_dz = (d_perp_dz * 0.8 + d_curvedAlong_dz * 1.8 + d_vWiggle_dz) * _RippleScale;
+                float d_vPhase_dx = (d_perp_dx * 0.8 - d_curvedAlong_dx * 1.8 + d_vWiggle_dx) * _RippleScale;
+                float d_vPhase_dz = (d_perp_dz * 0.8 - d_curvedAlong_dz * 1.8 + d_vWiggle_dz) * _RippleScale;
                 float dvWake_dx = cos(vPhase) * d_vPhase_dx * (_RippleHeight * 1.8) * vDecay * vWeight * speedFactor;
                 float dvWake_dz = cos(vPhase) * d_vPhase_dz * (_RippleHeight * 1.8) * vDecay * vWeight * speedFactor;
 
@@ -523,7 +523,7 @@ Shader "VFX/StylizedWater"
                 float perp = abs(dot(toBoat, boatRight));
                 float curvedAlong = along + perp * perp * 0.14;
                 float vWiggle = sin(along * 0.45 + perp * 0.22 + _Time.y * 1.5) * 1.35;
-                float vPhase = (perp * 0.8 + curvedAlong * 1.8 + vWiggle) * _RippleScale - _Time.y * _RippleSpeed;
+                float vPhase = (perp * 0.8 - curvedAlong * 1.8 + vWiggle) * _RippleScale - _Time.y * _RippleSpeed;
                 float vDecay = exp(-(perp * 0.8 - along * 0.4) * _RippleDecay);
                 
                 // Giới hạn vùng ảnh hưởng ở phía sau mũi thuyền và tỏa rộng dần
