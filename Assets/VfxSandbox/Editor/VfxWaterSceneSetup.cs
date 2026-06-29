@@ -198,8 +198,8 @@ namespace VfxSandbox.Editor
             GameObject hullBase = GameObject.CreatePrimitive(PrimitiveType.Cube);
             hullBase.name = "Hull_Base";
             hullBase.transform.SetParent(boatRoot.transform);
-            hullBase.transform.localPosition = new Vector3(0f, -0.05f, 0f);
-            hullBase.transform.localScale = new Vector3(0.9f, 0.3f, 2.2f);
+            hullBase.transform.localPosition = new Vector3(0f, 0.15f, 0f);
+            hullBase.transform.localScale = new Vector3(0.9f, 0.6f, 2.2f);
             hullBase.GetComponent<Renderer>().sharedMaterial = woodMat;
             DestroyImmediate(hullBase.GetComponent<Collider>());
 
@@ -207,8 +207,8 @@ namespace VfxSandbox.Editor
             GameObject hullLeft = GameObject.CreatePrimitive(PrimitiveType.Cube);
             hullLeft.name = "Hull_Left";
             hullLeft.transform.SetParent(boatRoot.transform);
-            hullLeft.transform.localPosition = new Vector3(-0.48f, 0.1f, 0f);
-            hullLeft.transform.localScale = new Vector3(0.08f, 0.45f, 2.2f);
+            hullLeft.transform.localPosition = new Vector3(-0.52f, 0.35f, 0f);
+            hullLeft.transform.localScale = new Vector3(0.08f, 0.9f, 2.2f);
             hullLeft.transform.localRotation = Quaternion.Euler(0f, 0f, 12f); // Nghiêng vát ra ngoài
             hullLeft.GetComponent<Renderer>().sharedMaterial = woodMat;
             DestroyImmediate(hullLeft.GetComponent<Collider>());
@@ -217,8 +217,8 @@ namespace VfxSandbox.Editor
             GameObject hullRight = GameObject.CreatePrimitive(PrimitiveType.Cube);
             hullRight.name = "Hull_Right";
             hullRight.transform.SetParent(boatRoot.transform);
-            hullRight.transform.localPosition = new Vector3(0.48f, 0.1f, 0f);
-            hullRight.transform.localScale = new Vector3(0.08f, 0.45f, 2.2f);
+            hullRight.transform.localPosition = new Vector3(0.52f, 0.35f, 0f);
+            hullRight.transform.localScale = new Vector3(0.08f, 0.9f, 2.2f);
             hullRight.transform.localRotation = Quaternion.Euler(0f, 0f, -12f); // Nghiêng vát ra ngoài
             hullRight.GetComponent<Renderer>().sharedMaterial = woodMat;
             DestroyImmediate(hullRight.GetComponent<Collider>());
@@ -227,8 +227,8 @@ namespace VfxSandbox.Editor
             GameObject hullBow = GameObject.CreatePrimitive(PrimitiveType.Cube);
             hullBow.name = "Hull_Bow";
             hullBow.transform.SetParent(boatRoot.transform);
-            hullBow.transform.localPosition = new Vector3(0f, 0.1f, 1.25f);
-            hullBow.transform.localScale = new Vector3(0.88f, 0.45f, 0.4f);
+            hullBow.transform.localPosition = new Vector3(0f, 0.35f, 1.25f);
+            hullBow.transform.localScale = new Vector3(0.88f, 0.9f, 0.4f);
             hullBow.transform.localRotation = Quaternion.Euler(20f, 0f, 0f); // Vát nghiêng lên mũi
             hullBow.GetComponent<Renderer>().sharedMaterial = woodMat;
             DestroyImmediate(hullBow.GetComponent<Collider>());
@@ -237,8 +237,8 @@ namespace VfxSandbox.Editor
             GameObject mast = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             mast.name = "Mast";
             mast.transform.SetParent(boatRoot.transform);
-            mast.transform.localPosition = new Vector3(0f, 0.9f, 0.1f);
-            mast.transform.localScale = new Vector3(0.08f, 0.9f, 0.08f);
+            mast.transform.localPosition = new Vector3(0f, 1.3f, 0.1f);
+            mast.transform.localScale = new Vector3(0.08f, 1.2f, 0.08f);
             mast.GetComponent<Renderer>().sharedMaterial = woodMat;
             DestroyImmediate(mast.GetComponent<Collider>());
 
@@ -246,8 +246,8 @@ namespace VfxSandbox.Editor
             GameObject sail = GameObject.CreatePrimitive(PrimitiveType.Cube);
             sail.name = "Sail";
             sail.transform.SetParent(boatRoot.transform);
-            sail.transform.localPosition = new Vector3(0f, 1.2f, 0.35f);
-            sail.transform.localScale = new Vector3(1.1f, 0.9f, 0.02f);
+            sail.transform.localPosition = new Vector3(0f, 1.7f, 0.35f);
+            sail.transform.localScale = new Vector3(1.1f, 1.3f, 0.02f);
             sail.transform.localRotation = Quaternion.Euler(5f, -10f, 3f); // Hơi xoắn căng gió
             sail.GetComponent<Renderer>().sharedMaterial = sailMat;
             DestroyImmediate(sail.GetComponent<Collider>());
@@ -326,13 +326,13 @@ namespace VfxSandbox.Editor
                 new GradientColorKey[] { new GradientColorKey(Color.white, 0.0f), new GradientColorKey(Color.white, 1.0f) },
                 new GradientAlphaKey[] { new GradientAlphaKey(0.0f, 0.0f), new GradientAlphaKey(0.75f, 0.15f), new GradientAlphaKey(0.75f, 0.75f), new GradientAlphaKey(0.0f, 1.0f) }
             );
-            col.gradient = grad;
+            col.color = new ParticleSystem.MinMaxGradient(grad);
 
             // Size over Lifetime (Bọt nở phình nhẹ khi nổi gần mặt nước)
             var sz = ps.sizeOverLifetime;
             sz.enabled = true;
             Keyframe[] keys = new Keyframe[] { new Keyframe(0f, 0.5f), new Keyframe(0.2f, 1.0f), new Keyframe(1.0f, 1.15f) };
-            sz.size = new ParticleSystem.MinMaxCurve(new AnimationCurve(keys));
+            sz.size = new ParticleSystem.MinMaxCurve(1.0f, new AnimationCurve(keys));
 
             // Emission
             var emission = ps.emission;

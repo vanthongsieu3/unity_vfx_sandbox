@@ -19,9 +19,9 @@ namespace VfxSandbox
         public float rippleDecay = 0.75f;
 
         [Header("Buoyancy Settings")]
-        public float floatOffset = -0.12f; // Độ chìm sâu của thuyền dưới nước
-        public float positionLerpSpeed = 5.0f;
-        public float rotationLerpSpeed = 4.0f;
+        public float floatOffset = 0.18f; // Chiều cao nổi của thuyền so với mặt nước (dương để deck cao hơn sóng)
+        public float positionLerpSpeed = 12.0f; // Tăng tốc độ đuổi theo sóng để không bị sóng trùm lên deck
+        public float rotationLerpSpeed = 10.0f; // Tăng tốc độ nghiêng theo sóng để giữ thuyền luôn nổi song song mặt sóng
         
         [Header("References")]
         public Renderer waterRenderer;
@@ -97,7 +97,11 @@ namespace VfxSandbox
             float ripple1 = Mathf.Sin(dist1 * rippleScale - time * rippleSpeed) * rippleHeight * Mathf.Exp(-dist1 * rippleDecay);
             float ripple2 = Mathf.Sin(dist2 * rippleScale - time * rippleSpeed) * rippleHeight * Mathf.Exp(-dist2 * rippleDecay);
 
-            return baseHeight + ripple1 + ripple2;
+            // Bổ sung sóng phản xạ từ chính con thuyền để khớp 100% với mặt nước biến dạng của shader
+            float distBoat = Vector2.Distance(new Vector2(pos.x, pos.z), new Vector2(transform.position.x, transform.position.z));
+            float rippleBoat = Mathf.Sin(distBoat * rippleScale - time * rippleSpeed) * (rippleHeight * 0.8f) * Mathf.Exp(-distBoat * (rippleDecay * 1.2f));
+
+            return baseHeight + ripple1 + ripple2 + rippleBoat;
         }
     }
 }
