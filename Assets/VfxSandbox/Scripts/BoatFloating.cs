@@ -204,13 +204,17 @@ namespace VfxSandbox
             // 1. Sóng chữ V (Wake)
             float along = Vector2.Dot(toBoat, boatForward);
             float perp = Mathf.Abs(Vector2.Dot(toBoat, boatRight));
-            float vPhase = (perp * 2.2f - along * 0.8f) * rippleScale - time * rippleSpeed;
-            float vDecay = Mathf.Exp(-(perp * 0.8f - along * 0.4f) * rippleDecay);
             
-            // Hàm smoothstep thủ công cho trọng số chữ V
-            float tAlong = Mathf.Clamp01((along - (-0.5f)) / (1.5f - (-0.5f)));
+            float vWiggle = Mathf.Sin(along * 0.9f + perp * 0.5f + time * 1.5f) * 0.7f;
+            float vPhase = (perp * 2.2f + along * 0.8f + vWiggle) * rippleScale - time * rippleSpeed;
+            float vDecay = Mathf.Exp(-(perp * 0.8f + along * 0.4f) * rippleDecay);
+            
+            // Hàm smoothstep thủ công tương đương smoothstep(0.2f, -0.6f, along)
+            float tAlong = Mathf.Clamp01((0.2f - along) / (0.2f - (-0.6f)));
             float wAlong = tAlong * tAlong * (3f - 2f * tAlong);
-            float tPerp = Mathf.Clamp01((5.0f - perp) / 5.0f);
+            
+            // Hàm smoothstep thủ công tương đương smoothstep(6.0f, 0.0f, perp)
+            float tPerp = Mathf.Clamp01((6.0f - perp) / 6.0f);
             float wPerp = tPerp * tPerp * (3f - 2f * tPerp);
             
             float vWake = Mathf.Sin(vPhase) * (rippleHeight * 1.8f) * vDecay * (wAlong * wPerp) * speedFactor;
