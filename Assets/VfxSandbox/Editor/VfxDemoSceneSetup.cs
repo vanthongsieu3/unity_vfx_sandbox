@@ -20,8 +20,8 @@ namespace VfxSandbox.Editor
             if (!Directory.Exists(sceneDir)) Directory.CreateDirectory(sceneDir);
 
             // Cấu hình URP Asset tự động để sửa lỗi vật liệu màu hồng (pink shader error)
-            string rendererPath = Path.Combine(settingsDir, "CustomRendererData.asset");
-            string urpAssetPath = Path.Combine(settingsDir, "CustomURPAsset.asset");
+            string rendererPath = settingsDir + "/CustomRendererData.asset";
+            string urpAssetPath = settingsDir + "/CustomURPAsset.asset";
             
             var urpAsset = AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset>(urpAssetPath);
             if (urpAsset == null)
@@ -64,7 +64,7 @@ namespace VfxSandbox.Editor
 
             // 2. Tạo các Vật liệu (Materials)
             // A. Lava Flow Material
-            string lavaMatPath = Path.Combine(matDir, "mat_lava_flow.mat");
+            string lavaMatPath = matDir + "/mat_lava_flow.mat";
             Material lavaMat = new Material(Shader.Find("VFX/LavaFlow"));
             if (noiseTex != null) lavaMat.SetTexture("_NoiseMap", noiseTex);
             if (rampTex != null) lavaMat.SetTexture("_RampMap", rampTex);
@@ -73,14 +73,14 @@ namespace VfxSandbox.Editor
             AssetDatabase.CreateAsset(lavaMat, lavaMatPath);
 
             // B. Screen Distortion Material
-            string distMatPath = Path.Combine(matDir, "mat_screen_distortion.mat");
+            string distMatPath = matDir + "/mat_screen_distortion.mat";
             Material distMat = new Material(Shader.Find("VFX/ScreenDistortion"));
             if (circleTex != null) distMat.SetTexture("_DistortionMap", circleTex);
             distMat.SetFloat("_DistortionStrength", 0.05f);
             AssetDatabase.CreateAsset(distMat, distMatPath);
 
             // C. Ground Cracks Material (Transparent Decal shader hoặc Standard)
-            string cracksMatPath = Path.Combine(matDir, "mat_ground_cracks.mat");
+            string cracksMatPath = matDir + "/mat_ground_cracks.mat";
             Material cracksMat = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
             cracksMat.SetFloat("_Surface", 1.0f); // Set to transparent
             cracksMat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
@@ -97,7 +97,7 @@ namespace VfxSandbox.Editor
             AssetDatabase.CreateAsset(cracksMat, cracksMatPath);
 
             // D. Particle Flame Material
-            string flameMatPath = Path.Combine(matDir, "mat_explosion_flame.mat");
+            string flameMatPath = matDir + "/mat_explosion_flame.mat";
             Material flameMat = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit"));
             flameMat.SetFloat("_Surface", 1.0f); // Transparent
             flameMat.SetFloat("_BlendMode", 1.0f); // Additive blending
@@ -178,7 +178,7 @@ namespace VfxSandbox.Editor
             controller.embersPrefab = embersPrefab;
 
             // Lưu Scene
-            string scenePath = Path.Combine(sceneDir, "VfxDemoScene.unity");
+            string scenePath = sceneDir + "/VfxDemoScene.unity";
             EditorSceneManager.SaveScene(demoScene, scenePath);
 
             AssetDatabase.Refresh();

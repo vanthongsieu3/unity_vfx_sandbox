@@ -21,11 +21,11 @@ namespace VfxSandbox.Editor
             Mesh debrisMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/VfxSandbox/Meshes/vfx_mesh_rock_01.asset");
 
             // Create Prefabs
-            CreateTrailPrefab(Path.Combine(prefabDir, "vfx_prefab_trail.prefab"), flameMat);
-            CreateExplosionPrefab(Path.Combine(prefabDir, "vfx_prefab_explosion.prefab"), flameMat);
-            CreateDebrisPrefab(Path.Combine(prefabDir, "vfx_prefab_debris.prefab"), lavaMat, debrisMesh);
-            CreateShockwavePrefab(Path.Combine(prefabDir, "vfx_prefab_shockwave.prefab"), distMat);
-            CreateEmbersPrefab(Path.Combine(prefabDir, "vfx_prefab_embers.prefab"), flameMat);
+            CreateTrailPrefab(prefabDir + "/vfx_prefab_trail.prefab", flameMat);
+            CreateExplosionPrefab(prefabDir + "/vfx_prefab_explosion.prefab", flameMat);
+            CreateDebrisPrefab(prefabDir + "/vfx_prefab_debris.prefab", lavaMat, debrisMesh);
+            CreateShockwavePrefab(prefabDir + "/vfx_prefab_shockwave.prefab", distMat);
+            CreateEmbersPrefab(prefabDir + "/vfx_prefab_embers.prefab", flameMat);
 
             AssetDatabase.Refresh();
             Debug.Log("✓ VFX Prefabs generated successfully in Assets/VfxSandbox/Prefabs");
