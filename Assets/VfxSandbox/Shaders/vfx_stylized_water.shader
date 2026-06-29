@@ -376,10 +376,17 @@ Shader "VFX/StylizedWater"
                     float sandY = -1.0 - (input.worldPos.z - 1.5) * 0.1564;
                     depthDiff = -sandY;
                 }
-                float depthFactor = saturate(depthDiff / _DepthMaxDistance);
+                // Tính chu kỳ triều dâng/rút (Tide Cycle) để tăng bọt khi sóng vỗ bờ, giảm bọt khi rút ra xa
+                float tide = sin(_Time.y * _FoamLappingSpeed) * 0.5 + 0.5;
+
+                // Tạo gợn sóng uốn lượn hữu cơ dọc theo bờ biển (Organic Sloping Beach Wiggle)
+                float shoreWiggle = sin(input.worldPos.x * 0.075 + _Time.y * _WaveSpeed * 0.25) * 0.65 
+                                  + cos(input.worldPos.x * 0.032 - _Time.y * _WaveSpeed * 0.12) * 1.1;
+                float dynamicDepthDiff = depthDiff + shoreWiggle * (0.22 + tide * 0.18);
+                float depthFactor = saturate(dynamicDepthDiff / _DepthMaxDistance);
 
                 // 3. Khúc xạ đáy nước biến dạng (Refraction Distortion)
-                float2 distort = blendedNormalMap.xy * _RefractionStrength * saturate(depthDiff * 1.5);
+                float2 distort = blendedNormalMap.xy * _RefractionStrength * saturate(dynamicDepthDiff * 1.5);
                 float2 refractUv = screenUv + distort;
 
                 // Kiểm tra an toàn
@@ -419,9 +426,6 @@ Shader "VFX/StylizedWater"
                 float2 foamUv = input.worldPos.xz * (_FoamNoiseScale * 0.06) + blendedNormalMap.xy * 0.15 + (waveDir * 0.09 + waveTangent * 0.03) * _Time.y;
                 float foamNoise = _NoiseMap.Sample(sampler_LinearRepeat, foamUv).r;
                 
-                // Tính chu kỳ triều dâng/rút (Tide Cycle) để tăng bọt khi sóng vỗ bờ, giảm bọt khi rút ra xa
-                float tide = sin(_Time.y * _FoamLappingSpeed) * 0.5 + 0.5;
-                
                 // Khoảng cách bọt xô bờ tự động co giãn mạnh theo triều dâng
                 float dynamicFoamDistance = max(0.05, _FoamDistance * (0.5 + tide * 0.9));
                 
@@ -434,8 +438,8 @@ Shader "VFX/StylizedWater"
                 // Hệ số tăng bọt khi sóng vỗ bờ dốc tiến tới (crashing slope) và giảm bọt khi rút ngược ra biển (retreating slope)
                 float waveFrontFactor = saturate(-input.waveSlope * 0.7 + 0.65);
 
-                // A. Bọt xô bờ (Shoreline Foam) - Luôn chạy dựa trên depthDiff (giải tích hoặc thực tế) để vẽ mép cát tiếp xúc
-                float shoreFoamFactor = saturate(1.0 - max(0.0, depthDiff) / dynamicFoamDistance);
+                // A. Bọt xô bờ (Shoreline Foam) - Luôn chạy dựa trên dynamicDepthDiff để vẽ mép cát tiếp xúc
+                float shoreFoamFactor = saturate(1.0 - max(0.0, dynamicDepthDiff) / dynamicFoamDistance);
                 float shoreFoamVal = shoreFoamFactor - (1.0 - shoreFoamFactor) * foamNoise * dynamicNoiseWeight * 1.5;
                 float shoreFoamMask = smoothstep(0.12, 0.22, shoreFoamVal) * waveFrontFactor;
 
@@ -560,8 +564,8 @@ Shader "VFX/StylizedWater"
                 // Gộp chung bốn loại bọt nước
                 float foamCutout = max(max(max(shoreFoamMask, waveCrestMask), finalPillarFoam), outlineMask);
 
-                // Xử lý ẩn hoàn toàn nước và bọt trên bãi cát khô (khi depthDiff < 0.0)
-                if (depthDiff < 0.0)
+                // Xử lý ẩn hoàn toàn nước và bọt trên bãi cát khô (khi dynamicDepthDiff < 0.0)
+                if (dynamicDepthDiff < 0.0)
                 {
                     opacity = 0.0;
                     foamCutout = 0.0;
@@ -570,16 +574,16 @@ Shader "VFX/StylizedWater"
                 float3 finalWaterColor = lerp(sceneColor, reflectedColor, opacity);
                 finalWaterColor = lerp(finalWaterColor, _FoamColor.rgb, foamCutout * _FoamColor.a);
 
-                // 7. Tạo vân nắng lung linh khúc xạ (Distorted Caustics) bằng lưới vân Voronoi sắc sảo
-                float2 causticsUv1 = input.worldPos.xz * _NoiseScale * 0.06 + blendedNormalMap.xy * 0.12 + float2(_Time.y * 0.04, _Time.y * 0.02);
-                float2 causticsUv2 = input.worldPos.xz * _NoiseScale * 0.082 - blendedNormalMap.xy * 0.1 + float2(_Time.y * -0.03, _Time.y * 0.05);
+                // 7. Tạo vân nắng lung linh khúc xạ (Distorted Caustics) cuộn xuôi dòng hướng bờ
+                float2 causticsUv1 = input.worldPos.xz * _NoiseScale * 0.06 + blendedNormalMap.xy * 0.12 + (waveDir * 0.045 + waveTangent * 0.02) * _Time.y;
+                float2 causticsUv2 = input.worldPos.xz * _NoiseScale * 0.082 - blendedNormalMap.xy * 0.1 + (waveDir * 0.03 - waveTangent * 0.045) * _Time.y;
                 float noiseVal1 = _CausticsMap.Sample(sampler_LinearRepeat, causticsUv1).r;
                 float noiseVal2 = _CausticsMap.Sample(sampler_LinearRepeat, causticsUv2).r;
                 float caustics = noiseVal1 * noiseVal2;
                 
                 // Lũy thừa pow như Shader Graph để tạo viền vân nắng siêu mảnh, sắc và long lanh
                 float causticsMask = pow(caustics, _CausticsPower) * _CausticsIntensity;
-                float causticsFade = smoothstep(0.08, 0.35, depthDiff);
+                float causticsFade = smoothstep(0.08, 0.35, dynamicDepthDiff);
                 finalWaterColor += causticsMask * _CausticsColor.rgb * causticsFade * (1.0 - foamCutout);
 
                 // 8. Hiệu ứng Thấu quang Đỉnh Sóng (Subsurface Scattering / Wave Translucency)
