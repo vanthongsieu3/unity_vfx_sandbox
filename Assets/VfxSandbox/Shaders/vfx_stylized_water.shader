@@ -2,18 +2,18 @@ Shader "VFX/StylizedWater"
 {
     Properties
     {
-        [Header(Water Colors - Cau Hinh Mau Nuoc)]
+        [Header(Water Colors)]
         _ShallowColor("Mau Nuoc Nong (Shallow Color)", Color) = (0.0, 0.8, 0.75, 0.6)  // Màu xanh lam ngọc nông
         _DeepColor("Mau Nuoc Sau (Deep Color)", Color) = (0.02, 0.12, 0.35, 0.95)       // Màu xanh đại dương sâu
         _WaterOpaqueness("Do Duc Nuoc Nong (0: Trong Suot - 1: Duc)", Range(0.0, 1.0)) = 0.45 // Tùy chỉnh độ trong suốt/đục của nước
         _DepthMaxDistance("Khoang Cach Tron Mau Nong/Sau (Met)", Float) = 4.0   // Khoảng cách chuyển màu nông/sâu theo chiều dọc
 
-        [Header(Subsurface Scattering - Than Quang Dinh Song)]
+        [Header(Subsurface Scattering)]
         _SssColor("Mau Thau Quang Dinh Song (Emerald)", Color) = (0.0, 1.0, 0.65, 1.0) // Màu phát sáng của đỉnh sóng khi ngược nắng
         _SssStrength("Cuong Do Phat Sang Thau Quang (SSS)", Float) = 1.5                   // Độ sáng rực của đỉnh sóng
         _SssPower("Do Thu Hep Vien Phat Sang (Mu Pow)", Float) = 4.0                       // Độ tập trung góc nhìn ngược sáng
 
-        [Header(Shoreline and Wave Crest Foam - Bot Song Bap Benh)]
+        [Header(Shoreline and Wave Crest Foam)]
         _FoamColor("Mau Bot Nuoc (Foam Color)", Color) = (1.0, 1.0, 1.0, 1.0)
         _FoamDistance("Do Rong Vien Bot Xo Bo (Met)", Float) = 0.55                    // Chiều rộng dải bọt xô vào bờ cát
         _FoamLappingSpeed("Toc Do Thuy Trieu Co Gian Bot Bo", Float) = 1.3               // Tần số co giãn nhịp thở dâng rút của bọt bờ
@@ -22,9 +22,9 @@ Shader "VFX/StylizedWater"
         _FoamNoiseWeight("Do Meo Vien Bot (Noise Weight)", Range(0.1, 0.8)) = 0.45     // Độ lồi lõm zích zắc ở viền bọt
         _WaveCrestThreshold("Nguong Chieu Cao Sinh Bot Dinh Song", Float) = 0.12         // Độ cao sóng bắt đầu xuất hiện bọt trắng
         _WaveCrestRange("Do Phuc Vien Bot Tren Dinh Song", Float) = 0.15                 // Dải chuyển tiếp mềm của bọt đỉnh
-        _OutlineDistance("Do Rong Bot Viền Om Coc/Thuyen (Met)", Float) = 1.35            // Độ dày dải bọt sủi tăm ôm sát vật thể
+        _OutlineDistance("Do Rong Bot Vien Om Coc/Thuyen (Met)", Float) = 1.35            // Độ dày dải bọt sủi tăm ôm sát vật thể
 
-        [Header(Normal Map Ripples - Gon Song Lan Tan)]
+        [Header(Normal Map Ripples)]
         _NormalMap("Ban Do Phap Tuyen (Normal Map)", 2D) = "bump" {}
         _NormalScale1("Ty Le Kich Thuoc Gon Song Lop 1", Float) = 0.05
         _NormalScale2("Ty Le Kich Thuoc Gon Song Lop 2", Float) = 0.08
@@ -33,13 +33,13 @@ Shader "VFX/StylizedWater"
         _RefractionStrength("Cuong Do Khuc Xa Vien Bien Dang Day", Float) = 0.12         // Độ méo khúc xạ nhìn xuyên đáy nước
         _PlanarReflectionTexture("Anh Phan Chieu Guong (Tu Script Truyen)", 2D) = "black" {}
 
-        [Header(Procedural Gerstner Waves - Song Nhap Nho Chinh)]
+        [Header(Procedural Gerstner Waves)]
         _WaveDirection("Huong Song Chay (X, Z)", Vector) = (0.0, -1.0, 0, 0)             // Hướng sóng truyền từ khơi vào bờ
-        _WaveHeight("Chieu Cao Sóng Nhap Nho (Met)", Float) = 0.22                        // Độ cao nhấp nhô của đỉnh sóng
+        _WaveHeight("Chieu Cao Song Nhap Nho (Met)", Float) = 0.22                        // Độ cao nhấp nhô của đỉnh sóng
         _WaveScale("Tan So Song (Do Day Giua Cac Song)", Float) = 0.85                   // Số lượng ngọn sóng trên một khoảng cách
         _WaveSpeed("Toc Do Song Di Chuyen", Float) = 1.6                                 // Tốc độ lướt sóng
 
-        [Header(Concentric Obstacle Ripples - Song Phan Chan Va Dap)]
+        [Header(Concentric Obstacle Ripples)]
         _Pillar1Pos("Toa Do Coc Da 1 (X, Z)", Vector) = (1.2, 1.5, 0, 0)
         _Pillar2Pos("Toa Do Coc Da 2 (X, Z)", Vector) = (-1.8, 3.2, 0, 0)
         _BoatPos("Toa Do Con Thuyen (X, Z)", Vector) = (-0.5, -1.0, 0, 0)
@@ -50,7 +50,7 @@ Shader "VFX/StylizedWater"
         _RippleSpeed("Toc Do Lan Toa Song Phan Chan", Float) = 4.2                         // Tốc độ loang ra ngoài của vòng sóng
         _RippleDecay("Do Tat Dan Theo Khoang Cach (Decay)", Float) = 0.75                // Độ cản làm tắt sóng khi đi xa
 
-        [Header(Shimmering Caustics - Luoi Nang Lap Lanh)]
+        [Header(Shimmering Caustics)]
         _NoiseMap("Ban Do Nhieu Seamless Caustics", 2D) = "gray" {}
         _CausticsMap("Ban Do Voronoi Luoi Nang Lap Lanh", 2D) = "black" {}
         _NoiseScale("Kich Thuoc Vien Caustics", Float) = 6.0
@@ -58,7 +58,7 @@ Shader "VFX/StylizedWater"
         _CausticsPower("Do Sac Net Duong Vien Nang (Mu Pow)", Range(1.0, 15.0)) = 5.0    // Lũy thừa làm mỏng đường gợn nắng thành lưới mảnh
         _CausticsIntensity("Cuong Do Phat Sang Luoi Nang", Float) = 2.0
 
-        [Header(Sky Specular and Reflections - Phuc Xa Specular & Phai Mau Troi)]
+        [Header(Sky Specular and Reflections)]
         _SkyColor("Mau Bau Troi Phan Chieu (Goc Nghieng)", Color) = (0.45, 0.68, 0.9, 1.0)  // Màu hòa trộn bầu trời ở góc nhìn Fresnel nghiêng
         _ReflectionStrength("Cuong Do Phan Chieu Guong & Troi", Range(0, 1)) = 0.75      // Hệ số pha trộn ảnh phản chiếu thật/sky
         _Glossiness("Do Bong Be Mat Nuoc (Bong Specular)", Float) = 200.0                   // Độ thu hẹp điểm lóa nắng
