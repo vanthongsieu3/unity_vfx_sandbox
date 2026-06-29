@@ -287,7 +287,8 @@ Shader "VFX/StylizedWater"
                 float alongCoeff = 0.6 - along * 0.08;
                 
                 float vPhase = (perp * 0.8 - curvedAlong * alongCoeff + vWiggle) * dynamicScale - _Time.y * _RippleSpeed;
-                float vDecay = exp(-(perp * 0.8 - along * 0.4) * _RippleDecay);
+                float dynamicDecay = _RippleDecay / max(0.08, speedFactor);
+                float vDecay = exp(-(perp * 0.8 - along * 0.4) * dynamicDecay);
                 
                 // Giới hạn vùng ảnh hưởng ở phía sau mũi thuyền và tỏa rộng dần (hoàn toàn triệt tiêu sóng ở trước mũi tàu)
                 float vWeight = smoothstep(0.2, -0.6, along) * smoothstep(6.0, 0.0, perp);
@@ -532,7 +533,8 @@ Shader "VFX/StylizedWater"
                 float alongCoeff = 0.6 - along * 0.08;
                 
                 float vPhase = (perp * 0.8 - curvedAlong * alongCoeff + vWiggle) * dynamicScale - _Time.y * _RippleSpeed;
-                float vDecay = exp(-(perp * 0.8 - along * 0.4) * _RippleDecay);
+                float dynamicDecay = _RippleDecay / max(0.08, speedFactor);
+                float vDecay = exp(-(perp * 0.8 - along * 0.4) * dynamicDecay);
                 
                 // Giới hạn vùng ảnh hưởng ở phía sau mũi thuyền và tỏa rộng dần
                 float vWeight = smoothstep(0.2, -0.6, along) * smoothstep(6.0, 0.0, perp);
@@ -610,7 +612,7 @@ Shader "VFX/StylizedWater"
                 float finalPillarFoam = pillarFoam * waveFrontFactor;
 
                 // Độ suy giảm chậm hơn và giảm độ dày bọt khi sát thuyền để tạo hình loe phễu (dưới nhỏ trên to)
-                float foamDecay = exp(-(perp * 0.4 - along * 0.15) * _RippleDecay);
+                float foamDecay = exp(-(perp * 0.4 - along * 0.15) * dynamicDecay);
                 float nearDamp = smoothstep(-0.2, -1.8, along);
                 float vWakeFoamFactor = pow(saturate(sin(vPhase)), 3.5) * foamDecay * vWeight * speedFactor * nearDamp;
                 
