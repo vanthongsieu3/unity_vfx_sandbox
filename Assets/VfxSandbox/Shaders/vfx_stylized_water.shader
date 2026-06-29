@@ -31,6 +31,7 @@ Shader "VFX/StylizedWater"
         _NormalSpeed1("Normal Speed 1 (X, Y)", Vector) = (0.05, 0.02, 0, 0)
         _NormalSpeed2("Normal Speed 2 (X, Y)", Vector) = (-0.03, 0.04, 0, 0)
         _RefractionStrength("Refraction Distortion Strength", Float) = 0.12 // Độ khúc xạ biến dạng đáy nước
+        _PlanarReflectionTexture("Planar Reflection Texture", 2D) = "white" {} // Kết cấu phản chiếu thực tế từ camera phản chiếu
 
         [Header(Procedural Gerstner Waves)]
         _WaveDirection("Wave Propagation Direction (X, Y)", Vector) = (0.0, -1.0, 0, 0) // Hướng truyền sóng (mặc định từ sau ra trước hướng về bờ cát cạn)
@@ -106,6 +107,7 @@ Shader "VFX/StylizedWater"
             Texture2D _NoiseMap;
             Texture2D _NormalMap;
             Texture2D _CausticsMap;
+            sampler2D _PlanarReflectionTexture;
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _ShallowColor;
@@ -285,10 +287,19 @@ Shader "VFX/StylizedWater"
                 float3 deepColor = _DeepColor.rgb;
                 float3 waterBaseColor = lerp(shallowColor, deepColor, depthFactor);
 
-                // 5. Phản chiếu Bầu Trời dựa trên góc nhìn Fresnel (Fresnel Reflection)
+                // 5. Phản chiếu thực tế & Bầu trời dựa trên góc nhìn Fresnel (Planar & Fresnel Sky Reflection)
                 float3 viewDir = SafeNormalize(input.viewDirWS);
                 float fresnel = pow(1.0 - saturate(dot(viewDir, worldNormal)), 4.0);
-                float3 reflectedColor = lerp(waterBaseColor, _SkyColor.rgb, fresnel * _ReflectionStrength);
+                
+                // Đọc ảnh phản chiếu phẳng với biến dạng từ Normal Map để tạo gợn sóng phản chiếu lăn tăn
+                float2 reflectUv = screenUv + blendedNormalMap.xy * 0.035;
+                reflectUv = clamp(reflectUv, 0.002, 0.998); // Tránh tràn biên Render Texture
+                float3 planarReflection = tex2D(_PlanarReflectionTexture, reflectUv).rgb;
+
+                // Hòa trộn phản chiếu thực tế (Planar) vào màu gốc của nước
+                float3 reflectedColor = lerp(waterBaseColor, planarReflection, _ReflectionStrength);
+                // Hòa trộn thêm một chút màu trời ở góc nhìn Fresnel cực nghiêng để tạo độ sâu
+                reflectedColor = lerp(reflectedColor, _SkyColor.rgb, fresnel * 0.45);
 
                 float opacity = lerp(_WaterOpacity, _DeepColor.a, depthFactor);
                 float3 finalWaterColor = lerp(sceneColor, reflectedColor, opacity);

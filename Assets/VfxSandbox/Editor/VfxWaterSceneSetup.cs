@@ -138,6 +138,12 @@ namespace VfxSandbox.Editor
             var waterRenderer = waterPlane.GetComponent<Renderer>();
             waterRenderer.sharedMaterial = waterMat;
 
+            // H. Thêm script phản chiếu phẳng thời gian thực (PlanarReflections)
+            var planarRef = waterPlane.AddComponent<PlanarReflections>();
+            planarRef.textureSize = 512; // 512x512 render texture cho độ nét và hiệu năng tốt nhất
+            planarRef.clipPlaneOffset = 0.02f;
+            planarRef.reflectionMask = ~0; // Phản chiếu toàn bộ các vật thể trong scene (loại trừ nước qua code)
+
             // 4. Tạo mặt cát dốc xuống dưới đáy nước (Sloping Sand Floor)
             // Mặt cát dốc thoai thoải từ sau ra trước (Phần trước là bờ cát cạn, phần sau là biển sâu)
             GameObject sandPlane = GameObject.CreatePrimitive(PrimitiveType.Plane);
