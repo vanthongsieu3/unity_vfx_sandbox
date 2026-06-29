@@ -86,6 +86,7 @@ namespace VfxSandbox.Editor
             string cracksMatPath = matDir + "/mat_ground_cracks.mat";
             Material cracksMat = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
             cracksMat.SetFloat("_Surface", 1.0f); // Set to transparent
+            cracksMat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT"); // Bật URP Transparency
             cracksMat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
             cracksMat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
             cracksMat.SetInt("_ZWrite", 0);
@@ -103,7 +104,9 @@ namespace VfxSandbox.Editor
             string flameMatPath = matDir + "/mat_explosion_flame.mat";
             Material flameMat = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit"));
             flameMat.SetFloat("_Surface", 1.0f); // Transparent
-            flameMat.SetFloat("_BlendMode", 1.0f); // Additive blending
+            flameMat.SetFloat("_Blend", 1.0f);   // 1.0 is Additive (URP property name is _Blend)
+            flameMat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT"); // Bật URP Transparency
+            flameMat.EnableKeyword("_BLENDMODE_ADDITIVE");      // Bật URP Additive blending
             flameMat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
             flameMat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.One);
             flameMat.SetInt("_ZWrite", 0);
