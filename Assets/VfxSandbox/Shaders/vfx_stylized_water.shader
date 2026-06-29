@@ -555,7 +555,9 @@ Shader "VFX/StylizedWater"
                 
                 // Suy giảm độ dày bọt khi đi xa dần (kéo dài theo tốc độ thuyền)
                 float wakeDecay = exp(-distBehind * (0.35 / (speedFactor + 0.01)));
-                float wakeFoamBase = coneFactor * wakeDecay * speedFactor;
+                // Hoàn toàn triệt tiêu bọt khí rẽ sóng ở trước đuôi tàu (along > -0.7)
+                float wakeConeWeight = smoothstep(-0.7, -1.2, along);
+                float wakeFoamBase = coneFactor * wakeDecay * speedFactor * wakeConeWeight;
                 
                 // Trộn thêm 2 lớp nhiễu trôi ngược dòng để đục lỗ rách bong bóng khí sủi bọt chân thực
                 float2 wakeNoiseUv1 = input.worldPos.xz * (_FoamNoiseScale * 0.095) + (waveDir * 0.07 + waveTangent * 0.03) * _Time.y;
