@@ -246,6 +246,7 @@ namespace VfxSandbox.Editor
 
             // G. Thêm script điều khiển dập dềnh (BoatFloating)
             var floatingScript = boatRoot.AddComponent<BoatFloating>();
+            floatingScript.waterRenderer = waterRenderer; // Liên kết trực tiếp Renderer mặt nước
             floatingScript.floatOffset = -0.1f;
             floatingScript.waveHeight = 0.22f;
             floatingScript.waveScale = 0.85f;

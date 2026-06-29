@@ -22,6 +22,7 @@ Shader "VFX/StylizedWater"
         _FoamNoiseWeight("Foam Edge Noise Distortion", Range(0.1, 0.8)) = 0.45 // Độ lồi lõm của mép bọt sóng
         _WaveCrestThreshold("Wave Crest Foam Threshold", Float) = 0.12    // Điểm cao của sóng bắt đầu sinh bọt đỉnh
         _WaveCrestRange("Wave Crest Foam Range", Float) = 0.15            // Dải chuyển tiếp bọt đỉnh sóng
+        _OutlineDistance("Hugging Outline Width", Float) = 0.32           // Độ dày của viền bọt ôm sát cọc và thuyền
 
         [Header(Normal Map Ripples)]
         _NormalMap("Normal Map", 2D) = "bump" {}
@@ -40,6 +41,7 @@ Shader "VFX/StylizedWater"
         [Header(Concentric Obstacle Ripples)]
         _Pillar1Pos("Pillar 1 Position (X, Z)", Vector) = (1.2, 1.5, 0, 0)
         _Pillar2Pos("Pillar 2 Position (X, Z)", Vector) = (-1.8, 3.2, 0, 0)
+        _BoatPos("Boat Position (X, Z)", Vector) = (-0.5, -1.0, 0, 0)     // Vị trí thuyền để tính sóng phản xạ
         _RippleHeight("Obstacle Ripple Height", Float) = 0.07             // Độ cao của sóng phản xạ từ cọc
         _RippleScale("Obstacle Ripple Frequency", Float) = 5.5            // Tần số sóng phản xạ từ cọc
         _RippleSpeed("Obstacle Ripple Speed", Float) = 4.2                // Tốc độ lan tỏa sóng phản xạ từ cọc
@@ -117,6 +119,7 @@ Shader "VFX/StylizedWater"
                 float _FoamNoiseWeight;
                 float _WaveCrestThreshold;
                 float _WaveCrestRange;
+                float _OutlineDistance;
                 float _NormalScale1;
                 float _NormalScale2;
                 float4 _NormalSpeed1;
@@ -128,6 +131,7 @@ Shader "VFX/StylizedWater"
                 float _WaveSpeed;
                 float4 _Pillar1Pos;
                 float4 _Pillar2Pos;
+                float4 _BoatPos;
                 float _RippleHeight;
                 float _RippleScale;
                 float _RippleSpeed;
@@ -176,15 +180,17 @@ Shader "VFX/StylizedWater"
 
                 float baseWaveHeight = wave1 + wave2;
 
-                // 2. Thêm sóng phản xạ đồng tâm từ các cọc (Concentric Obstacle Ripples)
+                // 2. Thêm sóng phản xạ đồng tâm từ các cọc và thuyền
                 float dist1 = distance(positionWS.xz, _Pillar1Pos.xy);
                 float dist2 = distance(positionWS.xz, _Pillar2Pos.xy);
+                float distBoat = distance(positionWS.xz, _BoatPos.xy);
 
                 float ripple1 = sin(dist1 * _RippleScale - _Time.y * _RippleSpeed) * _RippleHeight * exp(-dist1 * _RippleDecay);
                 float ripple2 = sin(dist2 * _RippleScale - _Time.y * _RippleSpeed) * _RippleHeight * exp(-dist2 * _RippleDecay);
+                float rippleBoat = sin(distBoat * _RippleScale - _Time.y * _RippleSpeed) * (_RippleHeight * 0.8) * exp(-distBoat * (_RippleDecay * 1.2));
 
-                positionWS.y += baseWaveHeight + ripple1 + ripple2;
-                output.waveHeight = baseWaveHeight + ripple1 + ripple2;
+                positionWS.y += baseWaveHeight + ripple1 + ripple2 + rippleBoat;
+                output.waveHeight = baseWaveHeight + ripple1 + ripple2 + rippleBoat;
 
                 // 3. Tính toán Vector Pháp tuyến (Normal Vector) chính xác dựa trên đạo hàm sóng chiếu theo hướng và sóng phản xạ
                 float dy1_dx = k1 * waveDir.x * cos(wavePos * k1 + w1) * _WaveHeight;
@@ -203,8 +209,13 @@ Shader "VFX/StylizedWater"
                 float dry2_dx = cos(dist2 * _RippleScale - _Time.y * _RippleSpeed) * _RippleScale * rDir2.x * _RippleHeight * exp(-dist2 * _RippleDecay);
                 float dry2_dz = cos(dist2 * _RippleScale - _Time.y * _RippleSpeed) * _RippleScale * rDir2.y * _RippleHeight * exp(-dist2 * _RippleDecay);
 
-                float dy_dx = dy1_dx + dy2_dx + dry1_dx + dry2_dx;
-                float dy_dz = dy1_dz + dy2_dz + dry1_dz + dry2_dz;
+                // Đạo hàm cho sóng phản xạ thuyền
+                float2 rDirBoat = (positionWS.xz - _BoatPos.xy) / max(0.001, distBoat);
+                float dryBoat_dx = cos(distBoat * _RippleScale - _Time.y * _RippleSpeed) * _RippleScale * rDirBoat.x * (_RippleHeight * 0.8) * exp(-distBoat * (_RippleDecay * 1.2));
+                float dryBoat_dz = cos(distBoat * _RippleScale - _Time.y * _RippleSpeed) * _RippleScale * rDirBoat.y * (_RippleHeight * 0.8) * exp(-distBoat * (_RippleDecay * 1.2));
+
+                float dy_dx = dy1_dx + dy2_dx + dry1_dx + dry2_dx + dryBoat_dx;
+                float dy_dz = dy1_dz + dy2_dz + dry1_dz + dry2_dz + dryBoat_dz;
                 float3 waveNormal = normalize(float3(-dy_dx, 1.0, -dy_dz));
 
                 output.positionCS = TransformWorldToHClip(positionWS);
@@ -288,9 +299,10 @@ Shader "VFX/StylizedWater"
                 float waveCrestNoise = _NoiseMap.Sample(sampler_LinearRepeat, foamUv * 1.6).r;
                 float waveCrestMask = smoothstep(0.48, 0.55, waveCrestFactor * waveCrestNoise * 2.3);
 
-                // C. Bọt sóng phản xạ đồng tâm lan tỏa từ các cọc (Pulsing Concentric Foam Rings)
+                // C. Bọt sóng phản xạ đồng tâm lan tỏa từ các cọc và thuyền (Pulsing Concentric Foam Rings)
                 float dist1 = distance(input.worldPos.xz, _Pillar1Pos.xy);
                 float dist2 = distance(input.worldPos.xz, _Pillar2Pos.xy);
+                float distBoat = distance(input.worldPos.xz, _BoatPos.xy);
                 
                 float ringSpeed = 1.4;
                 float maxRingRadius = 2.4;
@@ -304,10 +316,22 @@ Shader "VFX/StylizedWater"
                 float timeRad2 = frac(_Time.y * 0.35 + 0.5) * maxRingRadius;
                 float ringMask2 = smoothstep(ringWidth, 0.0, abs(dist2 - timeRad2)) * (1.0 - timeRad2 / maxRingRadius);
 
-                float pillarFoam = max(ringMask1, ringMask2) * 0.85 * smoothstep(4.0, 0.0, min(dist1, dist2));
+                // Thuyền
+                float timeRadBoat = frac(_Time.y * 0.35 + 0.25) * maxRingRadius;
+                float ringMaskBoat = smoothstep(ringWidth, 0.0, abs(distBoat - timeRadBoat)) * (1.0 - timeRadBoat / maxRingRadius);
 
-                // Gộp chung ba loại bọt nước
-                float foamCutout = max(max(shoreFoamMask, waveCrestMask), pillarFoam);
+                float pillarFoam = max(max(ringMask1, ringMask2), ringMaskBoat) * 0.85 * smoothstep(4.0, 0.0, min(min(dist1, dist2), distBoat));
+
+                // D. Bọt viền ôm khít sát sạt vật thể (Solid outline foam hugging the boat and pillars) - Độc lập góc dốc
+                float outlineMask = 0.0;
+                if (rawDepth > 0.0001)
+                {
+                    float outlineFactor = saturate(1.0 - max(0.0, depthDiff) / _OutlineDistance);
+                    outlineMask = smoothstep(0.15, 0.38, outlineFactor); // Tạo viền trắng đục đặc sắc sảo
+                }
+
+                // Gộp chung bốn loại bọt nước
+                float foamCutout = max(max(max(shoreFoamMask, waveCrestMask), pillarFoam), outlineMask);
                 finalWaterColor = lerp(finalWaterColor, _FoamColor.rgb, foamCutout * _FoamColor.a);
 
                 // 7. Tạo vân nắng lung linh khúc xạ (Distorted Caustics)

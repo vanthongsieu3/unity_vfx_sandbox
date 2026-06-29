@@ -22,9 +22,28 @@ namespace VfxSandbox
         public float floatOffset = -0.12f; // Độ chìm sâu của thuyền dưới nước
         public float positionLerpSpeed = 5.0f;
         public float rotationLerpSpeed = 4.0f;
+        
+        [Header("References")]
+        public Renderer waterRenderer;
 
         private void Update()
         {
+            // Tự động tìm kiếm mặt nước nếu chưa gán
+            if (waterRenderer == null)
+            {
+                GameObject waterObj = GameObject.Find("Stylized_Water_Surface");
+                if (waterObj != null)
+                {
+                    waterRenderer = waterObj.GetComponent<Renderer>();
+                }
+            }
+
+            // Đồng bộ vị trí thuyền vào vật liệu nước để vẽ sóng phản xạ
+            if (waterRenderer != null && waterRenderer.sharedMaterial != null)
+            {
+                waterRenderer.sharedMaterial.SetVector("_BoatPos", new Vector4(transform.position.x, transform.position.z, 0f, 0f));
+            }
+
             Vector3 currentPos = transform.position;
 
             // 1. Lấy vị trí 4 điểm xung quanh thuyền để tính góc nghiêng (Pitch và Roll)
