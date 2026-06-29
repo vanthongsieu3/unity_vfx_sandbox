@@ -58,6 +58,11 @@ namespace VfxSandbox.Editor
             string prefabPath = prefabDir + "/vfx_prefab_slash.prefab";
             CreateSlashPrefab(prefabPath, slashMat, sparksMat, slashMesh);
 
+            // 3. Dựng Prefab Kiếm Khí (vfx_prefab_slash_wave.prefab)
+            GameObject explosionPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/VfxSandbox/Prefabs/vfx_prefab_explosion.prefab");
+            string wavePath = prefabDir + "/vfx_prefab_slash_wave.prefab";
+            CreateSlashWavePrefab(wavePath, slashMat, sparksMat, explosionPrefab, slashMesh);
+
             AssetDatabase.Refresh();
             Debug.Log("✓ Magic Slash prefabs and materials generated successfully!");
         }
@@ -132,6 +137,83 @@ namespace VfxSandbox.Editor
             sparksRenderer.renderMode = ParticleSystemRenderMode.Stretch;
             sparksRenderer.lengthScale = 2.8f;
             sparksRenderer.velocityScale = 0.08f; // Sửa speedScale thành velocityScale
+
+            PrefabUtility.SaveAsPrefabAsset(go, path);
+            Object.DestroyImmediate(go);
+        }
+
+        private static void CreateSlashWavePrefab(string path, Material slashMat, Material sparksMat, GameObject explosionPrefab, Mesh slashMesh)
+        {
+            // Tạo đối tượng gốc của kiếm khí bay đi
+            GameObject go = new GameObject("VFX_Slash_Wave_Projectile");
+            
+            // 1. Thêm bộ lọc và kết xuất lưới để vẽ kiếm khí dựng đứng
+            if (slashMesh != null)
+            {
+                var filter = go.AddComponent<MeshFilter>();
+                filter.sharedMesh = slashMesh;
+
+                var renderer = go.AddComponent<MeshRenderer>();
+                renderer.sharedMaterial = slashMat;
+            }
+
+            // 2. Thêm script chuyển động bay đi và phát nổ khi va đập
+            var proj = go.AddComponent<SlashWaveProjectile>();
+            proj.speed = 22f;
+            proj.lifetime = 1.2f;
+            proj.explosionPrefab = explosionPrefab;
+
+            // Thêm collider để nhận biết va chạm (Trigger)
+            var col = go.AddComponent<BoxCollider>();
+            col.isTrigger = true;
+            col.center = new Vector3(0f, 0f, 2.5f);
+            col.size = new Vector3(5f, 1f, 2f);
+
+            // 3. Thêm hệ thống hạt đuôi lửa xẹt sau (Trail Sparks)
+            GameObject trailGo = new GameObject("Trail_Sparks");
+            trailGo.transform.parent = go.transform;
+            trailGo.transform.localPosition = new Vector3(0f, 0f, 1.5f); // Đặt ở sau mũi kiếm khí
+            trailGo.transform.localRotation = Quaternion.Euler(0f, 180f, 0f); // Phun ngược lại phía sau
+
+            var trailPs = trailGo.AddComponent<ParticleSystem>();
+            var trailMain = trailPs.main;
+            trailMain.duration = 1f;
+            trailMain.loop = true;
+            trailMain.startLifetime = new ParticleSystem.MinMaxCurve(0.2f, 0.4f);
+            trailMain.startSpeed = new ParticleSystem.MinMaxCurve(5f, 10f);
+            trailMain.startSize = new ParticleSystem.MinMaxCurve(0.06f, 0.18f);
+            trailMain.gravityModifier = 0.1f;
+            trailMain.simulationSpace = ParticleSystemSimulationSpace.World; // Hạt bay lơ lửng lại trong thế giới
+
+            var trailEmission = trailPs.emission;
+            trailEmission.rateOverTime = 40f; // Phun 40 hạt/s để làm đuôi dày
+
+            var trailShape = trailPs.shape;
+            trailShape.shapeType = ParticleSystemShapeType.Sphere;
+            trailShape.radius = 0.3f;
+            trailShape.randomDirectionAmount = 0.2f;
+
+            var trailSize = trailPs.sizeOverLifetime;
+            trailSize.enabled = true;
+            AnimationCurve sizeCurve = new AnimationCurve();
+            sizeCurve.AddKey(0f, 1.0f);
+            sizeCurve.AddKey(1f, 0.0f);
+            trailSize.size = new ParticleSystem.MinMaxCurve(1f, sizeCurve);
+
+            var trailColor = trailPs.colorOverLifetime;
+            trailColor.enabled = true;
+            Gradient trailGrad = new Gradient();
+            trailGrad.SetKeys(
+                new GradientColorKey[] { new GradientColorKey(new Color(0f, 0.8f, 1f), 0f), new GradientColorKey(new Color(0f, 0.1f, 0.6f), 0.7f) },
+                new GradientAlphaKey[] { new GradientAlphaKey(1.0f, 0f), new GradientAlphaKey(0f, 1.0f) }
+            );
+            trailColor.color = trailGrad;
+
+            var trailRenderer = trailGo.GetComponent<ParticleSystemRenderer>();
+            trailRenderer.sharedMaterial = sparksMat;
+            trailRenderer.renderMode = ParticleSystemRenderMode.Stretch;
+            trailRenderer.lengthScale = 2.0f;
+            trailRenderer.velocityScale = 0.05f;
 
             PrefabUtility.SaveAsPrefabAsset(go, path);
             Object.DestroyImmediate(go);
