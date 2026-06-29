@@ -39,6 +39,36 @@ namespace VfxSandbox
                 }
             }
 
+            // Tự động dò tìm và gán 2 đảo đá vôi gần thuyền nhất để kích hoạt bọt sóng phản chấn
+            GameObject[] allObjects = GameObject.FindObjectsByType<GameObject>(FindObjectsSortMode.None);
+            float minDist1 = float.MaxValue;
+            float minDist2 = float.MaxValue;
+            Vector2 closestP1 = new Vector2(1.2f, 1.5f);
+            Vector2 closestP2 = new Vector2(-1.8f, 3.2f);
+            Vector2 boatPos2D = new Vector2(transform.position.x, transform.position.z);
+
+            foreach (var go in allObjects)
+            {
+                if (go != null && go.name.StartsWith("Water_Rock_Obstacle_"))
+                {
+                    Vector2 rockPos2D = new Vector2(go.transform.position.x, go.transform.position.z);
+                    float dist = Vector2.Distance(boatPos2D, rockPos2D);
+                    if (dist < minDist1)
+                    {
+                        minDist2 = minDist1;
+                        closestP2 = closestP1;
+                        
+                        minDist1 = dist;
+                        closestP1 = rockPos2D;
+                    }
+                    else if (dist < minDist2)
+                    {
+                        minDist2 = dist;
+                        closestP2 = rockPos2D;
+                    }
+                }
+            }
+
             // Tự động đồng bộ hóa toàn bộ thông số từ Material sang C# để làm Single Source of Truth
             if (waterRenderer != null && waterRenderer.sharedMaterial != null)
             {
@@ -50,20 +80,21 @@ namespace VfxSandbox
                 Vector4 wDir = mat.GetVector("_WaveDirection");
                 waveDirection = new Vector2(wDir.x, wDir.y);
                 
-                Vector4 p1 = mat.GetVector("_Pillar1Pos");
-                pillar1Pos = new Vector2(p1.x, p1.y);
-                Vector4 p2 = mat.GetVector("_Pillar2Pos");
-                pillar2Pos = new Vector2(p2.x, p2.y);
-                
                 rippleHeight = mat.GetFloat("_RippleHeight");
                 rippleScale = mat.GetFloat("_RippleScale");
                 rippleSpeed = mat.GetFloat("_RippleSpeed");
                 rippleDecay = mat.GetFloat("_RippleDecay");
                 boatLength = mat.GetFloat("_BoatLength");
 
-                // Đẩy tọa độ động của thuyền lên shader để vẽ sóng phản chấn hình capsule
+                // Đẩy tọa độ động của thuyền và 2 cột gần nhất lên shader để vẽ sóng phản chấn hình capsule
                 mat.SetVector("_BoatPos", new Vector4(transform.position.x, transform.position.z, 0f, 0f));
                 mat.SetVector("_BoatDir", new Vector4(transform.forward.x, transform.forward.z, 0f, 0f));
+                mat.SetVector("_Pillar1Pos", new Vector4(closestP1.x, closestP1.y, 0f, 0f));
+                mat.SetVector("_Pillar2Pos", new Vector4(closestP2.x, closestP2.y, 0f, 0f));
+
+                // Lưu lại tọa độ cọc để phục vụ hàm tính toán GetWaveHeight nổi của CPU
+                pillar1Pos = closestP1;
+                pillar2Pos = closestP2;
             }
 
             Vector3 currentPos = transform.position;

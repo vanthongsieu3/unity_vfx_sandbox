@@ -133,7 +133,7 @@ namespace VfxSandbox.Editor
             GameObject waterPlane = GameObject.CreatePrimitive(PrimitiveType.Plane);
             waterPlane.name = "Stylized_Water_Surface";
             waterPlane.transform.position = Vector3.zero;
-            waterPlane.transform.localScale = new Vector3(5.5f, 1f, 5.5f); // 55x55 mét diện tích nước
+            waterPlane.transform.localScale = new Vector3(8.0f, 1f, 8.0f); // 80x80 mét diện tích nước rộng lớn
             
             // Xóa Collider của nước để không cản trở tia raycast của các VFX khác nếu có
             DestroyImmediate(waterPlane.GetComponent<Collider>());
@@ -148,30 +148,71 @@ namespace VfxSandbox.Editor
             planarRef.reflectionMask = ~0; // Phản chiếu toàn bộ các vật thể trong scene (loại trừ nước qua code)
 
             // 4. Tạo mặt cát dốc xuống dưới đáy nước (Sloping Sand Floor)
-            // Mặt cát dốc thoai thoải từ sau ra trước (Phần trước là bờ cát cạn, phần sau là biển sâu)
             GameObject sandPlane = GameObject.CreatePrimitive(PrimitiveType.Plane);
             sandPlane.name = "Sloping_Sand_Floor";
             sandPlane.transform.position = new Vector3(0f, -1.0f, 1.5f);
             sandPlane.transform.rotation = Quaternion.Euler(9f, 0f, 0f); // Dốc nghiêng 9 độ (sát camera nông, xa camera sâu)
-            sandPlane.transform.localScale = new Vector3(7.5f, 1f, 7.5f);
+            sandPlane.transform.localScale = new Vector3(10.0f, 1f, 10.0f); // 100x100 mét bãi cát dốc rộng
             
             var sandRenderer = sandPlane.GetComponent<Renderer>();
             sandRenderer.sharedMaterial = sandMat;
 
-            // 5. Tạo các khối đá tảng nhô lên mặt nước để thể hiện bọt xô viền (Foam Intersection rings)
-            GameObject rock1 = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            rock1.name = "Water_Rock_Obstacle_1";
-            rock1.transform.position = new Vector3(1.2f, -0.2f, 1.5f);
-            rock1.transform.localScale = new Vector3(1.1f, 1.4f, 1.1f);
-            rock1.transform.rotation = Quaternion.Euler(15f, 30f, -10f);
-            rock1.GetComponent<Renderer>().sharedMaterial = rockMat;
+            // 5. Tạo các tháp đá vôi Vịnh Hạ Long (Majestic Archipelago - 10 Limestone Islands)
+            Vector3[] rockPositions = new Vector3[]
+            {
+                new Vector3(1.2f, -0.2f, 1.5f),
+                new Vector3(-1.8f, -0.3f, 3.2f),
+                new Vector3(4.5f, -0.5f, 6.0f),
+                new Vector3(-4.8f, -0.4f, 7.5f),
+                new Vector3(0.5f, -0.8f, 14.0f),
+                new Vector3(-8.0f, -0.6f, 12.0f),
+                new Vector3(9.5f, -0.6f, 10.5f),
+                new Vector3(-5.5f, -0.3f, -2.5f),
+                new Vector3(5.0f, -0.3f, -3.2f),
+                new Vector3(-10.5f, -0.8f, 2.5f)
+            };
 
-            GameObject rock2 = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            rock2.name = "Water_Rock_Obstacle_2";
-            rock2.transform.position = new Vector3(-1.8f, -0.3f, 3.2f);
-            rock2.transform.localScale = new Vector3(2.0f, 1.6f, 2.0f);
-            rock2.transform.rotation = Quaternion.Euler(-10f, 45f, 15f);
-            rock2.GetComponent<Renderer>().sharedMaterial = rockMat;
+            Vector3[] rockScales = new Vector3[]
+            {
+                new Vector3(1.2f, 2.5f, 1.2f),
+                new Vector3(2.0f, 3.0f, 2.0f),
+                new Vector3(2.5f, 4.5f, 2.2f),
+                new Vector3(3.2f, 5.0f, 3.0f),
+                new Vector3(5.0f, 8.5f, 4.5f),
+                new Vector3(4.0f, 7.0f, 3.8f),
+                new Vector3(3.5f, 6.5f, 3.5f),
+                new Vector3(1.8f, 3.2f, 1.8f),
+                new Vector3(1.6f, 2.8f, 1.6f),
+                new Vector3(4.5f, 7.5f, 4.5f)
+            };
+
+            Vector3[] rockRotations = new Vector3[]
+            {
+                new Vector3(12f, 30f, -8f),
+                new Vector3(-8f, 45f, 12f),
+                new Vector3(5f, 15f, -10f),
+                new Vector3(-15f, 110f, 8f),
+                new Vector3(8f, -45f, 5f),
+                new Vector3(-5f, 60f, -12f),
+                new Vector3(10f, 25f, 8f),
+                new Vector3(-12f, 15f, 15f),
+                new Vector3(14f, -20f, -10f),
+                new Vector3(-8f, 75f, -5f)
+            };
+
+            GameObject rock1 = null;
+            GameObject rock2 = null;
+            for (int i = 0; i < rockPositions.Length; i++)
+            {
+                GameObject rock = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                rock.name = "Water_Rock_Obstacle_" + (i + 1);
+                rock.transform.position = rockPositions[i];
+                rock.transform.localScale = rockScales[i];
+                rock.transform.rotation = Quaternion.Euler(rockRotations[i]);
+                rock.GetComponent<Renderer>().sharedMaterial = rockMat;
+                if (i == 0) rock1 = rock;
+                if (i == 1) rock2 = rock;
+            }
 
             // 6. Cấu hình Camera góc xiên nhìn xuống mặt nước
             GameObject camObj = new GameObject("Main Camera");
