@@ -21,6 +21,7 @@ namespace VfxSandbox.Editor
             GenerateRampTexture(dir + "/vfx_tex_ramp_01.png", 256);
             GenerateRampVoidTexture(dir + "/vfx_tex_ramp_void.png", 256); // Sinh màu chuyển Void/Kassadin
             GenerateRockTexture(dir + "/vfx_tex_rock_01.png", 256);
+            GenerateWaterNormal(dir + "/vfx_tex_water_normal.png", 256); // Sinh map pháp tuyến nước cuộn sóng mịn màng
 
             AssetDatabase.Refresh();
             Debug.Log("✓ Procedural textures generated successfully in Assets/VfxSandbox/Textures");
@@ -205,6 +206,62 @@ namespace VfxSandbox.Editor
                 }
             }
             
+            tex.Apply();
+            byte[] bytes = tex.EncodeToPNG();
+            File.WriteAllBytes(path, bytes);
+            DestroyImmediate(tex);
+        }
+
+        private static void GenerateWaterNormal(string path, int size)
+        {
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false, true); // Linear texture for normal maps
+            float du = 1.0f / size;
+            float dv = 1.0f / size;
+
+            // Hàm tính độ cao sóng tuần hoàn để triệt tiêu viền ghép nối (100% seamless)
+            float GetWaveHeight(float u, float v)
+            {
+                float uAngle = u * Mathf.PI * 2.0f;
+                float vAngle = v * Mathf.PI * 2.0f;
+
+                // Kết hợp nhiều tần số sóng khác nhau
+                float h = Mathf.Sin(uAngle * 2.0f + vAngle * 1.0f) * 0.35f +
+                          Mathf.Cos(uAngle * 1.0f - vAngle * 3.0f) * 0.25f +
+                          Mathf.Sin(uAngle * 4.0f + vAngle * 2.0f) * 0.18f +
+                          Mathf.Cos(uAngle * 3.0f - vAngle * 5.0f) * 0.12f +
+                          Mathf.Sin(uAngle * 6.0f) * 0.06f +
+                          Mathf.Cos(vAngle * 6.0f) * 0.04f;
+                return h;
+            }
+
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float u = (float)x / size;
+                    float v = (float)y / size;
+
+                    // Sử dụng phương pháp vi phân hữu hạn Sobel/Finite-difference tính Vector pháp tuyến
+                    float h_l = GetWaveHeight(u - du, v);
+                    float h_r = GetWaveHeight(u + du, v);
+                    float h_d = GetWaveHeight(u, v - dv);
+                    float h_u = GetWaveHeight(u, v + dv);
+
+                    float nx = (h_l - h_r) * 1.5f; // Độ gợn sóng mạnh/nhẹ
+                    float ny = (h_d - h_u) * 1.5f;
+                    float nz = 1.0f;
+
+                    Vector3 normal = new Vector3(nx, ny, nz).normalized;
+
+                    // Mã hóa véc-tơ pháp tuyến từ dải [-1, 1] sang dải màu [0, 1] cho GPU đọc
+                    float r = normal.x * 0.5f + 0.5f;
+                    float g = normal.y * 0.5f + 0.5f;
+                    float b = normal.z * 0.5f + 0.5f;
+
+                    tex.SetPixel(x, y, new Color(r, g, b, 1.0f));
+                }
+            }
+
             tex.Apply();
             byte[] bytes = tex.EncodeToPNG();
             File.WriteAllBytes(path, bytes);
