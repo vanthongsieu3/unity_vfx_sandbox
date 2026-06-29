@@ -227,7 +227,7 @@ namespace VfxSandbox.Editor
                 }
                 else
                 {
-                    importer.alphaSource = TextureImporterAlphaSource.InputTextureAlpha; // Đọc Alpha từ tệp ảnh gốc
+                    importer.alphaSource = TextureImporterAlphaSource.FromInput; // Đọc Alpha từ tệp ảnh gốc
                 }
                 importer.alphaIsTransparency = true;
                 importer.mipmapEnabled = false;
