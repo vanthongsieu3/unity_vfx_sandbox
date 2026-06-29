@@ -28,7 +28,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _NormalMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: bc75e275fb0d9e241af945af8aabf0bc, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
@@ -61,5 +61,6 @@ Material:
     - _NormalSpeed2: {r: -0.03, g: 0.04, b: 0, a: 0}
     - _ShallowColor: {r: 0, g: 0.82, b: 0.78, a: 0.5}
     - _SkyColor: {r: 0.45, g: 0.68, b: 0.9, a: 1}
+    - _WaveDirection: {r: 0, g: -1, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

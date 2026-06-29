@@ -25,7 +25,7 @@ Shader "VFX/StylizedWater"
         _RefractionStrength("Refraction Distortion Strength", Float) = 0.12 // Độ khúc xạ biến dạng đáy nước
 
         [Header(Procedural Gerstner Waves)]
-        _WaveDirection("Wave Propagation Direction (X, Z)", Vector) = (-1.0, 0.0, 0, 0) // Hướng truyền sóng (mặc định từ phải sang trái về phía bờ cát)
+        _WaveDirection("Wave Propagation Direction (X, Y)", Vector) = (0.0, -1.0, 0, 0) // Hướng truyền sóng (mặc định từ sau ra trước hướng về bờ cát cạn)
         _WaveHeight("Wave Height", Float) = 0.22                          // Chiều cao nhấp nhô của sóng
         _WaveScale("Wave Scale/Frequency", Float) = 0.85                  // Tần số sóng
         _WaveSpeed("Wave Speed", Float) = 1.6                             // Tốc độ sóng
@@ -124,8 +124,16 @@ Shader "VFX/StylizedWater"
                 // Vị trí thế giới của đỉnh nước (World Position)
                 float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
 
-                // Chuẩn hóa hướng truyền sóng waveDir (X, Z)
-                float2 waveDir = normalize(_WaveDirection.xz);
+                // Chuẩn hóa hướng truyền sóng waveDir dựa trên XY của Vector để tránh lỗi chia 0 (NaN) làm biến mất Mesh
+                float2 waveDir = _WaveDirection.xy;
+                if (dot(waveDir, waveDir) < 0.001)
+                {
+                    waveDir = float2(0.0, -1.0); // Hướng mặc định dọc bờ (sau ra trước)
+                }
+                else
+                {
+                    waveDir = normalize(waveDir);
+                }
                 float wavePos = dot(positionWS.xz, waveDir);
 
                 // 1. Phép dựng sóng Gerstner giải tích hướng tâm
