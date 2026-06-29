@@ -122,8 +122,9 @@ namespace VfxSandbox.Editor
             ground.transform.position = Vector3.zero;
             ground.transform.localScale = new Vector3(3, 1, 3);
             var groundRenderer = ground.GetComponent<Renderer>();
-            groundRenderer.material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-            groundRenderer.material.color = new Color(0.12f, 0.15f, 0.18f); // Đá xám tối
+            Material groundMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            groundMat.color = new Color(0.12f, 0.15f, 0.18f); // Đá xám tối
+            groundRenderer.sharedMaterial = groundMat;
 
             // Thêm Camera
             GameObject camObj = new GameObject("Main Camera");
