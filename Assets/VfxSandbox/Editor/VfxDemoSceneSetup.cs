@@ -141,15 +141,15 @@ namespace VfxSandbox.Editor
             if (emberTex != null) flameMat.SetTexture("_BaseMap", emberTex);
             AssetDatabase.CreateAsset(flameMat, flameMatPath);
 
-            // E. Debris Rock Material (Volcanic rock with glowing magma parts)
+            // E. Debris Rock Material (Volcanic rock with scrolling lava flow shader!)
             string debrisMatPath = matDir + "/mat_debris_rock.mat";
-            Material debrisMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            Material debrisMat = new Material(Shader.Find("VFX/LavaFlow"));
             if (rockTex != null) debrisMat.SetTexture("_BaseMap", rockTex);
-            debrisMat.SetColor("_BaseColor", Color.white);
-            // Kích hoạt Emissive để đá vụn có các điểm dung nham đỏ rực phát sáng
-            debrisMat.EnableKeyword("_EMISSION");
-            debrisMat.SetColor("_EmissionColor", new Color(1.8f, 0.4f, 0f, 1f));
-            if (emberTex != null) debrisMat.SetTexture("_EmissionMap", emberTex);
+            if (noiseTex != null) debrisMat.SetTexture("_NoiseMap", noiseTex);
+            if (rampTex != null) debrisMat.SetTexture("_RampMap", rampTex);
+            debrisMat.SetVector("_FlowSpeed", new Vector4(0.4f, 0.2f, 0f, 0f)); // Tốc độ cuộn dung nham
+            debrisMat.SetFloat("_LavaIntensity", 3.0f); // Độ rực sáng
+            debrisMat.SetFloat("_DisplacementStrength", 0.05f); // Vertex displacement nhẹ
             AssetDatabase.CreateAsset(debrisMat, debrisMatPath);
 
             // F. Fire Ring Material (Magma scrolling on 3D ring mesh)
