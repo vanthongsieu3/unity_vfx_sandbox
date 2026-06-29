@@ -47,6 +47,7 @@ namespace VfxSandbox.Editor
             waterMat.SetFloat("_FoamNoiseWeight", 0.45f); // Độ lồi lõm của viền bọt
             waterMat.SetFloat("_WaveCrestThreshold", 0.08f); // Bọt đỉnh sóng nổi lên ở đỉnh
             waterMat.SetFloat("_WaveCrestRange", 0.18f);
+            waterMat.SetVector("_WaveDirection", new Vector4(0f, -1f, 0f, 0f)); // Sóng đánh từ xa (sau) về gần bờ cát (trước)
             waterMat.SetFloat("_WaveHeight", 0.22f); // Sóng nhấp nhô tuyệt đẹp
             waterMat.SetFloat("_WaveScale", 0.85f);
             waterMat.SetFloat("_WaveSpeed", 1.6f);
@@ -99,11 +100,11 @@ namespace VfxSandbox.Editor
             waterRenderer.sharedMaterial = waterMat;
 
             // 4. Tạo mặt cát dốc xuống dưới đáy nước (Sloping Sand Floor)
-            // Việc đặt dốc nghiêng từ trái sang phải khớp với góc nhìn nghiêng của Camera
+            // Mặt cát dốc thoai thoải từ sau ra trước (Phần trước là bờ cát cạn, phần sau là biển sâu)
             GameObject sandPlane = GameObject.CreatePrimitive(PrimitiveType.Plane);
             sandPlane.name = "Sloping_Sand_Floor";
-            sandPlane.transform.position = new Vector3(-1.8f, -1.2f, 0f);
-            sandPlane.transform.rotation = Quaternion.Euler(0f, 0f, -9f); // Dốc nghiêng 9 độ lên về phía bên trái (bờ cát nằm bên trái)
+            sandPlane.transform.position = new Vector3(0f, -1.0f, 1.5f);
+            sandPlane.transform.rotation = Quaternion.Euler(9f, 0f, 0f); // Dốc nghiêng 9 độ (sát camera nông, xa camera sâu)
             sandPlane.transform.localScale = new Vector3(7.5f, 1f, 7.5f);
             
             var sandRenderer = sandPlane.GetComponent<Renderer>();
@@ -112,15 +113,15 @@ namespace VfxSandbox.Editor
             // 5. Tạo các khối đá tảng nhô lên mặt nước để thể hiện bọt xô viền (Foam Intersection rings)
             GameObject rock1 = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             rock1.name = "Water_Rock_Obstacle_1";
-            rock1.transform.position = new Vector3(-1.5f, -0.2f, 1.0f); // Nằm gần bờ cát hơn
+            rock1.transform.position = new Vector3(1.2f, -0.2f, 1.5f);
             rock1.transform.localScale = new Vector3(1.1f, 1.4f, 1.1f);
             rock1.transform.rotation = Quaternion.Euler(15f, 30f, -10f);
             rock1.GetComponent<Renderer>().sharedMaterial = rockMat;
 
             GameObject rock2 = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             rock2.name = "Water_Rock_Obstacle_2";
-            rock2.transform.position = new Vector3(0.6f, -0.4f, 2.8f); // Nằm xa ngoài vùng nước trung bình/sâu
-            rock2.transform.localScale = new Vector3(2.0f, 1.8f, 2.0f);
+            rock2.transform.position = new Vector3(-1.8f, -0.3f, 3.2f);
+            rock2.transform.localScale = new Vector3(2.0f, 1.6f, 2.0f);
             rock2.transform.rotation = Quaternion.Euler(-10f, 45f, 15f);
             rock2.GetComponent<Renderer>().sharedMaterial = rockMat;
 
