@@ -22,7 +22,7 @@ Shader "VFX/StylizedWater"
         _FoamNoiseWeight("Foam Edge Noise Distortion", Range(0.1, 0.8)) = 0.45 // Độ lồi lõm của mép bọt sóng
         _WaveCrestThreshold("Wave Crest Foam Threshold", Float) = 0.12    // Điểm cao của sóng bắt đầu sinh bọt đỉnh
         _WaveCrestRange("Wave Crest Foam Range", Float) = 0.15            // Dải chuyển tiếp bọt đỉnh sóng
-        _OutlineDistance("Hugging Outline Width", Float) = 0.32           // Độ dày của viền bọt ôm sát cọc và thuyền
+        _OutlineDistance("Hugging Outline Width", Float) = 1.35           // Độ dày của viền bọt ôm sát cọc và thuyền
 
         [Header(Normal Map Ripples)]
         _NormalMap("Normal Map", 2D) = "bump" {}
@@ -293,7 +293,9 @@ Shader "VFX/StylizedWater"
                     float dynamicFoamDistance = max(0.05, _FoamDistance + lapping);
 
                     float shoreFoamFactor = saturate(1.0 - max(0.0, depthDiff) / dynamicFoamDistance);
-                    shoreFoamMask = smoothstep(0.42, 0.48, shoreFoamFactor + foamNoise * _FoamNoiseWeight);
+                    // Thuật toán trừ nhiễu làm bọt rách tạo lỗ bong bóng / viền rách ngẫu nhiên ở mép ngoài bờ
+                    float shoreFoamVal = shoreFoamFactor - (1.0 - shoreFoamFactor) * foamNoise * _FoamNoiseWeight * 1.5;
+                    shoreFoamMask = smoothstep(0.12, 0.22, shoreFoamVal);
                 }
 
                 // B. Bọt đỉnh sóng (Wave Crest foam) - Phá vỡ các đường bọt song song dẹt thành các mảng bọt trôi nổi bằng phép nhân nhiễu
@@ -329,11 +331,13 @@ Shader "VFX/StylizedWater"
                 if (rawDepth > 0.0001)
                 {
                     float outlineFactor = saturate(1.0 - max(0.0, depthDiff) / _OutlineDistance);
-                    // Tần số nhiễu thấp hơn kết hợp cuộn chậm để tạo các đường lượn bọt uốn sóng hình bóng mây mượt mà chuẩn Zelda/Genshin
-                    float2 outlineFoamUv = input.worldPos.xz * (_FoamNoiseScale * 0.45) + blendedNormalMap.xy * 0.08 + float2(_Time.y * 0.06, _Time.y * 0.03);
-                    float outlineNoise = _NoiseMap.Sample(sampler_LinearRepeat, outlineFoamUv).r;
+                    // Sử dụng vân Voronoi (Caustics Map) cuộn chậm để đục lỗ bong bóng nước tròn trịa giống xà phòng sủi bọt chuẩn Zelda/Genshin
+                    float2 outlineFoamUv = input.worldPos.xz * 0.38 + float2(_Time.y * 0.04, _Time.y * 0.02);
+                    float outlineNoise = _CausticsMap.Sample(sampler_LinearRepeat, outlineFoamUv).r;
                     
-                    outlineMask = smoothstep(0.42, 0.48, outlineFactor + outlineNoise * _FoamNoiseWeight);
+                    // Lực bọt rách tạo bong bóng: ở gần vật thể bọt đặc trắng tinh, đi xa dần bị đục lỗ và rã thành các mảng trôi nổi nhỏ
+                    float outlineFoamVal = outlineFactor - (1.0 - outlineFactor) * outlineNoise * _FoamNoiseWeight * 1.7;
+                    outlineMask = smoothstep(0.12, 0.22, outlineFoamVal);
                 }
 
                 // Gộp chung bốn loại bọt nước
