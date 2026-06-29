@@ -488,7 +488,7 @@ Shader "VFX/StylizedWater"
                 
                 // Lực bọt rách tạo bong bóng: ở gần vật thể bọt đặc trắng tinh, đi xa dần bị đục lỗ và rã thành các mảng trôi nổi nhỏ
                 float outlineFoamVal = outlineFactor - (1.0 - outlineFactor) * outlineNoise * dynamicNoiseWeight * 1.7;
-                outlineMask = smoothstep(0.12, 0.22, outlineFoamVal);
+                float outlineMask = smoothstep(0.12, 0.22, outlineFoamVal);
 
                 // Gộp chung bốn loại bọt nước
                 float foamCutout = max(max(max(shoreFoamMask, waveCrestMask), pillarFoam), outlineMask);
