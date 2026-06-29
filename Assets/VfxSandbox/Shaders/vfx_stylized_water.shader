@@ -173,36 +173,47 @@ Shader "VFX/StylizedWater"
                     waveDir = normalize(waveDir);
                 }
 
-                // Thực hiện biến dạng (Wiggle/Curve distortion) uốn lượn sóng theo phương vuông góc (phương ngang)
+                // Thực hiện biến dạng đa tầng (Multi-frequency organic wiggle) uốn lượn sóng ngẫu nhiên cực đẹp theo nét vẽ tay
                 float2 waveTangent = float2(-waveDir.y, waveDir.x);
                 float tangentPos = dot(positionWS.xz, waveTangent);
-                float kPerp = _WaveScale * 0.45;
-                float phasePerp = tangentPos * kPerp + _Time.y * 0.8;
-                float distVal = sin(phasePerp) * 1.2;
-                float wavePos = dot(positionWS.xz, waveDir) + distVal;
+                
+                float phasePerp1 = tangentPos * (_WaveScale * 0.35) - _Time.y * 0.7;
+                float phasePerp2 = tangentPos * (_WaveScale * 0.85) + _Time.y * 1.1;
+                float phasePerp3 = tangentPos * (_WaveScale * 1.75) - _Time.y * 1.6;
 
-                // Tính toán đạo hàm của wavePos theo X và Z để cập nhật vào Pháp tuyến (Normal)
-                float d_wavePos_dx = waveDir.x + kPerp * waveTangent.x * cos(phasePerp) * 1.2;
-                float d_wavePos_dz = waveDir.y + kPerp * waveTangent.y * cos(phasePerp) * 1.2;
+                float wiggle = sin(phasePerp1) * 1.8 + cos(phasePerp2) * 0.65 + sin(phasePerp3) * 0.22;
+                float wavePos = dot(positionWS.xz, waveDir) + wiggle;
+
+                // Đạo hàm wiggle theo tangentPos để tính Pháp tuyến chuẩn
+                float d_wiggle = cos(phasePerp1) * (_WaveScale * 0.35) * 1.8 
+                               - sin(phasePerp2) * (_WaveScale * 0.85) * 0.65 
+                               + cos(phasePerp3) * (_WaveScale * 1.75) * 0.22;
+
+                float d_wavePos_dx = waveDir.x + d_wiggle * waveTangent.x;
+                float d_wavePos_dz = waveDir.y + d_wiggle * waveTangent.y;
 
                 // Phép dựng sóng Gerstner giải tích hướng tâm
                 float k1 = _WaveScale;
                 float w1 = _Time.y * _WaveSpeed;
                 float wave1 = sin(wavePos * k1 - w1) * _WaveHeight;
 
-                // Tạo sóng phụ chéo góc 37 độ để dập dềnh tự nhiên
+                // Tạo sóng phụ chéo góc 37 độ uốn cong đa tầng để dập dềnh tự nhiên
                 float2 waveDir2 = float2(waveDir.x * 0.8 - waveDir.y * 0.6, waveDir.y * 0.8 + waveDir.x * 0.6);
-                
                 float2 waveTangent2 = float2(-waveDir2.y, waveDir2.x);
                 float tangentPos2 = dot(positionWS.xz, waveTangent2);
-                float kPerp2 = _WaveScale * 1.35 * 0.4;
-                float phasePerp2 = tangentPos2 * kPerp2 + _Time.y * 0.6;
-                float distVal2 = cos(phasePerp2) * 0.8;
-                float wavePos2 = dot(positionWS.xz, waveDir2) + distVal2;
+                
+                float phasePerp2_1 = tangentPos2 * (_WaveScale * 0.4) - _Time.y * 0.55;
+                float phasePerp2_2 = tangentPos2 * (_WaveScale * 0.9) + _Time.y * 0.85;
+
+                float wiggle2 = sin(phasePerp2_1) * 1.3 + cos(phasePerp2_2) * 0.45;
+                float wavePos2 = dot(positionWS.xz, waveDir2) + wiggle2;
 
                 // Tính toán đạo hàm của wavePos2 theo X và Z
-                float d_wavePos2_dx = waveDir2.x - kPerp2 * waveTangent2.x * sin(phasePerp2) * 0.8;
-                float d_wavePos2_dz = waveDir2.y - kPerp2 * waveTangent2.y * sin(phasePerp2) * 0.8;
+                float d_wiggle2 = cos(phasePerp2_1) * (_WaveScale * 0.4) * 1.3 
+                                - sin(phasePerp2_2) * (_WaveScale * 0.9) * 0.45;
+
+                float d_wavePos2_dx = waveDir2.x + d_wiggle2 * waveTangent2.x;
+                float d_wavePos2_dz = waveDir2.y + d_wiggle2 * waveTangent2.y;
 
                 float k2 = _WaveScale * 1.35;
                 float w2 = _Time.y * _WaveSpeed * 1.15;

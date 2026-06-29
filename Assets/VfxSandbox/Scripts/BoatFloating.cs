@@ -81,24 +81,29 @@ namespace VfxSandbox
         {
             float time = Time.time;
 
-            // A. Sóng Gerstner chính có biến dạng uốn lượn (Wiggle) uốn cong theo phương ngang
+            // A. Sóng Gerstner chính có biến dạng uốn lượn đa tầng (Multi-frequency organic wiggle)
             Vector2 waveDir = waveDirection.normalized;
             Vector2 waveTangent = new Vector2(-waveDir.y, waveDir.x);
             float tangentPos = pos.x * waveTangent.x + pos.z * waveTangent.y;
-            float kPerp = waveScale * 0.45f;
-            float phasePerp = tangentPos * kPerp + time * 0.8f;
-            float distVal = Mathf.Sin(phasePerp) * 1.2f;
-            float wavePos = (pos.x * waveDir.x + pos.z * waveDir.y) + distVal;
+            
+            float phasePerp1 = tangentPos * (waveScale * 0.35f) - time * 0.7f;
+            float phasePerp2 = tangentPos * (waveScale * 0.85f) + time * 1.1f;
+            float phasePerp3 = tangentPos * (waveScale * 1.75f) - time * 1.6f;
+
+            float wiggle = Mathf.Sin(phasePerp1) * 1.8f + Mathf.Cos(phasePerp2) * 0.65f + Mathf.Sin(phasePerp3) * 0.22f;
+            float wavePos = (pos.x * waveDir.x + pos.z * waveDir.y) + wiggle;
             float wave1 = Mathf.Sin(wavePos * waveScale - time * waveSpeed) * waveHeight;
 
-            // Sóng phụ chéo góc cũng được uốn cong
+            // Sóng phụ chéo góc cũng được uốn cong đa tầng
             Vector2 waveDir2 = new Vector2(waveDir.x * 0.8f - waveDir.y * 0.6f, waveDir.y * 0.8f + waveDir.x * 0.6f);
             Vector2 waveTangent2 = new Vector2(-waveDir2.y, waveDir2.x);
             float tangentPos2 = pos.x * waveTangent2.x + pos.z * waveTangent2.y;
-            float kPerp2 = waveScale * 1.35f * 0.4f;
-            float phasePerp2 = tangentPos2 * kPerp2 + time * 0.6f;
-            float distVal2 = Mathf.Cos(phasePerp2) * 0.8f;
-            float wavePos2 = (pos.x * waveDir2.x + pos.z * waveDir2.y) + distVal2;
+            
+            float phasePerp2_1 = tangentPos2 * (waveScale * 0.4f) - time * 0.55f;
+            float phasePerp2_2 = tangentPos2 * (waveScale * 0.9f) + time * 0.85f;
+
+            float wiggle2 = Mathf.Sin(phasePerp2_1) * 1.3f + Mathf.Cos(phasePerp2_2) * 0.45f;
+            float wavePos2 = (pos.x * waveDir2.x + pos.z * waveDir2.y) + wiggle2;
             float wave2 = Mathf.Cos(wavePos2 * (waveScale * 1.35f) - time * (waveSpeed * 1.15f)) * (waveHeight * 0.55f);
 
             float baseHeight = wave1 + wave2;
