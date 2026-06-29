@@ -8,9 +8,16 @@ Shader "VFX/StylizedWater"
         _WaterOpacity("Base Opacity", Range(0, 1)) = 0.5                  // Độ trong suốt cơ bản của nước
         _DepthMaxDistance("Depth Color Blending Distance", Float) = 4.0   // Khoảng cách chuyển màu nông/sâu
 
+        [Header(Subsurface Scattering Translucency)]
+        _SssColor("SSS Color (Translucency)", Color) = (0.0, 1.0, 0.65, 1.0) // Màu thấu quang xanh lục bảo rực rỡ
+        _SssStrength("SSS Strength", Float) = 1.5                         // Cường độ phát quang đỉnh sóng
+        _SssPower("SSS Power Angle", Float) = 4.0                         // Độ tụ hướng nhìn ngược sáng
+
         [Header(Shoreline and Wave Crest Foam)]
         _FoamColor("Foam Color", Color) = (1.0, 1.0, 1.0, 1.0)
-        _FoamDistance("Shore Foam Width", Float) = 0.55                   // Độ rộng bọt sóng xô bờ
+        _FoamDistance("Shore Foam Width", Float) = 0.55                   // Độ rộng bọt sóng xô bờ trung bình
+        _FoamLappingSpeed("Foam Lapping Speed", Float) = 1.3              // Tốc độ dâng/rút thủy triều xô bờ
+        _FoamLappingAmplitude("Foam Lapping Amplitude", Float) = 0.16     // Biên độ co giãn dâng rút của bọt bờ
         _FoamNoiseScale("Foam Noise Scale", Float) = 3.5                  // Tỉ lệ nhiễu bọt sóng
         _FoamNoiseWeight("Foam Edge Noise Distortion", Range(0.1, 0.8)) = 0.45 // Độ lồi lõm của mép bọt sóng
         _WaveCrestThreshold("Wave Crest Foam Threshold", Float) = 0.12    // Điểm cao của sóng bắt đầu sinh bọt đỉnh
@@ -99,8 +106,13 @@ Shader "VFX/StylizedWater"
                 float4 _DeepColor;
                 float _WaterOpacity;
                 float _DepthMaxDistance;
+                float4 _SssColor;
+                float _SssStrength;
+                float _SssPower;
                 float4 _FoamColor;
                 float _FoamDistance;
+                float _FoamLappingSpeed;
+                float _FoamLappingAmplitude;
                 float _FoamNoiseScale;
                 float _FoamNoiseWeight;
                 float _WaveCrestThreshold;
@@ -259,11 +271,15 @@ Shader "VFX/StylizedWater"
                 float2 foamUv = input.worldPos.xz * _FoamNoiseScale + blendedNormalMap.xy * 0.15 + float2(_Time.y * 0.12, _Time.y * 0.06);
                 float foamNoise = _NoiseMap.Sample(sampler_LinearRepeat, foamUv).r;
                 
-                // A. Bọt xô bờ & cọc (Shoreline & Pillar Intersection foam) - dùng rawDepth > 0.0001 tránh lỗi precision
+                // A. Bọt xô bờ & cọc (Shoreline & Pillar Intersection foam) với hiệu ứng thủy triều nhấp nhô (Lapping)
                 float shoreFoamMask = 0.0;
                 if (rawDepth > 0.0001)
                 {
-                    float shoreFoamFactor = saturate(1.0 - max(0.0, depthDiff) / _FoamDistance);
+                    // Lapping animation: bọt co giãn dâng rút tuần hoàn theo thời gian
+                    float lapping = sin(_Time.y * _FoamLappingSpeed) * _FoamLappingAmplitude;
+                    float dynamicFoamDistance = max(0.05, _FoamDistance + lapping);
+
+                    float shoreFoamFactor = saturate(1.0 - max(0.0, depthDiff) / dynamicFoamDistance);
                     shoreFoamMask = smoothstep(0.42, 0.48, shoreFoamFactor + foamNoise * _FoamNoiseWeight);
                 }
 
@@ -305,11 +321,16 @@ Shader "VFX/StylizedWater"
                 float causticsFade = smoothstep(0.08, 0.35, depthDiff);
                 finalWaterColor += causticsMask * _CausticsColor.rgb * _CausticsIntensity * causticsFade * (1.0 - foamCutout);
 
-                // 8. Tính toán phản xạ mặt trời chói mắt (Stylized Specular Highlight)
+                // 8. Hiệu ứng Thấu quang Đỉnh Sóng (Subsurface Scattering / Wave Translucency)
                 Light mainLight = GetMainLight();
                 float3 lightDir = mainLight.direction;
-                float3 halfDir = SafeNormalize(lightDir + viewDir);
                 
+                float waveCrestHeight = saturate(input.waveHeight / max(0.001, _WaveHeight * 1.5));
+                float sssFactor = pow(saturate(dot(viewDir, -lightDir)), _SssPower) * waveCrestHeight * _SssStrength;
+                finalWaterColor += _SssColor.rgb * sssFactor * mainLight.color * (1.0 - foamCutout);
+
+                // 9. Tính toán phản xạ mặt trời chói mắt (Stylized Specular Highlight)
+                float3 halfDir = SafeNormalize(lightDir + viewDir);
                 float NdotH = saturate(dot(worldNormal, halfDir));
                 float specular = pow(NdotH, _Glossiness) * _SpecularIntensity;
                 float3 specColor = mainLight.color * specular;

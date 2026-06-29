@@ -47,6 +47,14 @@ namespace VfxSandbox.Editor
             waterMat.SetFloat("_FoamNoiseWeight", 0.45f); // Độ lồi lõm của viền bọt
             waterMat.SetFloat("_WaveCrestThreshold", 0.08f); // Bọt đỉnh sóng nổi lên ở đỉnh
             waterMat.SetFloat("_WaveCrestRange", 0.18f);
+            
+            // Thiết lập thấu quang ngọn sóng (SSS) và thủy triều xô bờ (Foam Lapping)
+            waterMat.SetColor("_SssColor", new Color(0.0f, 1.0f, 0.65f, 1.0f)); // Xanh ngọc lục bảo phát sáng
+            waterMat.SetFloat("_SssStrength", 1.5f);
+            waterMat.SetFloat("_SssPower", 4.0f);
+            waterMat.SetFloat("_FoamLappingSpeed", 1.3f);
+            waterMat.SetFloat("_FoamLappingAmplitude", 0.16f);
+
             waterMat.SetVector("_WaveDirection", new Vector4(0f, -1f, 0f, 0f)); // Sóng đánh từ xa (sau) về gần bờ cát (trước)
             waterMat.SetFloat("_WaveHeight", 0.22f); // Sóng nhấp nhô tuyệt đẹp
             waterMat.SetFloat("_WaveScale", 0.85f);
