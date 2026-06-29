@@ -601,8 +601,13 @@ Shader "VFX/StylizedWater"
                 // Đồng bộ bọt sóng phản chấn cọc theo sườn sóng dốc đón bờ
                 float finalPillarFoam = pillarFoam * waveFrontFactor;
 
+                // Độ suy giảm chậm hơn và giảm độ dày bọt khi sát thuyền để tạo hình loe phễu (dưới nhỏ trên to)
+                float foamDecay = exp(-(perp * 0.4 - along * 0.15) * _RippleDecay);
+                float nearDamp = smoothstep(-0.2, -1.8, along);
+                float vWakeFoamFactor = pow(saturate(sin(vPhase)), 3.5) * foamDecay * vWeight * speedFactor * nearDamp;
+                
                 // Áp nhiễu và làm rách bọt sóng chữ V cho đồng bộ style nghệ thuật vẽ tay
-                float boatWakeFoamRaw = smoothstep(0.18, 0.28, vWakeRaw * (0.45 + combinedWakeNoise * 1.15)) * 1.5;
+                float boatWakeFoamRaw = smoothstep(0.15, 0.25, vWakeFoamFactor * (0.5 + combinedWakeNoise * 1.15)) * 1.55;
                 
                 // Sóng dập dềnh đồng tâm (Bobbing) khi thuyền đứng yên hoặc di chuyển rất chậm
                 float bobbingFoam = ringBoat * 0.85 * boatRippleWeight * (1.0 - speedFactor) * (0.6 + combinedWakeNoise * 0.8);
