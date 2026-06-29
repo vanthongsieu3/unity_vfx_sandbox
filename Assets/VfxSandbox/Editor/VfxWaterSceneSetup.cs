@@ -61,7 +61,7 @@ namespace VfxSandbox.Editor
             // Gán các thông số màu sắc nước lung linh PC-grade
             waterMat.SetColor("_ShallowColor", new Color(0.0f, 0.82f, 0.78f, 0.5f));  // Xanh lam ngọc trong trẻo nông
             waterMat.SetColor("_DeepColor", new Color(0.01f, 0.12f, 0.38f, 0.98f));   // Xanh biển đại dương sâu thẳm
-            waterMat.SetFloat("_WaterOpacity", 0.45f);
+            waterMat.SetFloat("_WaterOpaqueness", 0.45f);
             waterMat.SetFloat("_DepthMaxDistance", 3.2f);
             waterMat.SetFloat("_FoamDistance", 0.55f);
             waterMat.SetFloat("_FoamNoiseScale", 4.0f);

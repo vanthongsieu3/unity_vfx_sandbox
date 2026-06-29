@@ -5,7 +5,7 @@ Shader "VFX/StylizedWater"
         [Header(Water Colors)]
         _ShallowColor("Shallow Color", Color) = (0.0, 0.8, 0.75, 0.6)  // Màu xanh lam ngọc nông
         _DeepColor("Deep Color", Color) = (0.02, 0.12, 0.35, 0.95)       // Màu xanh đại dương sâu
-        _WaterOpacity("Base Opacity", Range(0, 1)) = 0.5                  // Độ trong suốt cơ bản của nước
+        _WaterOpaqueness("Water Opaqueness (Trong/Duc)", Range(0.0, 1.0)) = 0.45 // Độ đục/trong suốt của nước biển nông cơ bản của nước
         _DepthMaxDistance("Depth Color Blending Distance", Float) = 4.0   // Khoảng cách chuyển màu nông/sâu
 
         [Header(Subsurface Scattering Translucency)]
@@ -112,7 +112,7 @@ Shader "VFX/StylizedWater"
             CBUFFER_START(UnityPerMaterial)
                 float4 _ShallowColor;
                 float4 _DeepColor;
-                float _WaterOpacity;
+                float _WaterOpaqueness;
                 float _DepthMaxDistance;
                 float4 _SssColor;
                 float _SssStrength;
@@ -301,7 +301,7 @@ Shader "VFX/StylizedWater"
                 // Hòa trộn thêm một chút màu trời ở góc nhìn Fresnel cực nghiêng để tạo độ sâu
                 reflectedColor = lerp(reflectedColor, _SkyColor.rgb, fresnel * 0.45);
 
-                float opacity = lerp(_WaterOpacity, _DeepColor.a, depthFactor);
+                float opacity = lerp(_WaterOpaqueness, _DeepColor.a, depthFactor);
                 float3 finalWaterColor = lerp(sceneColor, reflectedColor, opacity);
 
                 // 6. Tạo bọt nước xô bờ gợn sóng cách điệu (Stylized Shoreline Foam)
