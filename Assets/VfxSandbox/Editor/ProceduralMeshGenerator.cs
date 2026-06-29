@@ -286,8 +286,8 @@ namespace VfxSandbox.Editor
 
             int segments = 24;
             float arcAngle = 140f * Mathf.Deg2Rad; // Cung chém 140 độ
-            float innerRadius = 2.0f;
-            float outerRadius = 3.2f;
+            float innerRadius = 0.8f; // Thu nhỏ lại gần người hơn (tầm chém thực tế)
+            float outerRadius = 1.8f;
 
             int vertCount = (segments + 1) * 2;
             Vector3[] vertices = new Vector3[vertCount];

@@ -12,7 +12,7 @@ namespace VfxSandbox
 
         // Cấu trúc hình học của cung chém để đồng bộ vị trí phát tia lửa (Sparks) ở mũi chém
         private float arcAngleRad = 140f * Mathf.Deg2Rad;
-        private float outerRadius = 3.2f;
+        private float outerRadius = 1.8f; // Thu nhỏ đồng bộ với Mesh chém
 
         private void Start()
         {
