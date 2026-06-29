@@ -11,10 +11,10 @@ Shader "VFX/StylizedWater"
         [Header(Shoreline and Wave Crest Foam)]
         _FoamColor("Foam Color", Color) = (1.0, 1.0, 1.0, 1.0)
         _FoamDistance("Shore Foam Width", Float) = 0.55                   // Độ rộng bọt sóng xô bờ
-        _FoamNoiseScale("Foam Noise Scale", Float) = 4.0                  // Tỉ lệ nhiễu bọt sóng
+        _FoamNoiseScale("Foam Noise Scale", Float) = 3.5                  // Tỉ lệ nhiễu bọt sóng
         _FoamNoiseWeight("Foam Edge Noise Distortion", Range(0.1, 0.8)) = 0.45 // Độ lồi lõm của mép bọt sóng
-        _WaveCrestThreshold("Wave Crest Foam Threshold", Float) = 0.08    // Điểm cao của sóng bắt đầu sinh bọt đỉnh
-        _WaveCrestRange("Wave Crest Foam Range", Float) = 0.18            // Dải chuyển tiếp bọt đỉnh sóng
+        _WaveCrestThreshold("Wave Crest Foam Threshold", Float) = 0.12    // Điểm cao của sóng bắt đầu sinh bọt đỉnh
+        _WaveCrestRange("Wave Crest Foam Range", Float) = 0.15            // Dải chuyển tiếp bọt đỉnh sóng
 
         [Header(Normal Map Ripples)]
         _NormalMap("Normal Map", 2D) = "bump" {}
@@ -79,13 +79,14 @@ Shader "VFX/StylizedWater"
                 float3 worldNormal  : TEXCOORD1;
                 float3 viewDirWS    : TEXCOORD3;
                 float3 worldPos     : TEXCOORD4;
-                float waveHeight    : TEXCOORD5; // Lưu chiều cao nhấp nhô của đỉnh sóng để sinh bọt đỉnh
+                float waveHeight    : TEXCOORD5;
             };
 
             Texture2D _NoiseMap;
-            SamplerState sampler_NoiseMap;
             Texture2D _NormalMap;
-            SamplerState sampler_NormalMap;
+
+            // Sử dụng các SamplerState định sẵn của URP để bắt buộc cơ chế lặp (Repeat) 100% không phụ thuộc thiết lập Import của Texture
+            SamplerState sampler_LinearRepeat;
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _ShallowColor;
@@ -100,8 +101,8 @@ Shader "VFX/StylizedWater"
                 float _WaveCrestRange;
                 float _NormalScale1;
                 float _NormalScale2;
-                float4 _NormalSpeed1; // Đổi sang float4 khớp với Vector trong properties để tránh lỗi desync alignment CBuffer
-                float4 _NormalSpeed2; // Đổi sang float4
+                float4 _NormalSpeed1;
+                float4 _NormalSpeed2;
                 float _RefractionStrength;
                 float _WaveHeight;
                 float _WaveScale;
@@ -155,12 +156,12 @@ Shader "VFX/StylizedWater"
                 // Tính toán tọa độ màn hình (Screen UV)
                 float2 screenUv = input.positionCS.xy / _ScreenParams.xy;
 
-                // 1. Đọc và hòa trộn 2 lớp Map Pháp tuyến (Normal Map) chuyển động chéo nhau
+                // 1. Đọc và hòa trộn 2 lớp Map Pháp tuyến (Normal Map) chuyển động chéo nhau (Ép Sampler Repeat)
                 float2 normalUv1 = input.worldPos.xz * _NormalScale1 + _NormalSpeed1.xy * _Time.y;
                 float2 normalUv2 = input.worldPos.xz * _NormalScale2 + _NormalSpeed2.xy * _Time.y;
                 
-                float3 normal1 = UnpackNormal(_NormalMap.Sample(sampler_NormalMap, normalUv1));
-                float3 normal2 = UnpackNormal(_NormalMap.Sample(sampler_NormalMap, normalUv2));
+                float3 normal1 = UnpackNormal(_NormalMap.Sample(sampler_LinearRepeat, normalUv1));
+                float3 normal2 = UnpackNormal(_NormalMap.Sample(sampler_LinearRepeat, normalUv2));
                 
                 // Hòa trộn vector pháp tuyến chi tiết
                 float3 blendedNormalMap = normalize(float3(normal1.xy + normal2.xy, normal1.z * normal2.z));
@@ -204,16 +205,21 @@ Shader "VFX/StylizedWater"
                 float3 finalWaterColor = lerp(sceneColor, reflectedColor, opacity);
 
                 // 6. Tạo bọt nước xô bờ gợn sóng cách điệu (Stylized Shoreline Foam)
-                float2 foamUv = input.worldPos.xz * _FoamNoiseScale + blendedNormalMap.xy * 0.2 + float2(_Time.y * 0.12, _Time.y * 0.06);
-                float foamNoise = _NoiseMap.Sample(sampler_NoiseMap, foamUv).r;
+                float2 foamUv = input.worldPos.xz * _FoamNoiseScale + blendedNormalMap.xy * 0.15 + float2(_Time.y * 0.12, _Time.y * 0.06);
+                float foamNoise = _NoiseMap.Sample(sampler_LinearRepeat, foamUv).r;
                 
-                // A. Bọt xô bờ (Shoreline foam)
-                float shoreFoamFactor = saturate(1.0 - depthDiff / _FoamDistance);
-                float shoreFoamMask = smoothstep(0.42, 0.48, shoreFoamFactor + foamNoise * _FoamNoiseWeight);
+                // A. Bọt xô bờ (Shoreline foam) - Sửa lỗi viền bọt răng cưa rách nát ở rìa không có đáy nước (Skybox)
+                float shoreFoamMask = 0.0;
+                if (sceneZ > screenZ) // Chỉ sinh bọt nếu có thực thể nằm DƯỚI mặt nước (tránh lỗi mép bầu trời)
+                {
+                    float shoreFoamFactor = saturate(1.0 - depthDiff / _FoamDistance);
+                    shoreFoamMask = smoothstep(0.42, 0.48, shoreFoamFactor + foamNoise * _FoamNoiseWeight);
+                }
 
-                // B. Bọt đỉnh sóng (Wave Crest foam) - Tự động nổi bọt trắng xóa trên ngọn các con sóng nhấp nhô di chuyển ngoài khơi
+                // B. Bọt đỉnh sóng (Wave Crest foam) - Phá vỡ các đường bọt song song dẹt thành các mảng bọt trôi nổi bằng phép nhân nhiễu
                 float waveCrestFactor = saturate((input.waveHeight - _WaveCrestThreshold) / _WaveCrestRange);
-                float waveCrestMask = smoothstep(0.45, 0.52, waveCrestFactor + foamNoise * _FoamNoiseWeight);
+                float waveCrestNoise = _NoiseMap.Sample(sampler_LinearRepeat, foamUv * 1.6).r;
+                float waveCrestMask = smoothstep(0.48, 0.55, waveCrestFactor * waveCrestNoise * 2.3); // Nhân tỉ lệ xé nhỏ
 
                 // Gộp chung hai loại bọt nước
                 float foamCutout = max(shoreFoamMask, waveCrestMask);
@@ -223,8 +229,8 @@ Shader "VFX/StylizedWater"
                 // Dùng chính véc-tơ pháp tuyến bẻ cong UV vân nắng tạo hình rực sáng hữu cơ uốn lượn
                 float2 causticsUv1 = input.worldPos.xz * _NoiseScale * 0.06 + blendedNormalMap.xy * 0.12 + float2(_Time.y * 0.04, _Time.y * 0.02);
                 float2 causticsUv2 = input.worldPos.xz * _NoiseScale * 0.082 - blendedNormalMap.xy * 0.1 + float2(_Time.y * -0.03, _Time.y * 0.05);
-                float noiseVal1 = _NoiseMap.Sample(sampler_NoiseMap, causticsUv1).r;
-                float noiseVal2 = _NoiseMap.Sample(sampler_NoiseMap, causticsUv2).r;
+                float noiseVal1 = _NoiseMap.Sample(sampler_LinearRepeat, causticsUv1).r;
+                float noiseVal2 = _NoiseMap.Sample(sampler_LinearRepeat, causticsUv2).r;
                 float caustics = noiseVal1 * noiseVal2;
                 
                 float causticsMask = smoothstep(_CausticsCutoff, _CausticsCutoff + 0.1, caustics);
