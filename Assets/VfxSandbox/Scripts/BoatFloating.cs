@@ -205,8 +205,9 @@ namespace VfxSandbox
             float along = Vector2.Dot(toBoat, boatForward);
             float perp = Mathf.Abs(Vector2.Dot(toBoat, boatRight));
             
-            float vWiggle = Mathf.Sin(along * 0.9f + perp * 0.5f + time * 1.5f) * 0.7f;
-            float vPhase = (perp * 2.2f + along * 0.8f + vWiggle) * rippleScale - time * rippleSpeed;
+            float curvedAlong = along + perp * perp * 0.14f;
+            float vWiggle = Mathf.Sin(along * 0.45f + perp * 0.22f + time * 1.5f) * 1.35f;
+            float vPhase = (perp * 2.2f + curvedAlong * 0.8f + vWiggle) * rippleScale - time * rippleSpeed;
             float vDecay = Mathf.Exp(-(perp * 0.8f + along * 0.4f) * rippleDecay);
             
             // Hàm smoothstep thủ công tương đương smoothstep(0.2f, -0.6f, along)

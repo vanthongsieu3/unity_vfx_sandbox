@@ -279,28 +279,32 @@ Shader "VFX/StylizedWater"
                 float along = dot(toBoat, boatForward);
                 float perp = abs(dot(toBoat, boatRight));
                 
-                // Thêm độ uốn lượn toán học để sóng rẽ nước cong mềm mại tự nhiên chứ không thẳng tắp
-                float vWiggle = sin(along * 0.9 + perp * 0.5 + _Time.y * 1.5) * 0.7;
-                float vPhase = (perp * 2.2 + along * 0.8 + vWiggle) * _RippleScale - _Time.y * _RippleSpeed;
+                // Cải tiến uốn cong phi tuyến (quadratic curve) và tạo nếp sóng uốn lượn hình chữ S mềm mại (Kelvin Wake bending)
+                float curvedAlong = along + perp * perp * 0.14;
+                float vWiggle = sin(along * 0.45 + perp * 0.22 + _Time.y * 1.5) * 1.35;
+                float vPhase = (perp * 2.2 + curvedAlong * 0.8 + vWiggle) * _RippleScale - _Time.y * _RippleSpeed;
                 float vDecay = exp(-(perp * 0.8 + along * 0.4) * _RippleDecay);
                 
                 // Giới hạn vùng ảnh hưởng ở phía sau mũi thuyền và tỏa rộng dần (hoàn toàn triệt tiêu sóng ở trước mũi tàu)
                 float vWeight = smoothstep(0.2, -0.6, along) * smoothstep(6.0, 0.0, perp);
                 float vWake = sin(vPhase) * (_RippleHeight * 1.8) * vDecay * vWeight * speedFactor;
                 
-                // Đạo hàm cho Sóng chữ V (kèm đạo hàm vWiggle)
+                // Đạo hàm cho Sóng chữ V (kèm đạo hàm curvedAlong và vWiggle tần số thấp)
                 float perpSign = sign(dot(toBoat, boatRight));
                 float d_along_dx = boatForward.x;
                 float d_along_dz = boatForward.y;
                 float d_perp_dx = boatRight.x * perpSign;
                 float d_perp_dz = boatRight.y * perpSign;
                 
-                float wCos = cos(along * 0.9 + perp * 0.5 + _Time.y * 1.5) * 0.7;
-                float d_vWiggle_dx = wCos * (0.9 * d_along_dx + 0.5 * d_perp_dx);
-                float d_vWiggle_dz = wCos * (0.9 * d_along_dz + 0.5 * d_perp_dz);
+                float d_curvedAlong_dx = d_along_dx + 0.28 * perp * d_perp_dx;
+                float d_curvedAlong_dz = d_along_dz + 0.28 * perp * d_perp_dz;
                 
-                float d_vPhase_dx = (d_perp_dx * 2.2 + d_along_dx * 0.8 + d_vWiggle_dx) * _RippleScale;
-                float d_vPhase_dz = (d_perp_dz * 2.2 + d_along_dz * 0.8 + d_vWiggle_dz) * _RippleScale;
+                float wCos = cos(along * 0.45 + perp * 0.22 + _Time.y * 1.5) * 1.35;
+                float d_vWiggle_dx = wCos * (0.45 * d_along_dx + 0.22 * d_perp_dx);
+                float d_vWiggle_dz = wCos * (0.45 * d_along_dz + 0.22 * d_perp_dz);
+                
+                float d_vPhase_dx = (d_perp_dx * 2.2 + d_curvedAlong_dx * 0.8 + d_vWiggle_dx) * _RippleScale;
+                float d_vPhase_dz = (d_perp_dz * 2.2 + d_curvedAlong_dz * 0.8 + d_vWiggle_dz) * _RippleScale;
                 float dvWake_dx = cos(vPhase) * d_vPhase_dx * (_RippleHeight * 1.8) * vDecay * vWeight * speedFactor;
                 float dvWake_dz = cos(vPhase) * d_vPhase_dz * (_RippleHeight * 1.8) * vDecay * vWeight * speedFactor;
 
@@ -517,7 +521,9 @@ Shader "VFX/StylizedWater"
                 // 1. Sóng rẽ nước chữ V (Wake) chạy dọc hai bên mạn và kéo dài về phía sau
                 float along = dot(toBoat, boatForward);
                 float perp = abs(dot(toBoat, boatRight));
-                float vPhase = (perp * 2.2 + along * 0.8) * _RippleScale - _Time.y * _RippleSpeed;
+                float curvedAlong = along + perp * perp * 0.14;
+                float vWiggle = sin(along * 0.45 + perp * 0.22 + _Time.y * 1.5) * 1.35;
+                float vPhase = (perp * 2.2 + curvedAlong * 0.8 + vWiggle) * _RippleScale - _Time.y * _RippleSpeed;
                 float vDecay = exp(-(perp * 0.8 + along * 0.4) * _RippleDecay);
                 
                 // Giới hạn vùng ảnh hưởng ở phía sau mũi thuyền và tỏa rộng dần
