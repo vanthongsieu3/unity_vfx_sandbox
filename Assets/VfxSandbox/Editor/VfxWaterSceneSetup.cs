@@ -271,23 +271,33 @@ namespace VfxSandbox.Editor
                 bubbleMat = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit"));
                 AssetDatabase.CreateAsset(bubbleMat, bubbleMatPath);
             }
+            // Thiết lập chế độ Transparent (trong suốt Alpha Blend) cho hạt để tránh viền đen/xám vuông
+            bubbleMat.SetFloat("_Surface", 1.0f); // 1 = Transparent
+            bubbleMat.SetFloat("_Blend", 0.0f);   // 0 = Alpha Blend
+            bubbleMat.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            bubbleMat.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            bubbleMat.SetFloat("_ZWrite", 0.0f);  // Không ghi vào Z-Buffer tránh đè cắt hạt
+            bubbleMat.DisableKeyword("_ALPHATEST_ON");
+            bubbleMat.EnableKeyword("_ALPHABLEND_ON");
+            bubbleMat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+
             Texture2D bubbleTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_bubble_01.png");
             if (bubbleTex != null)
             {
                 bubbleMat.SetTexture("_BaseMap", bubbleTex);
             }
 
-            // A. Bọt khí nền trôi nổi tự do (Ambient Ocean Bubbles)
-            AddBubbleParticleSystem(waterPlane, "Ambient_Ocean_Bubbles", new Vector3(0f, -0.4f, 1.5f), new Vector3(12f, 0.5f, 12f), 35f, 0.05f, 0.16f, 0.05f, 0.15f, 2.5f, 4.5f, -0.04f, bubbleMat);
+            // A. Bọt khí nền trôi nổi tự do (Ambient Ocean Bubbles) - sinh sát mặt nước, sủi tăm rất nhỏ rồi tan
+            AddBubbleParticleSystem(waterPlane, "Ambient_Ocean_Bubbles", new Vector3(0f, -0.05f, 1.5f), new Vector3(12f, 0.1f, 12f), 30f, 0.02f, 0.08f, 0.01f, 0.05f, 0.8f, 1.6f, -0.01f, bubbleMat);
 
-            // B. Bọt khí sục sôi sủi bọt quanh cọc đá 1 (Rock 1 Churning Bubbles)
-            AddBubbleParticleSystem(rock1, "Rock1_Churn_Bubbles", new Vector3(0f, -0.4f, 0f), new Vector3(1.5f, 0.2f, 1.5f), 15f, 0.03f, 0.12f, 0.08f, 0.25f, 1.5f, 2.8f, -0.06f, bubbleMat);
+            // B. Bọt khí sục sôi sủi bọt quanh cọc đá 1 (Rock 1 Churning Bubbles) - sủi bọt nhỏ, nhanh tan ở chân cọc
+            AddBubbleParticleSystem(rock1, "Rock1_Churn_Bubbles", new Vector3(0f, -0.05f, 0f), new Vector3(1.2f, 0.1f, 1.2f), 12f, 0.015f, 0.06f, 0.02f, 0.08f, 0.6f, 1.3f, -0.02f, bubbleMat);
 
-            // C. Bọt khí sục sôi sủi bọt quanh cọc đá 2 (Rock 2 Churning Bubbles)
-            AddBubbleParticleSystem(rock2, "Rock2_Churn_Bubbles", new Vector3(0f, -0.4f, 0f), new Vector3(1.5f, 0.2f, 1.5f), 15f, 0.03f, 0.12f, 0.08f, 0.25f, 1.5f, 2.8f, -0.06f, bubbleMat);
+            // C. Bọt khí sục sôi sủi bọt quanh cọc đá 2 (Rock 2 Churning Bubbles) - sủi bọt nhỏ, nhanh tan ở chân cọc
+            AddBubbleParticleSystem(rock2, "Rock2_Churn_Bubbles", new Vector3(0f, -0.05f, 0f), new Vector3(1.2f, 0.1f, 1.2f), 12f, 0.015f, 0.06f, 0.02f, 0.08f, 0.6f, 1.3f, -0.02f, bubbleMat);
 
-            // D. Bọt khí rẽ sóng dưới đáy thuyền (Boat Churning Bubbles)
-            AddBubbleParticleSystem(boatRoot, "Boat_Churn_Bubbles", new Vector3(0f, -0.2f, -0.2f), new Vector3(1.0f, 0.2f, 2.0f), 20f, 0.04f, 0.14f, 0.05f, 0.18f, 1.8f, 3.2f, -0.05f, bubbleMat);
+            // D. Bọt khí rẽ sóng dưới đáy thuyền (Boat Churning Bubbles) - sủi bọt và tan ngay dưới lườn thuyền
+            AddBubbleParticleSystem(boatRoot, "Boat_Churn_Bubbles", new Vector3(0f, -0.05f, -0.2f), new Vector3(0.8f, 0.1f, 1.8f), 16f, 0.015f, 0.07f, 0.02f, 0.08f, 0.6f, 1.3f, -0.02f, bubbleMat);
 
             // 9. Lưu Scene
             string scenePath = sceneDir + "/VfxWaterDemoScene.unity";
