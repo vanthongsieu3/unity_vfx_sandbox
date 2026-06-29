@@ -283,7 +283,7 @@ Shader "VFX/StylizedWater"
                 float curvedAlong = along + perp * perp * 0.14;
                 float vWiggle = sin(along * 0.45 + perp * 0.22 + _Time.y * 1.5) * 1.35;
                 float vPhase = (perp * 2.2 + curvedAlong * 0.8 + vWiggle) * _RippleScale - _Time.y * _RippleSpeed;
-                float vDecay = exp(-(perp * 0.8 + along * 0.4) * _RippleDecay);
+                float vDecay = exp(-(perp * 0.8 - along * 0.4) * _RippleDecay);
                 
                 // Giới hạn vùng ảnh hưởng ở phía sau mũi thuyền và tỏa rộng dần (hoàn toàn triệt tiêu sóng ở trước mũi tàu)
                 float vWeight = smoothstep(0.2, -0.6, along) * smoothstep(6.0, 0.0, perp);
@@ -524,7 +524,7 @@ Shader "VFX/StylizedWater"
                 float curvedAlong = along + perp * perp * 0.14;
                 float vWiggle = sin(along * 0.45 + perp * 0.22 + _Time.y * 1.5) * 1.35;
                 float vPhase = (perp * 2.2 + curvedAlong * 0.8 + vWiggle) * _RippleScale - _Time.y * _RippleSpeed;
-                float vDecay = exp(-(perp * 0.8 + along * 0.4) * _RippleDecay);
+                float vDecay = exp(-(perp * 0.8 - along * 0.4) * _RippleDecay);
                 
                 // Giới hạn vùng ảnh hưởng ở phía sau mũi thuyền và tỏa rộng dần
                 float vWeight = smoothstep(0.2, -0.6, along) * smoothstep(6.0, 0.0, perp);

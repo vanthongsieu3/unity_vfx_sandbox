@@ -41,7 +41,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _BoatLength: 1.5
+    - _BoatLength: 1.08
     - _BoatSpeed: 0
     - _CausticsCutoff: 0.3
     - _CausticsIntensity: 2.2
@@ -74,7 +74,7 @@ Material:
     - _WaveScale: 0.85
     - _WaveSpeed: 1.6
     m_Colors:
-    - _BoatDir: {r: 0.703101, g: 0.7109846, b: 0, a: 0}
+    - _BoatDir: {r: 0.70579135, g: 0.7082783, b: 0, a: 0}
     - _BoatPos: {r: -0.5, g: -1, b: 0, a: 0}
     - _CausticsColor: {r: 0.65, g: 1, b: 0.92, a: 1}
     - _DeepColor: {r: 0.01, g: 0.12, b: 0.38, a: 0.98}

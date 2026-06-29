@@ -208,7 +208,7 @@ namespace VfxSandbox
             float curvedAlong = along + perp * perp * 0.14f;
             float vWiggle = Mathf.Sin(along * 0.45f + perp * 0.22f + time * 1.5f) * 1.35f;
             float vPhase = (perp * 2.2f + curvedAlong * 0.8f + vWiggle) * rippleScale - time * rippleSpeed;
-            float vDecay = Mathf.Exp(-(perp * 0.8f + along * 0.4f) * rippleDecay);
+            float vDecay = Mathf.Exp(-(perp * 0.8f - along * 0.4f) * rippleDecay);
             
             // Hàm smoothstep thủ công tương đương smoothstep(0.2f, -0.6f, along)
             float tAlong = Mathf.Clamp01((0.2f - along) / (0.2f - (-0.6f)));
