@@ -19,6 +19,7 @@ namespace VfxSandbox.Editor
             GenerateRockMesh(dir + "/vfx_mesh_rock_01.asset");
             GenerateConeMesh(dir + "/vfx_mesh_cone_01.asset");
             GenerateRingMesh(dir + "/vfx_mesh_ring_01.asset"); // Tạo Mesh vòng khuyên/donut
+            GenerateSlashMesh(dir + "/vfx_mesh_slash_01.asset"); // Tạo Mesh cung chém chéo (Slash Arc)
 
             AssetDatabase.Refresh();
             Debug.Log("✓ Procedural meshes generated successfully in Assets/VfxSandbox/Meshes");
@@ -264,6 +265,63 @@ namespace VfxSandbox.Editor
                 triangles[triIndex++] = next * 2;
 
                 // Triangle 2
+                triangles[triIndex++] = next * 2;
+                triangles[triIndex++] = i * 2 + 1;
+                triangles[triIndex++] = next * 2 + 1;
+            }
+
+            mesh.vertices = vertices;
+            mesh.uv = uvs;
+            mesh.triangles = triangles;
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+
+            AssetDatabase.CreateAsset(mesh, path);
+        }
+
+        public static void GenerateSlashMesh(string path)
+        {
+            Mesh mesh = new Mesh();
+            mesh.name = "vfx_mesh_slash_01";
+
+            int segments = 24;
+            float arcAngle = 140f * Mathf.Deg2Rad; // Cung chém 140 độ
+            float innerRadius = 2.0f;
+            float outerRadius = 3.2f;
+
+            int vertCount = (segments + 1) * 2;
+            Vector3[] vertices = new Vector3[vertCount];
+            Vector2[] uvs = new Vector2[vertCount];
+            int[] triangles = new int[segments * 6];
+
+            for (int i = 0; i <= segments; i++)
+            {
+                float ratio = (float)i / segments;
+                // Căn giữa cung chém xoay quanh trục Z hướng tới trước (-arcAngle/2 đến +arcAngle/2)
+                float angle = -arcAngle * 0.5f + ratio * arcAngle;
+                float cos = Mathf.Cos(angle);
+                float sin = Mathf.Sin(angle);
+
+                // Điểm đỉnh trong (Inner radius)
+                vertices[i * 2] = new Vector3(sin * innerRadius, 0f, cos * innerRadius);
+                uvs[i * 2] = new Vector2(ratio, 0f); // U chạy theo chiều dọc cung, V = 0 ở trong
+
+                // Điểm đỉnh ngoài (Outer radius)
+                vertices[i * 2 + 1] = new Vector3(sin * outerRadius, 0f, cos * outerRadius);
+                uvs[i * 2 + 1] = new Vector2(ratio, 1f); // V = 1 ở ngoài
+            }
+
+            int triIndex = 0;
+            for (int i = 0; i < segments; i++)
+            {
+                int next = i + 1;
+
+                // Tam giác 1
+                triangles[triIndex++] = i * 2;
+                triangles[triIndex++] = i * 2 + 1;
+                triangles[triIndex++] = next * 2;
+
+                // Tam giác 2
                 triangles[triIndex++] = next * 2;
                 triangles[triIndex++] = i * 2 + 1;
                 triangles[triIndex++] = next * 2 + 1;
