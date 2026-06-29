@@ -49,9 +49,10 @@ Shader "VFX/StylizedWater"
 
         [Header(Shimmering Caustics)]
         _NoiseMap("Seamless Noise Map", 2D) = "gray" {}
+        _CausticsMap("Caustics Map (Voronoi)", 2D) = "white" {}
         _NoiseScale("Caustics Scale", Float) = 6.0
         _CausticsColor("Caustics Color", Color) = (0.7, 1.0, 0.95, 1.0)   // Màu vân sóng nắng
-        _CausticsCutoff("Caustics Cutoff", Range(0.1, 0.6)) = 0.3         // Độ sắc nét vân nắng
+        _CausticsPower("Caustics Power (Sharpness)", Range(1.0, 15.0)) = 5.0 // Cường độ lũy thừa tạo vân nét sắc sảo
         _CausticsIntensity("Caustics Intensity", Float) = 2.0
 
         [Header(Sky Specular and Reflections)]
@@ -102,6 +103,7 @@ Shader "VFX/StylizedWater"
 
             Texture2D _NoiseMap;
             Texture2D _NormalMap;
+            Texture2D _CausticsMap;
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _ShallowColor;
@@ -139,7 +141,7 @@ Shader "VFX/StylizedWater"
                 float4 _NoiseMap_ST;
                 float _NoiseScale;
                 float4 _CausticsColor;
-                float _CausticsCutoff;
+                float _CausticsPower;
                 float _CausticsIntensity;
                 float4 _SkyColor;
                 float _ReflectionStrength;
@@ -334,16 +336,17 @@ Shader "VFX/StylizedWater"
                 float foamCutout = max(max(max(shoreFoamMask, waveCrestMask), pillarFoam), outlineMask);
                 finalWaterColor = lerp(finalWaterColor, _FoamColor.rgb, foamCutout * _FoamColor.a);
 
-                // 7. Tạo vân nắng lung linh khúc xạ (Distorted Caustics)
+                // 7. Tạo vân nắng lung linh khúc xạ (Distorted Caustics) bằng lưới vân Voronoi sắc sảo
                 float2 causticsUv1 = input.worldPos.xz * _NoiseScale * 0.06 + blendedNormalMap.xy * 0.12 + float2(_Time.y * 0.04, _Time.y * 0.02);
                 float2 causticsUv2 = input.worldPos.xz * _NoiseScale * 0.082 - blendedNormalMap.xy * 0.1 + float2(_Time.y * -0.03, _Time.y * 0.05);
-                float noiseVal1 = _NoiseMap.Sample(sampler_LinearRepeat, causticsUv1).r;
-                float noiseVal2 = _NoiseMap.Sample(sampler_LinearRepeat, causticsUv2).r;
+                float noiseVal1 = _CausticsMap.Sample(sampler_LinearRepeat, causticsUv1).r;
+                float noiseVal2 = _CausticsMap.Sample(sampler_LinearRepeat, causticsUv2).r;
                 float caustics = noiseVal1 * noiseVal2;
                 
-                float causticsMask = smoothstep(_CausticsCutoff, _CausticsCutoff + 0.1, caustics);
+                // Lũy thừa pow như Shader Graph để tạo viền vân nắng siêu mảnh, sắc và long lanh
+                float causticsMask = pow(caustics, _CausticsPower) * _CausticsIntensity;
                 float causticsFade = smoothstep(0.08, 0.35, depthDiff);
-                finalWaterColor += causticsMask * _CausticsColor.rgb * _CausticsIntensity * causticsFade * (1.0 - foamCutout);
+                finalWaterColor += causticsMask * _CausticsColor.rgb * causticsFade * (1.0 - foamCutout);
 
                 // 8. Hiệu ứng Thấu quang Đỉnh Sóng (Subsurface Scattering / Wave Translucency)
                 Light mainLight = GetMainLight();

@@ -16,6 +16,9 @@ namespace VfxSandbox.Editor
             if (!Directory.Exists(sceneDir)) Directory.CreateDirectory(sceneDir);
             if (!Directory.Exists(matDir)) Directory.CreateDirectory(matDir);
 
+            // Tự động sinh/cập nhật toàn bộ Textures (Noise, Normal, Caustics) trước khi nạp
+            ProceduralTextureGenerator.Generate();
+
             // 1. Dựng các vật liệu (Materials)
             // A. Vật liệu nước cách điệu (Stylized Water Material)
             string waterMatPath = matDir + "/mat_stylized_water.mat";
@@ -28,6 +31,7 @@ namespace VfxSandbox.Editor
             
             Texture2D noiseTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_noise_01.png");
             Texture2D normalTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_water_normal.png");
+            Texture2D causticsTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_water_caustics.png");
             if (noiseTex != null)
             {
                 waterMat.SetTexture("_NoiseMap", noiseTex);
@@ -35,6 +39,10 @@ namespace VfxSandbox.Editor
             if (normalTex != null)
             {
                 waterMat.SetTexture("_NormalMap", normalTex);
+            }
+            if (causticsTex != null)
+            {
+                waterMat.SetTexture("_CausticsMap", causticsTex);
             }
 
             // Gán các thông số màu sắc nước lung linh PC-grade
@@ -59,8 +67,8 @@ namespace VfxSandbox.Editor
             waterMat.SetFloat("_WaveHeight", 0.22f); // Sóng nhấp nhô tuyệt đẹp
             waterMat.SetFloat("_WaveScale", 0.85f);
             waterMat.SetFloat("_WaveSpeed", 1.6f);
-            waterMat.SetFloat("_CausticsCutoff", 0.3f);
-            waterMat.SetFloat("_CausticsIntensity", 2.0f);
+            waterMat.SetFloat("_CausticsPower", 6.5f); // Tăng lũy thừa tạo gợn sóng nắng siêu long lanh sắc sảo
+            waterMat.SetFloat("_CausticsIntensity", 2.2f);
             waterMat.SetColor("_CausticsColor", new Color(0.65f, 1.0f, 0.92f, 1.0f));
             waterMat.SetColor("_SkyColor", new Color(0.45f, 0.68f, 0.9f, 1.0f));
             waterMat.SetFloat("_ReflectionStrength", 0.75f);

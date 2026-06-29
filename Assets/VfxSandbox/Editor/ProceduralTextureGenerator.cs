@@ -22,6 +22,7 @@ namespace VfxSandbox.Editor
             GenerateRampVoidTexture(dir + "/vfx_tex_ramp_void.png", 256); // Sinh màu chuyển Void/Kassadin
             GenerateRockTexture(dir + "/vfx_tex_rock_01.png", 256);
             GenerateWaterNormal(dir + "/vfx_tex_water_normal.png", 256); // Sinh map pháp tuyến nước cuộn sóng mịn màng
+            GenerateWaterCaustics(dir + "/vfx_tex_water_caustics.png", 256); // Sinh map vân caustics (gợn nắng tròn Voronoi) sắc sảo
 
             AssetDatabase.Refresh();
             Debug.Log("✓ Procedural textures generated successfully in Assets/VfxSandbox/Textures");
@@ -262,6 +263,75 @@ namespace VfxSandbox.Editor
                 }
             }
 
+            tex.Apply();
+            byte[] bytes = tex.EncodeToPNG();
+            File.WriteAllBytes(path, bytes);
+            DestroyImmediate(tex);
+        }
+
+        private static void GenerateWaterCaustics(string path, int size)
+        {
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, true);
+            int gridCount = 8;
+            Vector2[] points = new Vector2[gridCount * gridCount];
+            
+            // Khởi tạo các điểm ngẫu nhiên trong lưới
+            Random.InitState(42);
+            for (int cy = 0; cy < gridCount; cy++)
+            {
+                for (int cx = 0; cx < gridCount; cx++)
+                {
+                    float ox = Random.value;
+                    float oy = Random.value;
+                    points[cy * gridCount + cx] = new Vector2(cx + ox, cy + oy);
+                }
+            }
+
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float u = (float)x / size;
+                    float v = (float)y / size;
+                    
+                    float px = u * gridCount;
+                    float py = v * gridCount;
+                    
+                    float minDist = 100f;
+                    
+                    // Duyệt các ô lân cận để tìm khoảng cách nhỏ nhất (tính toán bao quanh cho Seamless)
+                    for (int dy = -1; dy <= 1; dy++)
+                    {
+                        for (int dx = -1; dx <= 1; dx++)
+                        {
+                            int gcx = Mathf.FloorToInt(px) + dx;
+                            int gcy = Mathf.FloorToInt(py) + dy;
+                            
+                            // Bao quanh tuần hoàn (Wrap around for tiling)
+                            int wrapX = (gcx + gridCount) % gridCount;
+                            int wrapY = (gcy + gridCount) % gridCount;
+                            
+                            Vector2 pt = points[wrapY * gridCount + wrapX];
+                            
+                            // Tính khoảng cách có tính đến việc bao quanh lưới
+                            float diffX = px - (gcx + (pt.x - wrapX));
+                            float diffY = py - (gcy + (pt.y - wrapY));
+                            float dist = Mathf.Sqrt(diffX * diffX + diffY * diffY);
+                            
+                            if (dist < minDist)
+                            {
+                                minDist = dist;
+                            }
+                        }
+                    }
+                    
+                    // Tạo viền sắc nét giống caustics (gợn nắng nước) bằng hàm pow
+                    float val = Mathf.Clamp01(1.0f - minDist);
+                    float caustics = Mathf.Pow(val, 4.0f); // Tăng độ sắc sảo cho vân nắng
+                    
+                    tex.SetPixel(x, y, new Color(caustics, caustics, caustics, 1.0f));
+                }
+            }
             tex.Apply();
             byte[] bytes = tex.EncodeToPNG();
             File.WriteAllBytes(path, bytes);
