@@ -220,6 +220,9 @@ namespace VfxSandbox.Editor
             camera.tag = "MainCamera";
             camObj.transform.position = new Vector3(0f, 3.8f, -7.5f);
             camObj.transform.rotation = Quaternion.Euler(22f, 0f, 0f);
+            var followScript = camObj.AddComponent<CameraFollow>();
+            followScript.offset = new Vector3(0f, 3.8f, -7.5f);
+            followScript.smoothSpeed = 6.0f;
 
             // BẮT BUỘC: Kích hoạt Opaque Texture và Depth Texture trên Camera để URP vẽ được bọt nước và trong suốt
             var cameraData = camObj.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
@@ -239,6 +242,7 @@ namespace VfxSandbox.Editor
             GameObject boatRoot = new GameObject("Stylized_Sailboat");
             boatRoot.transform.position = new Vector3(-0.5f, 0f, -1.0f); // Đặt ở vị trí trung tâm lệch nhẹ
             boatRoot.transform.rotation = Quaternion.Euler(0f, 45f, 0f); // Xoay chéo góc 45 độ so với chiều sóng
+            followScript.target = boatRoot.transform;
 
             // Tạo vật liệu gỗ và cánh buồm nhanh trong thư mục Asset để lưu trữ sạch sẽ
             string woodMatPath = matDir + "/mat_boat_wood.mat";
