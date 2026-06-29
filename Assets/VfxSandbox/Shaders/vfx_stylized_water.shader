@@ -329,7 +329,11 @@ Shader "VFX/StylizedWater"
                 if (rawDepth > 0.0001)
                 {
                     float outlineFactor = saturate(1.0 - max(0.0, depthDiff) / _OutlineDistance);
-                    outlineMask = smoothstep(0.15, 0.38, outlineFactor); // Tạo viền trắng đục đặc sắc sảo
+                    // Tần số nhiễu thấp hơn kết hợp cuộn chậm để tạo các đường lượn bọt uốn sóng hình bóng mây mượt mà chuẩn Zelda/Genshin
+                    float2 outlineFoamUv = input.worldPos.xz * (_FoamNoiseScale * 0.45) + blendedNormalMap.xy * 0.08 + float2(_Time.y * 0.06, _Time.y * 0.03);
+                    float outlineNoise = _NoiseMap.Sample(sampler_LinearRepeat, outlineFoamUv).r;
+                    
+                    outlineMask = smoothstep(0.42, 0.48, outlineFactor + outlineNoise * _FoamNoiseWeight);
                 }
 
                 // Gộp chung bốn loại bọt nước
