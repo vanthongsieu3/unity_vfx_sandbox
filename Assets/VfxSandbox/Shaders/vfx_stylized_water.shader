@@ -308,7 +308,7 @@ Shader "VFX/StylizedWater"
                 float3 finalWaterColor = lerp(sceneColor, reflectedColor, opacity);
 
                 // 6. Tạo bọt nước xô bờ gợn sóng cách điệu (Stylized Shoreline Foam)
-                float2 foamUv = input.worldPos.xz * _FoamNoiseScale + blendedNormalMap.xy * 0.15 + float2(_Time.y * 0.12, _Time.y * 0.06);
+                float2 foamUv = input.worldPos.xz * (_FoamNoiseScale * 0.06) + blendedNormalMap.xy * 0.15 + float2(_Time.y * 0.12, _Time.y * 0.06);
                 float foamNoise = _NoiseMap.Sample(sampler_LinearRepeat, foamUv).r;
                 
                 // A. Bọt xô bờ & cọc (Shoreline & Pillar Intersection foam) với hiệu ứng thủy triều nhấp nhô (Lapping)
@@ -363,7 +363,7 @@ Shader "VFX/StylizedWater"
                 {
                     float outlineFactor = saturate(1.0 - max(0.0, depthDiff) / _OutlineDistance);
                     // Sử dụng vân Voronoi (Caustics Map) cuộn chậm để đục lỗ bong bóng nước tròn trịa giống xà phòng sủi bọt chuẩn Zelda/Genshin
-                    float2 outlineFoamUv = input.worldPos.xz * 0.38 + float2(_Time.y * 0.04, _Time.y * 0.02);
+                    float2 outlineFoamUv = input.worldPos.xz * (_FoamNoiseScale * 0.045) + float2(_Time.y * 0.04, _Time.y * 0.02);
                     float outlineNoise = _CausticsMap.Sample(sampler_LinearRepeat, outlineFoamUv).r;
                     
                     // Lực bọt rách tạo bong bóng: ở gần vật thể bọt đặc trắng tinh, đi xa dần bị đục lỗ và rã thành các mảng trôi nổi nhỏ
