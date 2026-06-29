@@ -14,6 +14,7 @@ namespace VfxSandbox
         public Material shockwaveMaterial;
         public Material groundCracksMaterial;
         public Material emberMaterial;
+        public Material magicCircleMaterial; // Vật liệu vòng tròn ma pháp chuyên biệt
         public Mesh meteorMesh;
         public Mesh debrisMesh;
         public Mesh funnelMesh;
@@ -75,7 +76,7 @@ namespace VfxSandbox
             indicator.transform.localScale = Vector3.zero;
             
             var indicatorRenderer = indicator.GetComponent<Renderer>();
-            indicatorRenderer.material = explosionMaterial; // Dùng vật liệu phát sáng
+            indicatorRenderer.sharedMaterial = magicCircleMaterial != null ? magicCircleMaterial : explosionMaterial;
 
             // Animate indicator scale (từ bé nở ra to)
             float t = 0;
@@ -85,12 +86,19 @@ namespace VfxSandbox
                 float ratio = t / nạpThờiGian;
                 indicator.transform.localScale = Vector3.one * Mathf.Lerp(0f, 6.0f, ratio);
                 
-                // Nhấp nháy độ sáng lúc thiên thạch sắp chạm đất
-                if (indicatorRenderer.material.HasProperty("_Color"))
+                // Nhấp nháy độ sáng lúc thiên thạch sắp chạm đất (Hỗ trợ cả URP _BaseColor và _Color)
+                var mat = indicatorRenderer.material;
+                if (mat.HasProperty("_BaseColor"))
                 {
                     Color col = Color.Lerp(new Color(1f, 0.3f, 0f, 0f), new Color(1f, 0.5f, 0f, 1f), ratio);
                     if (ratio > 0.8f) col *= 2.0f; // rực sáng lên
-                    indicatorRenderer.material.color = col;
+                    mat.SetColor("_BaseColor", col);
+                }
+                else if (mat.HasProperty("_Color"))
+                {
+                    Color col = Color.Lerp(new Color(1f, 0.3f, 0f, 0f), new Color(1f, 0.5f, 0f, 1f), ratio);
+                    if (ratio > 0.8f) col *= 2.0f; // rực sáng lên
+                    mat.SetColor("_Color", col);
                 }
                 yield return null;
             }

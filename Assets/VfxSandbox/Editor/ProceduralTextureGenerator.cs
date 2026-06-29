@@ -15,10 +15,10 @@ namespace VfxSandbox.Editor
                 Directory.CreateDirectory(dir);
             }
 
-            GenerateNoiseTexture(Path.Combine(dir, "vfx_tex_noise_01.png"), 256);
-            GenerateEmberTexture(Path.Combine(dir, "vfx_tex_ember_01.png"), 256);
-            GenerateRampTexture(Path.Combine(dir, "vfx_tex_ramp_01.png"), 256);
-            GenerateRockTexture(Path.Combine(dir, "vfx_tex_rock_01.png"), 256);
+            GenerateNoiseTexture(dir + "/vfx_tex_noise_01.png", 256);
+            GenerateEmberTexture(dir + "/vfx_tex_ember_01.png", 256);
+            GenerateRampTexture(dir + "/vfx_tex_ramp_01.png", 256);
+            GenerateRockTexture(dir + "/vfx_tex_rock_01.png", 256);
 
             AssetDatabase.Refresh();
             Debug.Log("✓ Procedural textures generated successfully in Assets/VfxSandbox/Textures");

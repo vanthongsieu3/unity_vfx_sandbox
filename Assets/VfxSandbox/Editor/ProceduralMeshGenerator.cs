@@ -15,9 +15,9 @@ namespace VfxSandbox.Editor
                 Directory.CreateDirectory(dir);
             }
 
-            GenerateFunnelMesh(Path.Combine(dir, "vfx_mesh_funnel_01.asset"));
-            GenerateRockMesh(Path.Combine(dir, "vfx_mesh_rock_01.asset"));
-            GenerateConeMesh(Path.Combine(dir, "vfx_mesh_cone_01.asset"));
+            GenerateFunnelMesh(dir + "/vfx_mesh_funnel_01.asset");
+            GenerateRockMesh(dir + "/vfx_mesh_rock_01.asset");
+            GenerateConeMesh(dir + "/vfx_mesh_cone_01.asset");
 
             AssetDatabase.Refresh();
             Debug.Log("✓ Procedural meshes generated successfully in Assets/VfxSandbox/Meshes");

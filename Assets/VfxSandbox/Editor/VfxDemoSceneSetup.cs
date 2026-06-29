@@ -89,6 +89,22 @@ namespace VfxSandbox.Editor
             distMat.SetFloat("_DistortionStrength", 0.05f);
             AssetDatabase.CreateAsset(distMat, distMatPath);
 
+            // B2. Magic Circle Material (Transparent Unlit)
+            string circleMatPath = matDir + "/mat_magic_circle.mat";
+            Material circleMat = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
+            circleMat.SetFloat("_Surface", 1.0f); // Transparent
+            circleMat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            circleMat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            circleMat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            circleMat.SetInt("_ZWrite", 0);
+            circleMat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+            if (circleTex != null)
+            {
+                circleMat.SetTexture("_BaseMap", circleTex);
+                circleMat.SetColor("_BaseColor", new Color(1f, 0.4f, 0f, 1f));
+            }
+            AssetDatabase.CreateAsset(circleMat, circleMatPath);
+
             // C. Ground Cracks Material (Transparent Decal shader hoặc Standard)
             string cracksMatPath = matDir + "/mat_ground_cracks.mat";
             Material cracksMat = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
@@ -178,6 +194,7 @@ namespace VfxSandbox.Editor
             controller.shockwaveMaterial = distMat;
             controller.groundCracksMaterial = cracksMat;
             controller.emberMaterial = flameMat;
+            controller.magicCircleMaterial = circleMat; // Liên kết vật liệu vòng tròn ma pháp mới
 
             controller.meteorMesh = meteorMesh;
             controller.debrisMesh = meteorMesh;
