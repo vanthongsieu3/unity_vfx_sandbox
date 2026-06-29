@@ -91,6 +91,12 @@ namespace VfxSandbox.Editor
             // Đồng bộ tọa độ các cột đá vào shader để vẽ sóng phản xạ vòng tròn hướng tâm
             waterMat.SetVector("_Pillar1Pos", new Vector4(1.2f, 1.5f, 0f, 0f));
             waterMat.SetVector("_Pillar2Pos", new Vector4(-1.8f, 3.2f, 0f, 0f));
+            
+            // Thiết lập sóng phản chấn lan rộng nhiều lớp dập dềnh mờ dần
+            waterMat.SetFloat("_RippleHeight", 0.08f);
+            waterMat.SetFloat("_RippleScale", 6.0f);
+            waterMat.SetFloat("_RippleSpeed", 4.5f);
+            waterMat.SetFloat("_RippleDecay", 0.32f); // Decay thấp để lan tỏa ra xa nhiều lớp nhỏ tới to mờ dần
 
             // B. Vật liệu cát biển dưới đáy nước (Sand Material)
             string sandMatPath = matDir + "/mat_water_sand.mat";
@@ -268,13 +274,19 @@ namespace VfxSandbox.Editor
             // G. Thêm script điều khiển dập dềnh (BoatFloating)
             var floatingScript = boatRoot.AddComponent<BoatFloating>();
             floatingScript.waterRenderer = waterRenderer; // Liên kết trực tiếp Renderer mặt nước
-            floatingScript.floatOffset = -0.1f;
+            floatingScript.floatOffset = 0.18f; // Boong thuyền nổi hẳn trên mặt nước
+            floatingScript.positionLerpSpeed = 12.0f;
+            floatingScript.rotationLerpSpeed = 10.0f;
             floatingScript.waveHeight = 0.22f;
             floatingScript.waveScale = 0.85f;
             floatingScript.waveSpeed = 1.6f;
             floatingScript.waveDirection = new Vector2(0f, -1f);
             floatingScript.pillar1Pos = new Vector2(1.2f, 1.5f);
             floatingScript.pillar2Pos = new Vector2(-1.8f, 3.2f);
+            floatingScript.rippleHeight = 0.08f;
+            floatingScript.rippleScale = 6.0f;
+            floatingScript.rippleSpeed = 4.5f;
+            floatingScript.rippleDecay = 0.32f; // Đồng pha 32% suy hao để lan tỏa xa nhiều lớp
 
             // 8. Tạo hệ thống hạt bọt khí dưới nước cách điệu (Stylized Bubble Particle Systems)
             string bubbleMatPath = matDir + "/mat_particle_bubble.mat";
