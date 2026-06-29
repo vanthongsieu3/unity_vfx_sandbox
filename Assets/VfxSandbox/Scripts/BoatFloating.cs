@@ -17,6 +17,7 @@ namespace VfxSandbox
         public float rippleScale = 5.5f;
         public float rippleSpeed = 4.2f;
         public float rippleDecay = 0.75f;
+        public float boatLength = 1.5f;
 
         [Header("Buoyancy Settings")]
         public float floatOffset = 0.18f; // Chiều cao nổi của thuyền so với mặt nước (dương để deck cao hơn sóng)
@@ -38,10 +39,12 @@ namespace VfxSandbox
                 }
             }
 
-            // Đồng bộ vị trí thuyền vào vật liệu nước để vẽ sóng phản xạ
+            // Đồng bộ vị trí, hướng mũi thuyền và chiều dài vào vật liệu nước để vẽ sóng phản chấn hình capsule
             if (waterRenderer != null && waterRenderer.sharedMaterial != null)
             {
                 waterRenderer.sharedMaterial.SetVector("_BoatPos", new Vector4(transform.position.x, transform.position.z, 0f, 0f));
+                waterRenderer.sharedMaterial.SetVector("_BoatDir", new Vector4(transform.forward.x, transform.forward.z, 0f, 0f));
+                waterRenderer.sharedMaterial.SetFloat("_BoatLength", boatLength);
             }
 
             Vector3 currentPos = transform.position;
@@ -97,8 +100,19 @@ namespace VfxSandbox
             float ripple1 = Mathf.Sin(dist1 * rippleScale - time * rippleSpeed) * rippleHeight * Mathf.Exp(-dist1 * rippleDecay);
             float ripple2 = Mathf.Sin(dist2 * rippleScale - time * rippleSpeed) * rippleHeight * Mathf.Exp(-dist2 * rippleDecay);
 
-            // Bổ sung sóng phản xạ từ chính con thuyền để khớp 100% với mặt nước biến dạng của shader
-            float distBoat = Vector2.Distance(new Vector2(pos.x, pos.z), new Vector2(transform.position.x, transform.position.z));
+            // Bổ sung sóng phản xạ hình capsule từ chính con thuyền để khớp 100% với mặt nước biến dạng của shader
+            Vector2 boatForward = new Vector2(transform.forward.x, transform.forward.z);
+            if (boatForward.sqrMagnitude < 0.001f) boatForward = new Vector2(0f, 1f);
+            else boatForward.Normalize();
+
+            Vector2 boatA = new Vector2(transform.position.x, transform.position.z) - boatForward * (boatLength * 0.5f);
+            Vector2 boatB = new Vector2(transform.position.x, transform.position.z) + boatForward * (boatLength * 0.5f);
+            Vector2 segAB = boatB - boatA;
+            Vector2 vecAP = new Vector2(pos.x, pos.z) - boatA;
+            float tSeg = Mathf.Clamp01(Vector2.Dot(vecAP, segAB) / Mathf.Max(0.001f, Vector2.Dot(segAB, segAB)));
+            Vector2 closestPtBoat = boatA + tSeg * segAB;
+            float distBoat = Vector2.Distance(new Vector2(pos.x, pos.z), closestPtBoat);
+
             float rippleBoat = Mathf.Sin(distBoat * rippleScale - time * rippleSpeed) * (rippleHeight * 0.8f) * Mathf.Exp(-distBoat * (rippleDecay * 1.2f));
 
             return baseHeight + ripple1 + ripple2 + rippleBoat;

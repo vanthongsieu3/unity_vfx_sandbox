@@ -42,6 +42,8 @@ Shader "VFX/StylizedWater"
         _Pillar1Pos("Pillar 1 Position (X, Z)", Vector) = (1.2, 1.5, 0, 0)
         _Pillar2Pos("Pillar 2 Position (X, Z)", Vector) = (-1.8, 3.2, 0, 0)
         _BoatPos("Boat Position (X, Z)", Vector) = (-0.5, -1.0, 0, 0)     // Vị trí thuyền để tính sóng phản xạ
+        _BoatDir("Boat Forward Direction (X, Z)", Vector) = (0.0, 0.0, 1.0, 0.0) // Hướng mũi thuyền
+        _BoatLength("Boat Keel Length", Float) = 1.5                      // Chiều dài sống thuyền để tạo sóng hình capsule
         _RippleHeight("Obstacle Ripple Height", Float) = 0.07             // Độ cao của sóng phản xạ từ cọc
         _RippleScale("Obstacle Ripple Frequency", Float) = 5.5            // Tần số sóng phản xạ từ cọc
         _RippleSpeed("Obstacle Ripple Speed", Float) = 4.2                // Tốc độ lan tỏa sóng phản xạ từ cọc
@@ -134,6 +136,8 @@ Shader "VFX/StylizedWater"
                 float4 _Pillar1Pos;
                 float4 _Pillar2Pos;
                 float4 _BoatPos;
+                float4 _BoatDir;
+                float _BoatLength;
                 float _RippleHeight;
                 float _RippleScale;
                 float _RippleSpeed;
@@ -182,10 +186,19 @@ Shader "VFX/StylizedWater"
 
                 float baseWaveHeight = wave1 + wave2;
 
-                // 2. Thêm sóng phản xạ đồng tâm từ các cọc và thuyền
+                // 2. Thêm sóng phản xạ từ các cọc và thuyền (cọc tròn, thuyền hình capsule sống thuyền)
                 float dist1 = distance(positionWS.xz, _Pillar1Pos.xy);
                 float dist2 = distance(positionWS.xz, _Pillar2Pos.xy);
-                float distBoat = distance(positionWS.xz, _BoatPos.xy);
+                
+                // Khoảng cách hình capsule tới sống thuyền (Boat Keel Segment Projection)
+                float2 boatForward = normalize(_BoatDir.xy);
+                float2 boatA = _BoatPos.xy - boatForward * (_BoatLength * 0.5);
+                float2 boatB = _BoatPos.xy + boatForward * (_BoatLength * 0.5);
+                float2 segAB = boatB - boatA;
+                float2 vecAP = positionWS.xz - boatA;
+                float tSeg = saturate(dot(vecAP, segAB) / max(0.001, dot(segAB, segAB)));
+                float2 closestPtBoat = boatA + tSeg * segAB;
+                float distBoat = distance(positionWS.xz, closestPtBoat);
 
                 float ripple1 = sin(dist1 * _RippleScale - _Time.y * _RippleSpeed) * _RippleHeight * exp(-dist1 * _RippleDecay);
                 float ripple2 = sin(dist2 * _RippleScale - _Time.y * _RippleSpeed) * _RippleHeight * exp(-dist2 * _RippleDecay);
@@ -211,8 +224,8 @@ Shader "VFX/StylizedWater"
                 float dry2_dx = cos(dist2 * _RippleScale - _Time.y * _RippleSpeed) * _RippleScale * rDir2.x * _RippleHeight * exp(-dist2 * _RippleDecay);
                 float dry2_dz = cos(dist2 * _RippleScale - _Time.y * _RippleSpeed) * _RippleScale * rDir2.y * _RippleHeight * exp(-dist2 * _RippleDecay);
 
-                // Đạo hàm cho sóng phản xạ thuyền
-                float2 rDirBoat = (positionWS.xz - _BoatPos.xy) / max(0.001, distBoat);
+                // Đạo hàm cho sóng phản xạ hình capsule của thuyền (dựa trên điểm gần nhất trên sống thuyền)
+                float2 rDirBoat = (positionWS.xz - closestPtBoat) / max(0.001, distBoat);
                 float dryBoat_dx = cos(distBoat * _RippleScale - _Time.y * _RippleSpeed) * _RippleScale * rDirBoat.x * (_RippleHeight * 0.8) * exp(-distBoat * (_RippleDecay * 1.2));
                 float dryBoat_dz = cos(distBoat * _RippleScale - _Time.y * _RippleSpeed) * _RippleScale * rDirBoat.y * (_RippleHeight * 0.8) * exp(-distBoat * (_RippleDecay * 1.2));
 
@@ -306,7 +319,16 @@ Shader "VFX/StylizedWater"
                 // C. Bọt sóng phản xạ đồng tâm lan tỏa từ các cọc và thuyền (Pulsing Concentric Foam Rings)
                 float dist1 = distance(input.worldPos.xz, _Pillar1Pos.xy);
                 float dist2 = distance(input.worldPos.xz, _Pillar2Pos.xy);
-                float distBoat = distance(input.worldPos.xz, _BoatPos.xy);
+                
+                // Khoảng cách hình capsule tới sống thuyền (Boat Keel Segment Projection)
+                float2 boatForward = normalize(_BoatDir.xy);
+                float2 boatA = _BoatPos.xy - boatForward * (_BoatLength * 0.5);
+                float2 boatB = _BoatPos.xy + boatForward * (_BoatLength * 0.5);
+                float2 segAB = boatB - boatA;
+                float2 vecAP = input.worldPos.xz - boatA;
+                float tSeg = saturate(dot(vecAP, segAB) / max(0.001, dot(segAB, segAB)));
+                float2 closestPtBoat = boatA + tSeg * segAB;
+                float distBoat = distance(input.worldPos.xz, closestPtBoat);
                 
                 // Đọc pha sóng phản xạ từ cọc 1, cọc 2 và thuyền
                 float phase1 = dist1 * _RippleScale - _Time.y * _RippleSpeed;
