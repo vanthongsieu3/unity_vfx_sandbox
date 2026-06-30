@@ -4,8 +4,8 @@ Shader "VFX/BoatStencilMask"
     {
         Tags 
         { 
-            "RenderType"="Opaque" 
-            "Queue"="Geometry-1" 
+            "RenderType"="Transparent" 
+            "Queue"="Transparent-1" // Vẽ ngay trước nước (Transparent) để ghi đè Stencil
             "RenderPipeline"="UniversalPipeline"
         }
         
@@ -14,9 +14,11 @@ Shader "VFX/BoatStencilMask"
             Name "StencilMask"
             Tags { "LightMode"="UniversalForward" }
             
-            ColorMask 0 // Tắt hoàn toàn việc ghi màu sắc ra màn hình
-            ZWrite Off  // Tắt ghi Depth Buffer để không chặn các hình vẽ khác
-            Cull Off    // Vẽ cả mặt trước và sau của khối mặt nạ
+            // Khóa hoàn toàn kênh màu bằng cả ColorMask 0 và cơ chế Blend Zero One
+            ColorMask 0
+            Blend Zero One
+            ZWrite Off  // Tắt ghi Depth Buffer
+            Cull Off    // Vẽ hai mặt
             
             Stencil
             {
@@ -49,7 +51,6 @@ Shader "VFX/BoatStencilMask"
 
             half4 frag(Varyings input) : SV_Target
             {
-                // Trả về màu trống, thực tế ColorMask 0 sẽ chặn toàn bộ giá trị này ghi ra màn hình
                 return half4(0, 0, 0, 0);
             }
             ENDHLSL
