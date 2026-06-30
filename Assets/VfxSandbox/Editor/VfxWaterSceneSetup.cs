@@ -461,9 +461,9 @@ namespace VfxSandbox.Editor
                 GameObject maskVol = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 maskVol.name = "Stencil_Mask_Volume";
                 maskVol.transform.SetParent(boatRoot.transform);
-                // Đặt vị trí và tỷ lệ khớp hoàn hảo bên trong lòng thân tàu (Tránh thò ra đuôi/mạn gây thủng nước ngoài tàu)
-                maskVol.transform.localPosition = new Vector3(0f, 0.15f, 0.10f);
-                maskVol.transform.localScale = new Vector3(0.68f, 0.40f, 1.10f);
+                // Đặt vị trí và tỷ lệ khớp hoàn hảo bên trong lòng thân tàu (Tránh thò ra ngoài gây thủng nước)
+                maskVol.transform.localPosition = new Vector3(0f, 0.08f, 0.05f);
+                maskVol.transform.localScale = new Vector3(0.32f, 0.25f, 0.70f);
                 
                 // Gán vật liệu Stencil Mask và tắt toàn bộ đổ bóng/nhận bóng để tránh vẽ đè bóng
                 var maskRenderer = maskVol.GetComponent<MeshRenderer>();
