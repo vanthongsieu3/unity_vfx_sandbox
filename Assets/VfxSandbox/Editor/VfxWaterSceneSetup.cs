@@ -455,8 +455,13 @@ namespace VfxSandbox.Editor
                 maskVol.transform.localPosition = new Vector3(0f, 0.05f, -0.1f);
                 maskVol.transform.localScale = new Vector3(0.76f, 0.45f, 1.35f);
                 
-                // Gán vật liệu Stencil Mask và xoá Collider để tránh va chạm vật lý
-                maskVol.GetComponent<Renderer>().sharedMaterial = maskMat;
+                // Gán vật liệu Stencil Mask và tắt toàn bộ đổ bóng/nhận bóng để tránh vẽ đè bóng
+                var maskRenderer = maskVol.GetComponent<MeshRenderer>();
+                maskRenderer.sharedMaterial = maskMat;
+                maskRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                maskRenderer.receiveShadows = false;
+
+                // Xoá Collider để tránh va chạm vật lý
                 DestroyImmediate(maskVol.GetComponent<Collider>());
             }
             else

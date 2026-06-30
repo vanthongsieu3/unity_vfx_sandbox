@@ -12,6 +12,7 @@ Shader "VFX/BoatStencilMask"
         Pass
         {
             Name "StencilMask"
+            Tags { "LightMode"="UniversalForward" }
             
             ColorMask 0 // Tắt hoàn toàn việc ghi màu sắc ra màn hình
             ZWrite Off  // Tắt ghi Depth Buffer để không chặn các hình vẽ khác
