@@ -289,6 +289,13 @@ namespace VfxSandbox.Editor
                 GameObject boatModel = PrefabUtility.InstantiatePrefab(fbxPrefab) as GameObject;
                 boatModel.name = "Boat_Model";
                 boatModel.transform.SetParent(boatRoot.transform);
+
+                // Loại bỏ hoàn toàn Rigidbody tự động nếu có trong file FBX để tránh trôi sụt tự do dưới nước
+                var childRbs = boatModel.GetComponentsInChildren<Rigidbody>(true);
+                foreach (var rb in childRbs)
+                {
+                    DestroyImmediate(rb);
+                }
                 
                 // Tính toán bounds tổng thể của prefab để tự động điều chỉnh scale tối ưu (Auto-scaling)
                 Bounds combinedBounds = new Bounds(Vector3.zero, Vector3.zero);

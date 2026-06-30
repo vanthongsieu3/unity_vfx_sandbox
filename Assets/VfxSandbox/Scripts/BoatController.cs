@@ -34,8 +34,8 @@ namespace VfxSandbox
             if (controller != null)
             {
                 Vector3 movement = transform.forward * currentSpeed * Time.deltaTime;
-                // Áp lực nhẹ đi xuống để CharacterController bám sát va chạm với dốc cát dưới đáy
-                movement.y = -0.2f; 
+                // Di chuyển thuần ngang X-Z để nhường trục đứng Y cho BoatFloating dập dềnh theo sóng
+                movement.y = 0f; 
                 controller.Move(movement);
             }
             else
