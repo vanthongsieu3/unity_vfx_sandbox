@@ -14,9 +14,8 @@ Shader "VFX/BoatStencilMask"
             Name "StencilMask"
             Tags { "LightMode"="UniversalForward" }
             
-            // Khóa hoàn toàn kênh màu bằng cả ColorMask 0 và cơ chế Blend Zero One
-            ColorMask 0
-            Blend Zero One
+            // Sử dụng Alpha Blending chuẩn và tắt ghi depth để làm trong suốt 100% trên mọi phiên bản URP
+            Blend SrcAlpha OneMinusSrcAlpha
             ZWrite Off  // Tắt ghi Depth Buffer
             Cull Off    // Vẽ hai mặt
             
@@ -51,7 +50,8 @@ Shader "VFX/BoatStencilMask"
 
             half4 frag(Varyings input) : SV_Target
             {
-                return half4(0, 0, 0, 0);
+                // Trả về màu hoàn toàn trong suốt (Alpha = 0)
+                return half4(0.0, 0.0, 0.0, 0.0);
             }
             ENDHLSL
         }
