@@ -373,7 +373,8 @@ namespace VfxSandbox.Editor
             else if (styleName == "ice")
             {
                 // Băng hệ: Đổi Trail_Sparks thành hạt tuyết vụn rơi và quay tự do (Ice Shards)
-                trailPs.main.gravityModifier = 0.2f;
+                var mainModule = trailPs.main;
+                mainModule.gravityModifier = 0.2f;
                 var rot = trailPs.rotationOverLifetime;
                 rot.enabled = true;
                 rot.z = new ParticleSystem.MinMaxCurve(90f * Mathf.Deg2Rad, 360f * Mathf.Deg2Rad);

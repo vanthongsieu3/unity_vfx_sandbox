@@ -80,7 +80,7 @@ namespace VfxSandbox.Editor
 
             // Tạo thêm mô hình kiếm đơn giản đại diện cho vị trí người chơi vung kiếm
             GameObject bladeGizmo = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            Destroy(bladeGizmo.GetComponent<Collider>());
+            DestroyImmediate(bladeGizmo.GetComponent<Collider>());
             bladeGizmo.name = "Player_Blade_Gizmo";
             bladeGizmo.transform.parent = controllerObj.transform;
             bladeGizmo.transform.localPosition = new Vector3(0f, 0f, -0.4f);
