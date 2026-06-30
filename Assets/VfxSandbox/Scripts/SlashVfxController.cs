@@ -10,16 +10,17 @@ namespace VfxSandbox
             Fire,
             Ice,
             Wind,
-            Lightning
+            Lightning,
+            Hell
         }
 
         [Header("Active Prefabs (Auto-swapped)")]
         public GameObject slashPrefab;
         public GameObject slashWavePrefab; // Prefab Kiếm Khí (projectile) phóng đi
 
-        [Header("Style Pools (Magic, Fire, Ice, Wind, Lightning)")]
-        public GameObject[] slashStylePrefabs = new GameObject[5];
-        public GameObject[] slashWaveStylePrefabs = new GameObject[5];
+        [Header("Style Pools (Magic, Fire, Ice, Wind, Lightning, Hell)")]
+        public GameObject[] slashStylePrefabs = new GameObject[6];
+        public GameObject[] slashWaveStylePrefabs = new GameObject[6];
 
         [Header("Current Active Style")]
         public SlashStyle currentStyle = SlashStyle.Magic;
@@ -41,12 +42,13 @@ namespace VfxSandbox
 
         private void Update()
         {
-            // Phím số 1 -> 5 để đổi hệ/kiểu kiếm khí tức thì
+            // Phím số 1 -> 6 để đổi hệ/kiểu kiếm khí tức thì
             if (Input.GetKeyDown(KeyCode.Alpha1) || Input.GetKeyDown(KeyCode.Keypad1)) SetStyle(SlashStyle.Magic);
             else if (Input.GetKeyDown(KeyCode.Alpha2) || Input.GetKeyDown(KeyCode.Keypad2)) SetStyle(SlashStyle.Fire);
             else if (Input.GetKeyDown(KeyCode.Alpha3) || Input.GetKeyDown(KeyCode.Keypad3)) SetStyle(SlashStyle.Ice);
             else if (Input.GetKeyDown(KeyCode.Alpha4) || Input.GetKeyDown(KeyCode.Keypad4)) SetStyle(SlashStyle.Wind);
             else if (Input.GetKeyDown(KeyCode.Alpha5) || Input.GetKeyDown(KeyCode.Keypad5)) SetStyle(SlashStyle.Lightning);
+            else if (Input.GetKeyDown(KeyCode.Alpha6) || Input.GetKeyDown(KeyCode.Keypad6)) SetStyle(SlashStyle.Hell);
 
             // Tự động reset combo về nhát thứ nhất nếu để lâu không ấn chém
             if (comboIndex > 0 && Time.time - lastInputTime > comboResetTime)

@@ -67,9 +67,9 @@ namespace VfxSandbox.Editor
             controllerObj.transform.position = new Vector3(0f, 0.2f, 0f); // Cao hơn mặt đất một chút
             var controller = controllerObj.AddComponent<SlashVfxController>();
 
-            // Liên kết 5 bộ Prefabs phong cách kiếm khí khác nhau vào Controller
-            string[] styles = new string[] { "magic", "fire", "ice", "wind", "lightning" };
-            for (int i = 0; i < 5; i++)
+            // Liên kết 6 bộ Prefabs phong cách kiếm khí khác nhau vào Controller
+            string[] styles = new string[] { "magic", "fire", "ice", "wind", "lightning", "hell" };
+            for (int i = 0; i < 6; i++)
             {
                 string slashPath = $"Assets/VfxSandbox/Prefabs/vfx_prefab_slash_{styles[i]}.prefab";
                 controller.slashStylePrefabs[i] = AssetDatabase.LoadAssetAtPath<GameObject>(slashPath);

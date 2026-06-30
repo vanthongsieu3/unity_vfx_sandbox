@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: mat_magic_slash_ice
+  m_Shader: {fileID: 4800000, guid: 07c3a204e38d7cd4f8762d0b94934d3f, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _NoiseMap:
+        m_Texture: {fileID: 2800000, guid: abe644640f1e258439e4b1d9fc5d39b0, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _RampMap:
+        m_Texture: {fileID: 2800000, guid: d8460e25aa08662478542a483a766666, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _DistortionStrength: 0.16
+    - _Intensity: 4
+    - _Opacity: 1
+    - _Swipe: 0
+    - _TailLength: 0.45
+    - _WaveAmplitude: 0.08
+    - _WaveCount: 3
+    - _WaveSpeed: -5
+    m_Colors:
+    - _ColorTint: {r: 0.3, g: 0.6, b: 1, a: 1}
+    - _CoreColor: {r: 0.7, g: 0.95, b: 1, a: 1}
+    - _ScrollSpeed: {r: -1.5, g: 0.5, b: 0, a: 0}
+    - _ScrollSpeed2: {r: 1.2, g: -0.6, b: 0, a: 0}
+    - _VoidColor: {r: 0, g: 0.05, b: 0.15, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
