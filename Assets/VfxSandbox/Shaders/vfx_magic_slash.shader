@@ -136,7 +136,7 @@ Shader "VFX/MagicSlash"
                 // 6. Lõi hố đen không gian (Cosmic Void Rift Center)
                 float riftCenter = smoothstep(borderOffset * 1.5, borderOffset * 2.8, input.uv.y) * 
                                    smoothstep(1.0 - borderOffset * 1.5, 1.0 - borderOffset * 2.8, input.uv.y);
-                riftCenter *= swipeMask * startFade * _Opacity;
+                riftCenter *= swipeMask * lenFade * _Opacity;
                 float3 voidColor = _VoidColor.rgb * _Intensity; 
 
                 // 7. Nhiễu lửa nền lấy từ Color Ramp cuộn xoáy
