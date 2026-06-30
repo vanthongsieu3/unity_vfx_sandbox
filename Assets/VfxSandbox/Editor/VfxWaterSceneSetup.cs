@@ -648,13 +648,14 @@ namespace VfxSandbox.Editor
             }
             Debug.Log("--------------------------------");
 
-            // 9. Lưu Scene
+            // 9. Lưu Scene và tự động mở ra trên Hierarchy để đồng bộ hóa giao diện lập tức
             string scenePath = sceneDir + "/VfxWaterDemoScene.unity";
             EditorSceneManager.SaveScene(waterScene, scenePath);
+            EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
 
             AssetDatabase.Refresh();
             Debug.Log($"✓ Setup Stylized Water Scene completed successfully: {scenePath}");
-            EditorUtility.DisplayDialog("VFX Water Setup", "Đã khởi tạo xong Scene Nước cách điệu Stylized Water!\n\n1. Mở Scene mới tại: Assets/VfxSandbox/Scenes/VfxWaterDemoScene.unity\n2. Nhấn Play để chiêm ngưỡng sóng Gerstner, thấu quang ngọc lục bảo, thủy triều bờ cát, bọt viền ôm vật thể, gợn nắng caustics long lanh và hệ thống hạt bọt khí sủi bọt sinh động xung quanh cọc và thuyền!", "OK");
+            EditorUtility.DisplayDialog("VFX Water Setup", "Đã khởi tạo và tự động mở Scene Nước cách điệu Stylized Water!\n\nNhấn Play để chiêm ngưỡng sóng Gerstner, thấu quang ngọc lục bảo, thủy triều bờ cát, bọt viền ôm vật thể, gợn nắng caustics long lanh và hệ thống hạt bọt khí sủi bọt sinh động xung quanh cọc và thuyền!", "OK");
         }
 
         private static void AddBubbleParticleSystem(GameObject parent, string name, Vector3 localPos, Vector3 localScale, float emissionRate, float startSizeMin, float startSizeMax, float speedMin, float speedMax, float lifeMin, float lifeMax, float gravity, Material mat)
