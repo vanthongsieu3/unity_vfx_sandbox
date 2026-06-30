@@ -48,14 +48,19 @@ namespace VfxSandbox.Editor
                 skullMat = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit"));
                 AssetDatabase.CreateAsset(skullMat, skullMatPath);
             }
+            skullMat.SetOverrideTag("RenderType", "Transparent");
             skullMat.SetFloat("_Surface", 1.0f); // Transparent
             skullMat.SetFloat("_Blend", 0.0f);   // Alpha blend
-            skullMat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-            skullMat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-            skullMat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            skullMat.SetInt("_SrcBlend", 5);     // BlendMode.SrcAlpha
+            skullMat.SetInt("_DstBlend", 10);    // BlendMode.OneMinusSrcAlpha
             skullMat.SetInt("_ZWrite", 0);
-            skullMat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
-            if (skullTex != null) skullMat.SetTexture("_BaseMap", skullTex);
+            skullMat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            skullMat.renderQueue = 3000;
+            if (skullTex != null)
+            {
+                skullMat.SetTexture("_BaseMap", skullTex);
+                skullMat.SetTexture("_MainTex", skullTex);
+            }
 
             // 1. Tạo 6 phiên bản Phong cách kiếm khí riêng biệt (Slash + Projectile + Custom Explosion)
             // A. Ma pháp (Tím hồng vũ trụ mặc định)
@@ -141,15 +146,20 @@ namespace VfxSandbox.Editor
                 sparksMat = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit"));
                 AssetDatabase.CreateAsset(sparksMat, sparksMatPath);
             }
+            // Thiết lập đầy đủ tag RenderType, Queue và Keywords để URP không ngộ nhận là Opaque
+            sparksMat.SetOverrideTag("RenderType", "Transparent");
             sparksMat.SetFloat("_Surface", 1.0f); // Transparent
             sparksMat.SetFloat("_Blend", 1.0f);   // Additive
-            sparksMat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-            sparksMat.EnableKeyword("_BLENDMODE_ADDITIVE");
-            sparksMat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-            sparksMat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.One);
+            sparksMat.SetInt("_SrcBlend", 1);     // BlendMode.One
+            sparksMat.SetInt("_DstBlend", 10);    // BlendMode.OneMinusSrcAlpha (Premultiplied Additive siêu mượt)
             sparksMat.SetInt("_ZWrite", 0);
-            sparksMat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
-            if (sparkTex != null) sparksMat.SetTexture("_BaseMap", sparkTex);
+            sparksMat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            sparksMat.renderQueue = 3000;
+            if (sparkTex != null)
+            {
+                sparksMat.SetTexture("_BaseMap", sparkTex);
+                sparksMat.SetTexture("_MainTex", sparkTex);
+            }
 
             AssetDatabase.SaveAssets();
 
