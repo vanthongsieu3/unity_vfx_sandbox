@@ -20,10 +20,18 @@ namespace VfxSandbox.Editor
             Texture2D colorRampTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_ramp_01.png");
             Texture2D starTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_star_01.png");
             Texture2D emberTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_ember_01.png");
-            Mesh slashMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/VfxSandbox/Meshes/vfx_mesh_slash_01.asset");
-            GameObject explosionPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/VfxSandbox/Prefabs/vfx_prefab_explosion.prefab");
 
-            // Cấu hình Texture đầu lâu vừa sinh ra
+            // Tải các Meshes đặc trưng để thay đổi hình thái kiếm khí
+            Mesh slashMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/VfxSandbox/Meshes/vfx_mesh_slash_01.asset");
+            Mesh coneMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/VfxSandbox/Meshes/vfx_mesh_cone_01.asset");
+            Mesh funnelMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/VfxSandbox/Meshes/vfx_mesh_funnel_01.asset");
+            Mesh ringMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/VfxSandbox/Meshes/vfx_mesh_ring_01.asset");
+
+            // Tải các vật liệu phụ trợ cho vụ nổ
+            Material fireRingMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/VfxSandbox/Materials/mat_fire_ring.mat");
+            Material smokeMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/VfxSandbox/Materials/mat_explosion_smoke.mat");
+
+            // Cấu hình Texture đầu lâu địa ngục
             ConfigureTexture("Assets/VfxSandbox/Textures/vfx_tex_skull_01.png", false);
             Texture2D skullTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_skull_01.png");
             
@@ -35,7 +43,6 @@ namespace VfxSandbox.Editor
                 skullMat = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit"));
                 AssetDatabase.CreateAsset(skullMat, skullMatPath);
             }
-            // Thiết lập chế độ hòa trộn Alpha Blending cho đầu lâu
             skullMat.SetFloat("_Surface", 1.0f); // Transparent
             skullMat.SetFloat("_Blend", 0.0f);   // Alpha blend
             skullMat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
@@ -45,39 +52,45 @@ namespace VfxSandbox.Editor
             skullMat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
             if (skullTex != null) skullMat.SetTexture("_BaseMap", skullTex);
 
-            // 1. Tạo 6 phiên bản Phong cách kiếm khí riêng biệt
+            // 1. Tạo 6 phiên bản Phong cách kiếm khí riêng biệt (Slash + Projectile + Custom Explosion)
             // A. Ma pháp (Tím hồng vũ trụ mặc định)
             CreateStyle(prefabDir, matDir, "magic", 
                 new Color(1f, 1f, 1f), new Color(0.05f, 0f, 0.15f), new Color(0f, 0.95f, 1f), 4.5f, 4f, -8f, 0.14f,
-                new Color(0f, 1f, 1f), new Color(0f, 0.2f, 1f), starTex, slashMesh, noiseTex, voidRampTex, explosionPrefab);
+                new Color(0f, 1f, 1f), new Color(0f, 0.2f, 1f), starTex, slashMesh, noiseTex, voidRampTex, 
+                fireRingMat, smokeMat, ringMesh, skullTex, skullMat, coneMesh, funnelMesh);
 
-            // B. Rực lửa (Hỏa kiếm đỏ cam + Khói mù mịt)
+            // B. Rực lửa (Hỏa kiếm đỏ cam + Khói dày + Bùng nổ lửa lớn)
             CreateStyle(prefabDir, matDir, "fire", 
                 new Color(1f, 0.2f, 0f), new Color(0.2f, 0.02f, 0f), new Color(1f, 0.9f, 0.2f), 6.0f, 3.5f, -6f, 0.1f,
-                new Color(1f, 0.4f, 0f), new Color(1f, 0.1f, 0f), emberTex, slashMesh, noiseTex, colorRampTex, explosionPrefab);
+                new Color(1f, 0.4f, 0f), new Color(1f, 0.1f, 0f), emberTex, slashMesh, noiseTex, colorRampTex, 
+                fireRingMat, smokeMat, ringMesh, skullTex, skullMat, coneMesh, funnelMesh);
 
-            // C. Băng giá (Hàn kiếm lam tuyết + Băng vụn rơi)
+            // C. Băng giá (Đinh băng nhọn hoắt + Băng vụn vỡ radial khi nổ)
             CreateStyle(prefabDir, matDir, "ice", 
                 new Color(0.3f, 0.6f, 1.0f), new Color(0f, 0.05f, 0.15f), new Color(0.7f, 0.95f, 1.0f), 4.0f, 3f, -5f, 0.08f,
-                new Color(0.8f, 0.95f, 1f), new Color(0.2f, 0.5f, 1f), starTex, slashMesh, noiseTex, voidRampTex, explosionPrefab);
+                new Color(0.8f, 0.95f, 1f), new Color(0.2f, 0.5f, 1f), starTex, slashMesh, noiseTex, voidRampTex, 
+                fireRingMat, smokeMat, ringMesh, skullTex, skullMat, coneMesh, funnelMesh);
 
-            // D. Lốc xoáy (Phong kiếm xanh ngọc/bạc + Gió cuộn xoáy)
+            // D. Lốc xoáy (Phong kiếm lốc cuộn + Vòi rồng mini xoáy tít khi nổ)
             CreateStyle(prefabDir, matDir, "wind", 
                 new Color(0.1f, 0.8f, 0.4f), new Color(0f, 0.15f, 0.08f), new Color(0.6f, 1.0f, 0.8f), 3.8f, 5f, -12f, 0.12f,
-                new Color(0.5f, 1f, 0.7f), new Color(0f, 0.5f, 0.2f), starTex, slashMesh, noiseTex, colorRampTex, explosionPrefab);
+                new Color(0.5f, 1f, 0.7f), new Color(0f, 0.5f, 0.2f), starTex, slashMesh, noiseTex, colorRampTex, 
+                fireRingMat, smokeMat, ringMesh, skullTex, skullMat, coneMesh, funnelMesh);
 
-            // E. Sấm sét (Lôi kiếm tím điện/vàng rực giật mạnh + Tia sét ziczac)
+            // E. Sấm sét (Lôi kiếm giật răng cưa điện + Chớp sét nổ ziczac)
             CreateStyle(prefabDir, matDir, "lightning", 
                 new Color(0.5f, 0f, 1.0f), new Color(0.08f, 0f, 0.15f), new Color(0f, 1.0f, 1.0f), 7.0f, 7.5f, -18f, 0.26f,
-                new Color(0.8f, 1f, 0f), new Color(0f, 0.8f, 1f), emberTex, slashMesh, noiseTex, voidRampTex, explosionPrefab);
+                new Color(0.8f, 1f, 0f), new Color(0f, 0.8f, 1f), emberTex, slashMesh, noiseTex, voidRampTex, 
+                fireRingMat, smokeMat, ringMesh, skullTex, skullMat, coneMesh, funnelMesh);
 
-            // F. Địa ngục (Lửa đen quỷ kiếm tà ác + Đầu lâu linh hồn gào thét phía sau)
+            // F. Địa ngục (Lửa đen quỷ kiếm + Phóng đầu lâu to + Vụ nổ hồn ma đầu lâu)
             CreateStyle(prefabDir, matDir, "hell", 
                 new Color(0.4f, 0.0f, 0.0f), new Color(0.01f, 0.0f, 0.02f), new Color(0.15f, 0.0f, 0.0f), 2.2f, 3.8f, -4f, 0.16f,
-                new Color(0.3f, 0.0f, 0.0f), new Color(0.08f, 0.0f, 0.1f), emberTex, slashMesh, noiseTex, voidRampTex, explosionPrefab, skullTex, skullMat);
+                new Color(0.3f, 0.0f, 0.0f), new Color(0.08f, 0.0f, 0.1f), emberTex, slashMesh, noiseTex, voidRampTex, 
+                fireRingMat, smokeMat, ringMesh, skullTex, skullMat, coneMesh, funnelMesh);
 
             AssetDatabase.Refresh();
-            Debug.Log("✓ All 6 Magic Slash styles generated successfully!");
+            Debug.Log("✓ All 6 Magic Slash elements and themed explosions generated successfully!");
         }
 
         private static void ConfigureTexture(string assetPath, bool isNormalMap)
@@ -94,8 +107,8 @@ namespace VfxSandbox.Editor
 
         private static void CreateStyle(string prefabDir, string matDir, string styleName, 
             Color tintColor, Color voidColor, Color coreColor, float intensity, float waveCount, float waveSpeed, float waveAmplitude,
-            Color sparkColorStart, Color sparkColorEnd, Texture2D sparkTex, Mesh slashMesh, Texture2D noiseTex, Texture2D rampTex, GameObject explosionPrefab,
-            Texture2D skullTex = null, Material skullMat = null)
+            Color sparkColorStart, Color sparkColorEnd, Texture2D sparkTex, Mesh slashMesh, Texture2D noiseTex, Texture2D rampTex,
+            Material fireRingMat, Material smokeMat, Mesh ringMesh, Texture2D skullTex, Material skullMat, Mesh coneMesh, Mesh funnelMesh)
         {
             // 1. Tạo vật liệu vệt chém
             string slashMatPath = $"{matDir}/mat_magic_slash_{styleName}.mat";
@@ -135,13 +148,17 @@ namespace VfxSandbox.Editor
 
             AssetDatabase.SaveAssets();
 
-            // 3. Dựng Prefab vệt chém tại chỗ
+            // 3. Dựng Prefab vệt chém tại chỗ (Combo nhát 1 và 2)
             string slashPrefabPath = $"{prefabDir}/vfx_prefab_slash_{styleName}.prefab";
             CreateSlashPrefab(slashPrefabPath, slashMat, sparksMat, slashMesh, sparkColorStart, sparkColorEnd);
 
-            // 4. Dựng Prefab kiếm khí phóng đi
+            // 4. Dựng Prefab Vụ nổ đặc trưng nguyên tố riêng biệt (Custom Element Explosion)
+            string explosionPath = $"{prefabDir}/vfx_prefab_explosion_{styleName}.prefab";
+            GameObject customExplosion = CreateThemedExplosionPrefab(explosionPath, styleName, sparksMat, fireRingMat, smokeMat, ringMesh, skullTex, skullMat, coneMesh, funnelMesh);
+
+            // 5. Dựng Prefab Kiếm khí phóng đi (Projectile) với mô hình hình thái thay đổi hoàn toàn
             string wavePrefabPath = $"{prefabDir}/vfx_prefab_slash_wave_{styleName}.prefab";
-            CreateSlashWavePrefab(wavePrefabPath, slashMat, sparksMat, explosionPrefab, slashMesh, sparkColorStart, sparkColorEnd, styleName, skullTex, skullMat);
+            CreateSlashWavePrefab(wavePrefabPath, slashMat, sparksMat, customExplosion, slashMesh, sparkColorStart, sparkColorEnd, styleName, skullTex, skullMat, coneMesh, funnelMesh);
         }
 
         private static void CreateSlashPrefab(string path, Material slashMat, Material sparksMat, Mesh slashMesh, Color sparkColorStart, Color sparkColorEnd)
@@ -259,19 +276,309 @@ namespace VfxSandbox.Editor
             Object.DestroyImmediate(go);
         }
 
-        private static void CreateSlashWavePrefab(string path, Material slashMat, Material sparksMat, GameObject explosionPrefab, Mesh slashMesh, Color sparkColorStart, Color sparkColorEnd, string styleName, Texture2D skullTex, Material skullMat)
+        private static GameObject CreateThemedExplosionPrefab(string path, string styleName, Material sparksMat, Material fireRingMat, Material smokeMat, Mesh ringMesh, Texture2D skullTex, Material skullMat, Mesh coneMesh, Mesh funnelMesh)
+        {
+            GameObject go = new GameObject($"VFX_Explosion_{styleName}");
+            var ps = go.AddComponent<ParticleSystem>();
+            var main = ps.main;
+            main.duration = 1f;
+            main.loop = false;
+            main.startLifetime = 0.8f;
+            main.startSpeed = new ParticleSystem.MinMaxCurve(5f, 12f);
+            main.startSize = new ParticleSystem.MinMaxCurve(1.2f, 2.5f);
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+
+            var emission = ps.emission;
+            emission.rateOverTime = 0f;
+            emission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0.0f, 35) });
+
+            var shape = ps.shape;
+            shape.shapeType = ParticleSystemShapeType.Sphere;
+            shape.radius = 0.6f;
+
+            var size = ps.sizeOverLifetime;
+            size.enabled = true;
+            AnimationCurve curve = new AnimationCurve();
+            curve.AddKey(0f, 0.4f);
+            curve.AddKey(0.2f, 1.0f);
+            curve.AddKey(1f, 0f);
+            size.size = new ParticleSystem.MinMaxCurve(1f, curve);
+
+            var color = ps.colorOverLifetime;
+            color.enabled = true;
+            Gradient grad = new Gradient();
+
+            if (styleName == "magic")
+            {
+                grad.SetKeys(
+                    new GradientColorKey[] { new GradientColorKey(new Color(0f, 0.95f, 1f), 0f), new GradientColorKey(new Color(0.6f, 0f, 1f), 0.5f), new GradientColorKey(Color.black, 1.0f) },
+                    new GradientAlphaKey[] { new GradientAlphaKey(1.0f, 0f), new GradientAlphaKey(0.8f, 0.6f), new GradientAlphaKey(0f, 1.0f) }
+                );
+            }
+            else if (styleName == "fire")
+            {
+                grad.SetKeys(
+                    new GradientColorKey[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(new Color(1f, 0.3f, 0f), 0.4f), new GradientColorKey(Color.black, 1.0f) },
+                    new GradientAlphaKey[] { new GradientAlphaKey(1.0f, 0f), new GradientAlphaKey(0.8f, 0.6f), new GradientAlphaKey(0f, 1.0f) }
+                );
+            }
+            else if (styleName == "ice")
+            {
+                grad.SetKeys(
+                    new GradientColorKey[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(new Color(0.3f, 0.7f, 1f), 0.4f), new GradientColorKey(new Color(0.0f, 0.2f, 0.4f), 1.0f) },
+                    new GradientAlphaKey[] { new GradientAlphaKey(1.0f, 0f), new GradientAlphaKey(0.8f, 0.6f), new GradientAlphaKey(0f, 1.0f) }
+                );
+            }
+            else if (styleName == "wind")
+            {
+                grad.SetKeys(
+                    new GradientColorKey[] { new GradientColorKey(new Color(0.8f, 1f, 0.9f), 0f), new GradientColorKey(new Color(0.1f, 0.7f, 0.3f), 0.5f), new GradientColorKey(Color.black, 1.0f) },
+                    new GradientAlphaKey[] { new GradientAlphaKey(1.0f, 0f), new GradientAlphaKey(0.8f, 0.6f), new GradientAlphaKey(0f, 1.0f) }
+                );
+            }
+            else if (styleName == "lightning")
+            {
+                grad.SetKeys(
+                    new GradientColorKey[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(new Color(0.8f, 1f, 0f), 0.3f), new GradientColorKey(new Color(0.4f, 0f, 1f), 0.8f) },
+                    new GradientAlphaKey[] { new GradientAlphaKey(1.0f, 0f), new GradientAlphaKey(0.8f, 0.6f), new GradientAlphaKey(0f, 1.0f) }
+                );
+            }
+            else if (styleName == "hell")
+            {
+                grad.SetKeys(
+                    new GradientColorKey[] { new GradientColorKey(new Color(0.8f, 0f, 0f), 0f), new GradientColorKey(new Color(0.1f, 0f, 0.15f), 0.6f), new GradientColorKey(Color.black, 1.0f) },
+                    new GradientAlphaKey[] { new GradientAlphaKey(1.0f, 0f), new GradientAlphaKey(0.8f, 0.6f), new GradientAlphaKey(0f, 1.0f) }
+                );
+            }
+
+            color.color = grad;
+
+            var renderer = go.GetComponent<ParticleSystemRenderer>();
+            renderer.sharedMaterial = sparksMat;
+
+            // 1. Tạo vòng tròn lan tỏa (Ring Mesh)
+            if (ringMesh != null && fireRingMat != null)
+            {
+                GameObject ringGo = new GameObject("Explosion_Ring");
+                ringGo.transform.parent = go.transform;
+                ringGo.transform.localPosition = new Vector3(0f, 0.05f, 0f);
+                ringGo.transform.localRotation = Quaternion.identity;
+
+                var ringFilter = ringGo.AddComponent<MeshFilter>();
+                ringFilter.sharedMesh = ringMesh;
+
+                var ringRenderer = ringGo.AddComponent<MeshRenderer>();
+                // Dùng chung vật liệu ring nhưng nhân bản để chuyển màu theo hệ
+                Material tempRingMat = new Material(fireRingMat);
+                if (styleName == "magic") tempRingMat.SetColor("_ColorTint", new Color(0f, 0.9f, 1f, 1f));
+                else if (styleName == "fire") tempRingMat.SetColor("_ColorTint", new Color(1f, 0.3f, 0f, 1f));
+                else if (styleName == "ice") tempRingMat.SetColor("_ColorTint", new Color(0.3f, 0.7f, 1f, 1f));
+                else if (styleName == "wind") tempRingMat.SetColor("_ColorTint", new Color(0.1f, 0.8f, 0.4f, 1f));
+                else if (styleName == "lightning") tempRingMat.SetColor("_ColorTint", new Color(0.8f, 1f, 0f, 1f));
+                else if (styleName == "hell") tempRingMat.SetColor("_ColorTint", new Color(0.4f, 0f, 0.05f, 1f));
+
+                ringRenderer.sharedMaterial = tempRingMat;
+
+                var scaleScript = ringGo.AddComponent<VfxScaleAndFade>();
+                scaleScript.startScale = Vector3.one * 0.2f;
+                scaleScript.endScale = Vector3.one * 6.5f;
+                scaleScript.duration = 0.7f;
+            }
+
+            // 2. Tạo hiệu ứng đặc trưng vụ nổ
+            if (styleName == "fire" && smokeMat != null)
+            {
+                // Bùng nổ khói đen cuộn mù mịt
+                GameObject smokeGo = new GameObject("Explosion_Smoke");
+                smokeGo.transform.parent = go.transform;
+                smokeGo.transform.localPosition = Vector3.zero;
+                smokeGo.transform.localRotation = Quaternion.identity;
+
+                var smokePs = smokeGo.AddComponent<ParticleSystem>();
+                var smokeMain = smokePs.main;
+                smokeMain.duration = 1f;
+                smokeMain.loop = false;
+                smokeMain.startLifetime = 1.2f;
+                smokeMain.startSpeed = new ParticleSystem.MinMaxCurve(2f, 5f);
+                smokeMain.startSize = new ParticleSystem.MinMaxCurve(1.5f, 2.8f);
+                smokeMain.simulationSpace = ParticleSystemSimulationSpace.World;
+
+                var smokeEmission = smokePs.emission;
+                smokeEmission.rateOverTime = 0f;
+                smokeEmission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0.0f, 15) });
+
+                var smokeSize = smokePs.sizeOverLifetime;
+                smokeSize.enabled = true;
+                smokeSize.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(new Keyframe(0f, 0.5f), new Keyframe(1f, 1.8f)));
+
+                var smokeColor = smokePs.colorOverLifetime;
+                smokeColor.enabled = true;
+                Gradient smokeGrad = new Gradient();
+                smokeGrad.SetKeys(
+                    new GradientColorKey[] { new GradientColorKey(new Color(0.12f, 0.12f, 0.12f), 0f), new GradientColorKey(new Color(0.05f, 0.05f, 0.05f), 1.0f) },
+                    new GradientAlphaKey[] { new GradientAlphaKey(0.6f, 0f), new GradientAlphaKey(0f, 1.0f) }
+                );
+                smokeColor.color = smokeGrad;
+
+                var smokeRenderer = smokeGo.GetComponent<ParticleSystemRenderer>();
+                smokeRenderer.sharedMaterial = smokeMat;
+            }
+            else if (styleName == "ice" && coneMesh != null)
+            {
+                // Băng hệ: Bắn ra 12 đinh băng nhọn hoắt tỏa tròn radial cực bén
+                GameObject spikesGo = new GameObject("Explosion_Ice_Spikes");
+                spikesGo.transform.parent = go.transform;
+                spikesGo.transform.localPosition = Vector3.zero;
+                spikesGo.transform.localRotation = Quaternion.identity;
+
+                var spikesPs = spikesGo.AddComponent<ParticleSystem>();
+                var spikesMain = spikesPs.main;
+                spikesMain.duration = 1f;
+                spikesMain.loop = false;
+                spikesMain.startLifetime = new ParticleSystem.MinMaxCurve(0.4f, 0.7f);
+                spikesMain.startSpeed = new ParticleSystem.MinMaxCurve(8f, 16f);
+                spikesMain.startSize3D = true;
+                spikesMain.startSizeX = 0.15f;
+                spikesMain.startSizeY = 0.15f;
+                spikesMain.startSizeZ = 1.5f; // Kéo dẹt nhọn hoắt
+                spikesMain.simulationSpace = ParticleSystemSimulationSpace.World;
+
+                var spikesEmission = spikesPs.emission;
+                spikesEmission.rateOverTime = 0f;
+                spikesEmission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0.0f, 12) });
+
+                var spikesShape = spikesPs.shape;
+                spikesShape.shapeType = ParticleSystemShapeType.Sphere;
+                spikesShape.radius = 0.1f;
+                spikesShape.alignToDirection = true; // Quay hướng đinh ra ngoài
+
+                var spikesColor = spikesPs.colorOverLifetime;
+                spikesColor.enabled = true;
+                Gradient spikesGrad = new Gradient();
+                spikesGrad.SetKeys(
+                    new GradientColorKey[] { new GradientColorKey(new Color(0.6f, 0.9f, 1f), 0f), new GradientColorKey(new Color(0.2f, 0.5f, 0.8f), 0.8f) },
+                    new GradientAlphaKey[] { new GradientAlphaKey(1.0f, 0f), new GradientAlphaKey(0f, 1.0f) }
+                );
+                spikesColor.color = spikesGrad;
+
+                var spikesRenderer = spikesGo.GetComponent<ParticleSystemRenderer>();
+                spikesRenderer.sharedMaterial = sparksMat;
+                spikesRenderer.renderMode = ParticleSystemRenderMode.Mesh;
+                spikesRenderer.mesh = coneMesh;
+            }
+            else if (styleName == "wind" && funnelMesh != null)
+            {
+                // Phong hệ: Tạo cơn lốc xoáy đứng quay tít tại tâm nổ
+                GameObject tornadoGo = new GameObject("Explosion_Tornado");
+                tornadoGo.transform.parent = go.transform;
+                tornadoGo.transform.localPosition = Vector3.zero;
+                tornadoGo.transform.localRotation = Quaternion.identity;
+
+                var tornadoFilter = tornadoGo.AddComponent<MeshFilter>();
+                tornadoFilter.sharedMesh = funnelMesh;
+
+                var tornadoRenderer = tornadoGo.AddComponent<MeshRenderer>();
+                tornadoRenderer.sharedMaterial = sparksMat;
+
+                var scaleScript = tornadoGo.AddComponent<VfxScaleAndFade>();
+                scaleScript.startScale = new Vector3(0.5f, 0.2f, 0.5f);
+                scaleScript.endScale = new Vector3(3f, 4.5f, 3f); // Nở to cao lên thành vòi rồng
+                scaleScript.duration = 0.8f;
+                scaleScript.rotationSpeed = new Vector3(0f, 900f, 0f); // Xoay vòng tròn
+            }
+            else if (styleName == "lightning")
+            {
+                // Lôi hệ: Bắn các tia sét giật răng cưa điện xẹt
+                GameObject boltsGo = new GameObject("Explosion_Lightning_Bolts");
+                boltsGo.transform.parent = go.transform;
+                boltsGo.transform.localPosition = Vector3.zero;
+                boltsGo.transform.localRotation = Quaternion.identity;
+
+                var boltsPs = boltsGo.AddComponent<ParticleSystem>();
+                var boltsMain = boltsPs.main;
+                boltsMain.duration = 0.5f;
+                boltsMain.loop = false;
+                boltsMain.startLifetime = new ParticleSystem.MinMaxCurve(0.15f, 0.35f);
+                boltsMain.startSpeed = new ParticleSystem.MinMaxCurve(10f, 20f);
+                boltsMain.startSize = new ParticleSystem.MinMaxCurve(0.1f, 0.3f);
+                boltsMain.simulationSpace = ParticleSystemSimulationSpace.World;
+
+                var boltsEmission = boltsPs.emission;
+                boltsEmission.rateOverTime = 0f;
+                boltsEmission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0.0f, 20) });
+
+                var boltsNoise = boltsPs.noise;
+                boltsNoise.enabled = true;
+                boltsNoise.strength = 3.5f;
+                boltsNoise.frequency = 6.0f;
+                boltsNoise.scrollSpeed = 2.0f;
+
+                var boltsColor = boltsPs.colorOverLifetime;
+                boltsColor.enabled = true;
+                Gradient boltsGrad = new Gradient();
+                boltsGrad.SetKeys(
+                    new GradientColorKey[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(new Color(0f, 1f, 1f), 0.5f), new GradientColorKey(new Color(0.5f, 0f, 1f), 1.0f) },
+                    new GradientAlphaKey[] { new GradientAlphaKey(1.0f, 0f), new GradientAlphaKey(0f, 1.0f) }
+                );
+                boltsColor.color = boltsGrad;
+
+                var boltsRenderer = boltsGo.GetComponent<ParticleSystemRenderer>();
+                boltsRenderer.sharedMaterial = sparksMat;
+                boltsRenderer.renderMode = ParticleSystemRenderMode.Stretch;
+                boltsRenderer.lengthScale = 3f;
+            }
+            else if (styleName == "hell" && skullMat != null)
+            {
+                // Địa ngục hệ: Bùng nổ giải phóng 5 linh hồn đầu lâu đen bay sủi lên
+                GameObject skullsGo = new GameObject("Explosion_Skulls");
+                skullsGo.transform.parent = go.transform;
+                skullsGo.transform.localPosition = Vector3.zero;
+                skullsGo.transform.localRotation = Quaternion.identity;
+
+                var skullsPs = skullsGo.AddComponent<ParticleSystem>();
+                var skullsMain = skullsPs.main;
+                skullsMain.duration = 1f;
+                skullsMain.loop = false;
+                skullsMain.startLifetime = new ParticleSystem.MinMaxCurve(0.8f, 1.4f);
+                skullsMain.startSpeed = new ParticleSystem.MinMaxCurve(1.5f, 3.5f);
+                skullsMain.startSize = new ParticleSystem.MinMaxCurve(0.4f, 0.7f);
+                skullsMain.simulationSpace = ParticleSystemSimulationSpace.World;
+
+                var skullsEmission = skullsPs.emission;
+                skullsEmission.rateOverTime = 0f;
+                skullsEmission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0.0f, 5) });
+
+                var skullsShape = skullsPs.shape;
+                skullsShape.shapeType = ParticleSystemShapeType.Sphere;
+                skullsShape.radius = 0.5f;
+
+                var skullsColor = skullsPs.colorOverLifetime;
+                skullsColor.enabled = true;
+                Gradient skullsGrad = new Gradient();
+                skullsGrad.SetKeys(
+                    new GradientColorKey[] { new GradientColorKey(new Color(0.9f, 0.9f, 0.9f), 0f), new GradientColorKey(new Color(0.3f, 0f, 0.1f), 0.8f) },
+                    new GradientAlphaKey[] { new GradientAlphaKey(0.9f, 0f), new GradientAlphaKey(0f, 1.0f) }
+                );
+                skullsColor.color = skullsGrad;
+
+                var skullsSize = skullsPs.sizeOverLifetime;
+                skullsSize.enabled = true;
+                skullsSize.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(new Keyframe(0f, 0.2f), new Keyframe(0.2f, 1.0f), new Keyframe(1.0f, 0.0f)));
+
+                var skullsRenderer = skullsGo.GetComponent<ParticleSystemRenderer>();
+                skullsRenderer.sharedMaterial = skullMat;
+                skullsRenderer.renderMode = ParticleSystemRenderMode.Billboard;
+            }
+
+            PrefabUtility.SaveAsPrefabAsset(go, path);
+            Object.DestroyImmediate(go);
+            return AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        }
+
+        private static void CreateSlashWavePrefab(string path, Material slashMat, Material sparksMat, GameObject explosionPrefab, Mesh slashMesh, Color sparkColorStart, Color sparkColorEnd, string styleName, Texture2D skullTex, Material skullMat, Mesh coneMesh, Mesh funnelMesh)
         {
             GameObject go = new GameObject("VFX_Slash_Wave_Projectile");
             
-            if (slashMesh != null)
-            {
-                var filter = go.AddComponent<MeshFilter>();
-                filter.sharedMesh = slashMesh;
-
-                var renderer = go.AddComponent<MeshRenderer>();
-                renderer.sharedMaterial = slashMat;
-            }
-
             var proj = go.AddComponent<SlashWaveProjectile>();
             proj.speed = 22f;
             proj.lifetime = 1.2f;
@@ -281,6 +588,52 @@ namespace VfxSandbox.Editor
             col.isTrigger = true;
             col.center = new Vector3(0f, 0f, 2.5f);
             col.size = new Vector3(5f, 1f, 2f);
+
+            // Dựng mô hình kiếm ý đặc trưng cho từng Hệ (Mục 2 của yêu cầu người dùng)
+            GameObject modelGo = new GameObject("Projectile_Model");
+            modelGo.transform.parent = go.transform;
+            modelGo.transform.localPosition = Vector3.zero;
+
+            var filter = modelGo.AddComponent<MeshFilter>();
+            var renderer = modelGo.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = slashMat;
+
+            if (styleName == "ice" && coneMesh != null)
+            {
+                // Băng hệ: Phóng đinh băng nhọn hoắt hướng về phía trước
+                filter.sharedMesh = coneMesh;
+                modelGo.transform.localRotation = Quaternion.Euler(90f, 0f, 0f); // Mũi nhọn đâm tới (Z)
+                modelGo.transform.localScale = new Vector3(0.5f, 0.5f, 3.5f);     // Kéo dài nhọn bén
+            }
+            else if (styleName == "wind" && funnelMesh != null)
+            {
+                // Phong hệ: Phóng vòi rồng lốc gió xoáy cuộn di chuyển thẳng tiến
+                filter.sharedMesh = funnelMesh;
+                modelGo.transform.localRotation = Quaternion.identity;            // Đứng thẳng xoáy tròn
+                modelGo.transform.localScale = new Vector3(1.2f, 1.8f, 1.2f);
+                
+                // Thêm script xoay tự động quay tít khi di chuyển
+                var scaleScript = modelGo.AddComponent<VfxScaleAndFade>();
+                scaleScript.startScale = new Vector3(1.2f, 1.8f, 1.2f);
+                scaleScript.endScale = new Vector3(1.2f, 1.8f, 1.2f);
+                scaleScript.duration = proj.lifetime;
+                scaleScript.rotationSpeed = new Vector3(0f, 1000f, 0f);
+            }
+            else if (styleName == "hell" && skullTex != null)
+            {
+                // Địa ngục hệ: Phóng đầu lâu khổng lồ đen thui lướt đi
+                filter.sharedMesh = CreateQuadMesh();
+                renderer.sharedMaterial = skullMat;
+                modelGo.transform.localRotation = Quaternion.identity;
+                modelGo.transform.localScale = new Vector3(2.5f, 2.5f, 2.5f);
+            }
+            else
+            {
+                // Ma pháp, Hỏa, Lôi: Dùng vệt chém hình cung dựng đứng
+                filter.sharedMesh = slashMesh;
+                modelGo.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+                modelGo.transform.localScale = Vector3.one;
+            }
 
             // A. Hệ thống tia lửa đuôi mặc định (Trail Sparks)
             GameObject trailGo = new GameObject("Trail_Sparks");
@@ -295,7 +648,7 @@ namespace VfxSandbox.Editor
             trailMain.startLifetime = new ParticleSystem.MinMaxCurve(0.2f, 0.4f);
             trailMain.startSpeed = new ParticleSystem.MinMaxCurve(5f, 10f);
             trailMain.startSize = new ParticleSystem.MinMaxCurve(0.06f, 0.18f);
-            trailMain.gravityModifier = (styleName == "ice") ? 0.2f : 0.05f; // Băng vụn rơi mạnh hơn chút
+            trailMain.gravityModifier = (styleName == "ice") ? 0.2f : 0.05f; 
             trailMain.simulationSpace = ParticleSystemSimulationSpace.World;
 
             var trailEmission = trailPs.emission;
@@ -331,7 +684,6 @@ namespace VfxSandbox.Editor
             // B. Thêm hiệu ứng đặc trưng theo từng Hệ
             if (styleName == "fire")
             {
-                // Hỏa hệ: Thêm hiệu ứng khói đen mù mịt (Smoke Trail)
                 GameObject smokeGo = new GameObject("Trail_Smoke");
                 smokeGo.transform.parent = go.transform;
                 smokeGo.transform.localPosition = new Vector3(0f, 0f, 1.2f);
@@ -372,7 +724,6 @@ namespace VfxSandbox.Editor
             }
             else if (styleName == "ice")
             {
-                // Băng hệ: Đổi Trail_Sparks thành hạt tuyết vụn rơi và quay tự do (Ice Shards)
                 var mainModule = trailPs.main;
                 mainModule.gravityModifier = 0.2f;
                 var rot = trailPs.rotationOverLifetime;
@@ -382,7 +733,6 @@ namespace VfxSandbox.Editor
             }
             else if (styleName == "wind")
             {
-                // Phong hệ: Thêm luồng gió lốc xoáy cuộn tròn quanh kiếm khí (Wind Swirls)
                 GameObject windGo = new GameObject("Trail_Wind_Swirls");
                 windGo.transform.parent = go.transform;
                 windGo.transform.localPosition = new Vector3(0f, 0f, 1.0f);
@@ -403,9 +753,8 @@ namespace VfxSandbox.Editor
                 var vel = windPs.velocityOverLifetime;
                 vel.enabled = true;
                 vel.space = ParticleSystemSimulationSpace.Local;
-                // Bắt buộc X, Y, Z phải cùng chung một chế độ MinMaxCurve (ở đây là Random Between Two Constants) để tránh lỗi Unity validation
                 vel.orbitalX = new ParticleSystem.MinMaxCurve(0f, 0f);
-                vel.orbitalY = new ParticleSystem.MinMaxCurve(4.0f, 7.0f); // Xoáy tròn xung quanh
+                vel.orbitalY = new ParticleSystem.MinMaxCurve(4.0f, 7.0f);
                 vel.orbitalZ = new ParticleSystem.MinMaxCurve(0f, 0f);
 
                 var windColor = windPs.colorOverLifetime;
@@ -423,16 +772,14 @@ namespace VfxSandbox.Editor
             }
             else if (styleName == "lightning")
             {
-                // Lôi hệ: Thêm hiệu ứng tia sét giật rung lắc ngẫu nhiên (Noise Module)
                 var noise = trailPs.noise;
                 noise.enabled = true;
-                noise.strength = 1.8f;      // Lực giật lệch trục lớn
-                noise.frequency = 4.5f;     // Tần số giật cao tạo nếp răng cưa tia sét
+                noise.strength = 1.8f;
+                noise.frequency = 4.5f;
                 noise.scrollSpeed = 2.0f;
             }
             else if (styleName == "hell")
             {
-                // Địa ngục hệ: Thêm các hạt Đầu Lâu linh hồn bay lơ lửng sủi lên ở đuôi kiếm khí
                 GameObject skullGo = new GameObject("Trail_Skulls");
                 skullGo.transform.parent = go.transform;
                 skullGo.transform.localPosition = new Vector3(0f, 0.05f, 1.5f);
@@ -448,13 +795,12 @@ namespace VfxSandbox.Editor
                 skullMain.simulationSpace = ParticleSystemSimulationSpace.World;
 
                 var skullEmission = skullPs.emission;
-                skullEmission.rateOverTime = 12f; // Tần suất vừa phải cho đầu lâu nổi lên
+                skullEmission.rateOverTime = 12f;
 
                 var skullShape = skullPs.shape;
                 skullShape.shapeType = ParticleSystemShapeType.Box;
                 skullShape.scale = new Vector3(1.0f, 0.1f, 0.3f);
 
-                // Đầu lâu xoay nghiêng nhẹ ngẫu nhiên và lắc lư
                 var rot = skullPs.rotationOverLifetime;
                 rot.enabled = true;
                 rot.z = new ParticleSystem.MinMaxCurve(-45f * Mathf.Deg2Rad, 45f * Mathf.Deg2Rad);
@@ -462,7 +808,6 @@ namespace VfxSandbox.Editor
                 var skullColor = skullPs.colorOverLifetime;
                 skullColor.enabled = true;
                 Gradient skullGrad = new Gradient();
-                // Đầu lâu màu trắng nhạt chuyển sang tím đen u ám rồi tan biến
                 skullGrad.SetKeys(
                     new GradientColorKey[] { new GradientColorKey(new Color(0.9f, 0.9f, 0.9f), 0f), new GradientColorKey(new Color(0.2f, 0.0f, 0.3f), 0.8f) },
                     new GradientAlphaKey[] { new GradientAlphaKey(0.0f, 0f), new GradientAlphaKey(0.85f, 0.2f), new GradientAlphaKey(0.85f, 0.6f), new GradientAlphaKey(0f, 1.0f) }
@@ -481,6 +826,28 @@ namespace VfxSandbox.Editor
 
             PrefabUtility.SaveAsPrefabAsset(go, path);
             Object.DestroyImmediate(go);
+        }
+
+        private static Mesh CreateQuadMesh()
+        {
+            Mesh mesh = new Mesh();
+            mesh.vertices = new Vector3[]
+            {
+                new Vector3(-0.5f, -0.5f, 0f),
+                new Vector3(0.5f, -0.5f, 0f),
+                new Vector3(-0.5f, 0.5f, 0f),
+                new Vector3(0.5f, 0.5f, 0f)
+            };
+            mesh.uv = new Vector2[]
+            {
+                new Vector2(0f, 0f),
+                new Vector2(1f, 0f),
+                new Vector2(0f, 1f),
+                new Vector2(1f, 1f)
+            };
+            mesh.triangles = new int[] { 0, 2, 1, 2, 3, 1 };
+            mesh.RecalculateNormals();
+            return mesh;
         }
     }
 }

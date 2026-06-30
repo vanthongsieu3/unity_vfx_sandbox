@@ -18,7 +18,7 @@ namespace VfxSandbox
         private void Start()
         {
             // Nhân bản vật liệu và mở rộng tối đa biên độ Swipe để hiện đầy đủ thân kiếm khí hình bán nguyệt khi bay
-            var renderer = GetComponent<Renderer>();
+            var renderer = GetComponentInChildren<Renderer>();
             if (renderer != null)
             {
                 matInstance = renderer.material;
