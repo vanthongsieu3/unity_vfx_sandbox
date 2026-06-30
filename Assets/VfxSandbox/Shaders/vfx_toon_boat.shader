@@ -22,8 +22,8 @@ Shader "VFX/ToonBoat"
         [Header(Vertical Ambient Gradient)]
         _TopColorTint("Top Color Tint (Bright)", Color) = (1.15, 1.15, 1.1, 1.0)
         _BottomColorTint("Bottom Color Tint (Dark)", Color) = (0.55, 0.6, 0.68, 1.0)
-        _GradientMinY("Gradient Min Local Y", Float) = -0.6
-        _GradientMaxY("Gradient Max Local Y", Float) = 1.6
+        _GradientMinY("Gradient Min Relative Y", Float) = -0.3
+        _GradientMaxY("Gradient Max Relative Y", Float) = 0.8
         
         [Header(Stylized Specular)]
         _SpecularColor("Specular Color", Color) = (1.0, 0.95, 0.85, 1.0)
@@ -37,8 +37,8 @@ Shader "VFX/ToonBoat"
         
         [Header(Waterline Ambient Tint)]
         _WaterlineColor("Waterline Tint Color", Color) = (0.05, 0.18, 0.22, 1.0)
-        _WaterlineOffset("Waterline Local Y", Range(-1.0, 1.0)) = -0.05
-        _WaterlineGrad("Waterline Fade Range", Range(0.01, 1.0)) = 0.35
+        _WaterlineOffset("Waterline Relative Y", Range(-1.0, 1.0)) = -0.15
+        _WaterlineGrad("Waterline Fade Range", Range(0.01, 1.0)) = 0.15
     }
 
     SubShader
@@ -80,7 +80,6 @@ Shader "VFX/ToonBoat"
                 float3 positionWS   : TEXCOORD1;
                 float3 normalWS     : NORMAL;
                 float2 uv           : TEXCOORD0;
-                float localY        : TEXCOORD3;
             };
 
             // Uniform parameters
@@ -110,6 +109,9 @@ Shader "VFX/ToonBoat"
                 half _WaterlineGrad;
             CBUFFER_END
 
+            // Global shader variable populated by C# BoatFloating.cs script
+            float _BoatWorldY;
+
             Varyings vert(Attributes input)
             {
                 Varyings output;
@@ -117,10 +119,8 @@ Shader "VFX/ToonBoat"
                 VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
                 output.positionCS = vertexInput.positionCS;
                 output.positionWS = vertexInput.positionWS;
-                
                 output.normalWS = TransformObjectToWorldNormal(input.normalOS);
                 output.uv = input.uv;
-                output.localY = input.positionOS.y;
                 
                 return output;
             }
@@ -150,9 +150,12 @@ Shader "VFX/ToonBoat"
                 // Nội suy màu sắc thân gỗ/buồm giữa màu sáng và màu tối
                 half3 diffuseColor = lerp(_ShadowColor.rgb, baseColorWithGrain, toonDiffuse);
 
+                // Tính toán độ cao thực tế của đỉnh so với trọng tâm thế giới của tàu
+                // Giải quyết 100% lỗi lệch trục Blender (Z-up) sang Unity (Y-up) ở Object Space
+                float relativeY = input.positionWS.y - _BoatWorldY;
+
                 // 3. Gradient sáng tối dọc thân (Vertical Height Ambient Gradient)
-                // Giúp phần trên cabin đón sáng trời tươi tắn, phần dưới lườn tàu chìm sâu tối sắc lạnh (Bake ánh sáng nghệ thuật)
-                float vGradient = saturate((input.localY - _GradientMinY) / max(0.001, _GradientMaxY - _GradientMinY));
+                float vGradient = saturate((relativeY - _GradientMinY) / max(0.001, _GradientMaxY - _GradientMinY));
                 half3 verticalAmbient = lerp(_BottomColorTint.rgb, _TopColorTint.rgb, vGradient);
                 diffuseColor *= verticalAmbient;
 
@@ -183,7 +186,7 @@ Shader "VFX/ToonBoat"
 
                 // 7. Gradient nhuộm ẩm chân thực (Height-based Waterline Tint với viền sóng gợn nhẹ)
                 float waterlineNoise = sin(input.uv.x * 16.0) * 0.03;
-                float heightFactor = saturate(1.0 - (input.localY - _WaterlineOffset + waterlineNoise) / _WaterlineGrad);
+                float heightFactor = saturate(1.0 - (relativeY - _WaterlineOffset + waterlineNoise) / _WaterlineGrad);
                 diffuseColor = lerp(diffuseColor, _WaterlineColor.rgb, heightFactor * _WaterlineColor.a);
 
                 // 8. Tổng hợp màu sắc đầu ra hoàn chỉnh

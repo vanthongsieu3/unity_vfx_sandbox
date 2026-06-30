@@ -104,6 +104,9 @@ namespace VfxSandbox
                 mat.SetVectorArray("_PillarPositions", pillarPositions);
             }
 
+            // Đồng bộ hoá độ cao của thuyền lên Shader Toon để làm tâm tính toán Vertical Gradient
+            Shader.SetGlobalFloat("_BoatWorldY", transform.position.y);
+
             Vector3 currentPos = transform.position;
 
             // 1. Lấy vị trí 4 điểm xung quanh thuyền để tính góc nghiêng (Pitch và Roll)
