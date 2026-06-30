@@ -13,10 +13,30 @@ namespace VfxSandbox
 
         private float elapsed = 0f;
 
+        private Material matInstance;
+
         private void Start()
         {
+            // Nhân bản vật liệu và mở rộng tối đa biên độ Swipe để hiện đầy đủ thân kiếm khí hình bán nguyệt khi bay
+            var renderer = GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                matInstance = renderer.material;
+                matInstance.SetFloat("_Swipe", 1.15f);
+                matInstance.SetFloat("_TailLength", 1.25f);
+                matInstance.SetFloat("_Opacity", 1.0f);
+            }
+
             // Tự động xoay nhẹ hướng của kiếm khí để tạo cảm giác bay lượn ngẫu nhiên sinh động
             transform.Rotate(Vector3.forward * Random.Range(-5f, 5f), Space.Self);
+        }
+
+        private void OnDestroy()
+        {
+            if (matInstance != null)
+            {
+                Destroy(matInstance); // Dọn dẹp bộ nhớ vật liệu nhân bản
+            }
         }
 
         private void Update()
