@@ -184,7 +184,7 @@ namespace VfxSandbox
                     targetSkyColor = new Color(0.65f, 0.85f, 0.95f, 1.0f);
                     targetFoamColor = new Color(0.95f, 0.98f, 1.0f, 0.88f);
                     targetRippleHeight = 0.05f;
-                    targetFloatOffset = 0.18f;
+                    targetFloatOffset = -0.15f; // Chìm lườn và bánh lái xuống dưới mặt nước!
 
                     targetSunRotation = new Vector3(52f, -34f, 0f);
                     targetSunColor = new Color(1.0f, 0.96f, 0.88f, 1.0f); // Nắng vàng ấm áp
@@ -200,7 +200,7 @@ namespace VfxSandbox
                     targetSkyColor = new Color(0.85f, 0.25f, 0.35f, 1.0f);
                     targetFoamColor = new Color(1.0f, 0.90f, 0.85f, 0.92f);
                     targetRippleHeight = 0.09f;
-                    targetFloatOffset = 0.18f;
+                    targetFloatOffset = -0.15f;
 
                     targetSunRotation = new Vector3(15f, -85f, 0f);
                     targetSunColor = new Color(1.0f, 0.40f, 0.10f, 1.0f); // Ánh nắng cam cháy
@@ -216,7 +216,7 @@ namespace VfxSandbox
                     targetSkyColor = new Color(0.20f, 0.24f, 0.26f, 1.0f);
                     targetFoamColor = new Color(0.80f, 0.85f, 0.88f, 0.95f);
                     targetRippleHeight = 0.18f;
-                    targetFloatOffset = 0.14f; // Sụt nhẹ trong bão tố
+                    targetFloatOffset = -0.20f; // Sụt sâu hơn trong giông bão dữ dội
 
                     targetSunRotation = new Vector3(65f, 20f, 0f);
                     targetSunColor = new Color(0.55f, 0.60f, 0.65f, 1.0f); // Ánh sáng xám âm u
@@ -232,7 +232,7 @@ namespace VfxSandbox
                     targetSkyColor = new Color(0.12f, 0.03f, 0.01f, 1.0f);      // Khói bụi núi lửa u tối
                     targetFoamColor = new Color(1.0f, 0.85f, 0.1f, 0.98f);      // Vệt nứt dung nham vàng phát sáng
                     targetRippleHeight = 0.08f;
-                    targetFloatOffset = 0.38f; // Trọng lượng dung nham lớn đẩy thuyền nổi rất cao!
+                    targetFloatOffset = 0.05f; // Tỷ trọng dung nham lớn đẩy nổi cao hơn nước (chìm nhẹ 0.05)
 
                     targetSunRotation = new Vector3(30f, 60f, 0f);
                     targetSunColor = new Color(1.0f, 0.35f, 0.1f, 1.0f); // Nắng cam hỏa ngục
@@ -248,7 +248,7 @@ namespace VfxSandbox
                     targetSkyColor = new Color(0.58f, 0.55f, 0.52f, 1.0f);      // Bầu trời nhiều mây u ám
                     targetFoamColor = new Color(0.85f, 0.80f, 0.75f, 0.90f);    // Bọt phù sa màu bùn đất nhạt
                     targetRippleHeight = 0.07f;
-                    targetFloatOffset = 0.18f;
+                    targetFloatOffset = -0.15f;
 
                     targetSunRotation = new Vector3(45f, -120f, 0f);
                     targetSunColor = new Color(0.90f, 0.88f, 0.82f, 1.0f); // Nắng chiều hanh khô
@@ -264,7 +264,7 @@ namespace VfxSandbox
                     targetSkyColor = new Color(0.70f, 0.60f, 0.60f, 1.0f);
                     targetFoamColor = new Color(0.98f, 0.88f, 0.88f, 0.90f);    // Bọt hồng đào nhạt
                     targetRippleHeight = 0.06f;
-                    targetFloatOffset = 0.20f; // Nước mặn đẩy thuyền cao hơn chút
+                    targetFloatOffset = -0.13f; // Nước biển Đỏ mặn đẩy thuyền nổi cao hơn sông 2cm
 
                     targetSunRotation = new Vector3(50f, 90f, 0f);
                     targetSunColor = new Color(0.95f, 0.92f, 0.88f, 1.0f);
@@ -280,7 +280,7 @@ namespace VfxSandbox
                     targetSkyColor = new Color(0.12f, 0.14f, 0.18f, 1.0f);      // Bầu trời đêm tĩnh mịch
                     targetFoamColor = new Color(0.75f, 0.82f, 0.90f, 0.85f);    // Bọt lấp lánh ánh trăng
                     targetRippleHeight = 0.09f;
-                    targetFloatOffset = 0.18f;
+                    targetFloatOffset = -0.15f;
 
                     targetSunRotation = new Vector3(80f, 0f, 0f);
                     targetSunColor = new Color(0.65f, 0.75f, 0.90f, 1.0f); // Ánh trăng dịu mát huyền ảo
@@ -296,7 +296,7 @@ namespace VfxSandbox
                     targetSkyColor = new Color(0.78f, 0.85f, 0.88f, 1.0f);
                     targetFoamColor = new Color(0.98f, 1.0f, 0.98f, 0.92f);     // Vệt muối kết tinh trắng toát
                     targetRippleHeight = 0.02f;
-                    targetFloatOffset = 0.32f; // Tỷ trọng muối cực cao đẩy thuyền nổi cao vượt trội!
+                    targetFloatOffset = -0.01f; // Nước siêu mặn nâng thuyền nổi cao sát mặt nước (chìm 1cm)
 
                     targetSunRotation = new Vector3(60f, -45f, 0f);
                     targetSunColor = new Color(1.0f, 0.98f, 0.90f, 1.0f); // Nắng chói chang sa mạc
@@ -312,7 +312,7 @@ namespace VfxSandbox
                     targetSkyColor = new Color(0.85f, 0.92f, 0.98f, 1.0f);      // Bầu trời Bắc Cực băng giá
                     targetFoamColor = new Color(1.0f, 1.0f, 1.0f, 0.98f);       // Bọt tuyết trắng buốt đông cứng
                     targetRippleHeight = 0.03f;
-                    targetFloatOffset = 0.18f;
+                    targetFloatOffset = -0.15f;
 
                     targetSunRotation = new Vector3(35f, 150f, 0f);
                     targetSunColor = new Color(0.90f, 0.95f, 1.0f, 1.0f); // Ánh nắng mùa đông nhạt màu
