@@ -238,104 +238,102 @@ namespace VfxSandbox.Editor
             light.intensity = 1.3f;
             light.shadows = LightShadows.Soft;
 
-            // 8. Tạo mô hình con thuyền cánh buồm bằng các khối cơ bản (Procedural Stylized Sailboat)
-            GameObject boatRoot = new GameObject("Stylized_Sailboat");
-            boatRoot.transform.position = new Vector3(-0.5f, 0f, -1.0f); // Đặt ở vị trí trung tâm lệch nhẹ
-            boatRoot.transform.rotation = Quaternion.Euler(0f, 45f, 0f); // Xoay chéo góc 45 độ so với chiều sóng
+            // 8. Tạo mô hình con thuyền (Tải từ FBX Fishing Ship hoặc fallback sang thuyền gỗ ghép khối nếu không tìm thấy)
+            GameObject boatRoot = null;
+            string fbxPath = "Assets/VfxSandbox/Models/Fishing_Ship_Asset.fbx";
+            GameObject fbxPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(fbxPath);
+
+            if (fbxPrefab != null)
+            {
+                boatRoot = PrefabUtility.InstantiatePrefab(fbxPrefab) as GameObject;
+                boatRoot.name = "Stylized_Sailboat";
+                boatRoot.transform.position = new Vector3(-0.5f, 0f, -1.0f);
+                boatRoot.transform.rotation = Quaternion.Euler(0f, 45f, 0f);
+                boatRoot.transform.localScale = Vector3.one * 0.45f; // Thu nhỏ lại cho vừa với cự ly camera và cọc đá
+                
+                // Gán vật liệu ToonBoat cho tất cả MeshRenderer của mô hình
+                var renderers = boatRoot.GetComponentsInChildren<MeshRenderer>(true);
+                foreach (var r in renderers)
+                {
+                    // Phân biệt buồm/vải và thân thuyền dựa trên tên
+                    string lowerName = r.gameObject.name.ToLower();
+                    if (lowerName.Contains("sail") || lowerName.Contains("cloth") || lowerName.Contains("fabric") || lowerName.Contains("canvas"))
+                    {
+                        r.sharedMaterial = sailMat;
+                    }
+                    else
+                    {
+                        r.sharedMaterial = woodMat;
+                    }
+                }
+            }
+            else
+            {
+                // FALLBACK: Tạo mô hình con thuyền cánh buồm bằng các khối cơ bản (Procedural Stylized Sailboat) nếu không có FBX
+                boatRoot = new GameObject("Stylized_Sailboat");
+                boatRoot.transform.position = new Vector3(-0.5f, 0f, -1.0f); // Đặt ở vị trí trung tâm lệch nhẹ
+                boatRoot.transform.rotation = Quaternion.Euler(0f, 45f, 0f); // Xoay chéo góc 45 độ so với chiều sóng
+
+                // A. Đáy thuyền (Hull Base)
+                GameObject hullBase = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                hullBase.name = "Hull_Base";
+                hullBase.transform.SetParent(boatRoot.transform);
+                hullBase.transform.localPosition = new Vector3(0f, 0.15f, 0f);
+                hullBase.transform.localScale = new Vector3(0.9f, 0.6f, 2.2f);
+                hullBase.GetComponent<Renderer>().sharedMaterial = woodMat;
+                DestroyImmediate(hullBase.GetComponent<Collider>());
+
+                // B. Mạn trái thuyền (Hull Left)
+                GameObject hullLeft = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                hullLeft.name = "Hull_Left";
+                hullLeft.transform.SetParent(boatRoot.transform);
+                hullLeft.transform.localPosition = new Vector3(-0.52f, 0.35f, 0f);
+                hullLeft.transform.localScale = new Vector3(0.08f, 0.9f, 2.2f);
+                hullLeft.transform.localRotation = Quaternion.Euler(0f, 0f, 12f); // Nghiêng vát ra ngoài
+                hullLeft.GetComponent<Renderer>().sharedMaterial = woodMat;
+                DestroyImmediate(hullLeft.GetComponent<Collider>());
+
+                // C. Mạn phải thuyền (Hull Right)
+                GameObject hullRight = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                hullRight.name = "Hull_Right";
+                hullRight.transform.SetParent(boatRoot.transform);
+                hullRight.transform.localPosition = new Vector3(0.52f, 0.35f, 0f);
+                hullRight.transform.localScale = new Vector3(0.08f, 0.9f, 2.2f);
+                hullRight.transform.localRotation = Quaternion.Euler(0f, 0f, -12f); // Nghiêng vát ra ngoài
+                hullRight.GetComponent<Renderer>().sharedMaterial = woodMat;
+                DestroyImmediate(hullRight.GetComponent<Collider>());
+
+                // D. Mũi thuyền nhọn (Hull Bow)
+                GameObject hullBow = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                hullBow.name = "Hull_Bow";
+                hullBow.transform.SetParent(boatRoot.transform);
+                hullBow.transform.localPosition = new Vector3(0f, 0.35f, 1.25f);
+                hullBow.transform.localScale = new Vector3(0.88f, 0.9f, 0.4f);
+                hullBow.transform.localRotation = Quaternion.Euler(20f, 0f, 0f); // Vát nghiêng lên mũi
+                hullBow.GetComponent<Renderer>().sharedMaterial = woodMat;
+                DestroyImmediate(hullBow.GetComponent<Collider>());
+
+                // E. Cột buồm (Mast)
+                GameObject mast = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                mast.name = "Mast";
+                mast.transform.SetParent(boatRoot.transform);
+                mast.transform.localPosition = new Vector3(0f, 1.3f, 0.1f);
+                mast.transform.localScale = new Vector3(0.08f, 1.2f, 0.08f);
+                mast.GetComponent<Renderer>().sharedMaterial = woodMat;
+                DestroyImmediate(mast.GetComponent<Collider>());
+
+                // F. Cánh buồm (Sail)
+                GameObject sail = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                sail.name = "Sail";
+                sail.transform.SetParent(boatRoot.transform);
+                sail.transform.localPosition = new Vector3(0f, 1.7f, 0.35f);
+                sail.transform.localScale = new Vector3(1.1f, 1.3f, 0.02f);
+                sail.transform.localRotation = Quaternion.Euler(5f, -10f, 3f); // Hơi xoắn căng gió
+                sail.GetComponent<Renderer>().sharedMaterial = sailMat;
+                DestroyImmediate(sail.GetComponent<Collider>());
+            }
+
             followScript.target = boatRoot.transform;
-
-            // Tạo vật liệu gỗ và cánh buồm nhanh trong thư mục Asset để lưu trữ sạch sẽ
-            string woodMatPath = matDir + "/mat_boat_wood.mat";
-            Material woodMat = AssetDatabase.LoadAssetAtPath<Material>(woodMatPath);
-            if (woodMat == null)
-            {
-                woodMat = new Material(Shader.Find("VFX/ToonBoat"));
-                AssetDatabase.CreateAsset(woodMat, woodMatPath);
-            }
-            else
-            {
-                woodMat.shader = Shader.Find("VFX/ToonBoat");
-            }
-            woodMat.SetColor("_BaseColor", new Color(0.35f, 0.20f, 0.10f, 1.0f)); // Nâu gỗ ấm
-            woodMat.SetColor("_ShadowColor", new Color(0.12f, 0.06f, 0.08f, 1.0f)); // Bóng gỗ tối hơi tím thẫm cổ điển
-            woodMat.SetFloat("_HatchStrength", 0.55f);
-            woodMat.SetFloat("_SpecularSize", 0.05f);
-
-            string sailMatPath = matDir + "/mat_boat_sail.mat";
-            Material sailMat = AssetDatabase.LoadAssetAtPath<Material>(sailMatPath);
-            if (sailMat == null)
-            {
-                sailMat = new Material(Shader.Find("VFX/ToonBoat"));
-                AssetDatabase.CreateAsset(sailMat, sailMatPath);
-            }
-            else
-            {
-                sailMat.shader = Shader.Find("VFX/ToonBoat");
-            }
-            sailMat.SetColor("_BaseColor", new Color(0.92f, 0.90f, 0.85f, 1.0f)); // Trắng ngà
-            sailMat.SetColor("_ShadowColor", new Color(0.55f, 0.58f, 0.65f, 1.0f)); // Bóng vải buồm xám xanh mát dịu nghệ thuật
-            sailMat.SetFloat("_HatchStrength", 0.35f); // Hatching mờ hơn trên vải buồm
-            sailMat.SetFloat("_SpecularSize", 0.001f); // Không bóng loáng trên buồm vải
-
-            AssetDatabase.SaveAssets();
-
-            // A. Đáy thuyền (Hull Base)
-            GameObject hullBase = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            hullBase.name = "Hull_Base";
-            hullBase.transform.SetParent(boatRoot.transform);
-            hullBase.transform.localPosition = new Vector3(0f, 0.15f, 0f);
-            hullBase.transform.localScale = new Vector3(0.9f, 0.6f, 2.2f);
-            hullBase.GetComponent<Renderer>().sharedMaterial = woodMat;
-            DestroyImmediate(hullBase.GetComponent<Collider>());
-
-            // B. Mạn trái thuyền (Hull Left)
-            GameObject hullLeft = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            hullLeft.name = "Hull_Left";
-            hullLeft.transform.SetParent(boatRoot.transform);
-            hullLeft.transform.localPosition = new Vector3(-0.52f, 0.35f, 0f);
-            hullLeft.transform.localScale = new Vector3(0.08f, 0.9f, 2.2f);
-            hullLeft.transform.localRotation = Quaternion.Euler(0f, 0f, 12f); // Nghiêng vát ra ngoài
-            hullLeft.GetComponent<Renderer>().sharedMaterial = woodMat;
-            DestroyImmediate(hullLeft.GetComponent<Collider>());
-
-            // C. Mạn phải thuyền (Hull Right)
-            GameObject hullRight = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            hullRight.name = "Hull_Right";
-            hullRight.transform.SetParent(boatRoot.transform);
-            hullRight.transform.localPosition = new Vector3(0.52f, 0.35f, 0f);
-            hullRight.transform.localScale = new Vector3(0.08f, 0.9f, 2.2f);
-            hullRight.transform.localRotation = Quaternion.Euler(0f, 0f, -12f); // Nghiêng vát ra ngoài
-            hullRight.GetComponent<Renderer>().sharedMaterial = woodMat;
-            DestroyImmediate(hullRight.GetComponent<Collider>());
-
-            // D. Mũi thuyền nhọn (Hull Bow)
-            GameObject hullBow = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            hullBow.name = "Hull_Bow";
-            hullBow.transform.SetParent(boatRoot.transform);
-            hullBow.transform.localPosition = new Vector3(0f, 0.35f, 1.25f);
-            hullBow.transform.localScale = new Vector3(0.88f, 0.9f, 0.4f);
-            hullBow.transform.localRotation = Quaternion.Euler(20f, 0f, 0f); // Vát nghiêng lên mũi
-            hullBow.GetComponent<Renderer>().sharedMaterial = woodMat;
-            DestroyImmediate(hullBow.GetComponent<Collider>());
-
-            // E. Cột buồm (Mast)
-            GameObject mast = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            mast.name = "Mast";
-            mast.transform.SetParent(boatRoot.transform);
-            mast.transform.localPosition = new Vector3(0f, 1.3f, 0.1f);
-            mast.transform.localScale = new Vector3(0.08f, 1.2f, 0.08f);
-            mast.GetComponent<Renderer>().sharedMaterial = woodMat;
-            DestroyImmediate(mast.GetComponent<Collider>());
-
-            // F. Cánh buồm (Sail)
-            GameObject sail = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            sail.name = "Sail";
-            sail.transform.SetParent(boatRoot.transform);
-            sail.transform.localPosition = new Vector3(0f, 1.7f, 0.35f);
-            sail.transform.localScale = new Vector3(1.1f, 1.3f, 0.02f);
-            sail.transform.localRotation = Quaternion.Euler(5f, -10f, 3f); // Hơi xoắn căng gió
-            sail.GetComponent<Renderer>().sharedMaterial = sailMat;
-            DestroyImmediate(sail.GetComponent<Collider>());
 
             // G. Thêm script điều khiển dập dềnh (BoatFloating)
             var floatingScript = boatRoot.AddComponent<BoatFloating>();
