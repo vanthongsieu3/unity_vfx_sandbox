@@ -4845,7 +4845,7 @@ ParticleSystemRenderer:
   m_MeshWeighting1: 1
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
---- !u!1 &7089869053030189814
+--- !u!1 &4976659686860964455
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -4853,50 +4853,46 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1870946212128571755}
-  - component: {fileID: 1143896969594645196}
-  - component: {fileID: 1905172535112585327}
-  - component: {fileID: 8005488752296452479}
-  - component: {fileID: 7543491976566295726}
+  - component: {fileID: 8146055346367740546}
+  - component: {fileID: 5194834364410329291}
+  - component: {fileID: 2910240846551564421}
   m_Layer: 0
-  m_Name: vfx_prefab_slash_wave_fire
+  m_Name: Projectile_Model
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &1870946212128571755
+--- !u!4 &8146055346367740546
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7089869053030189814}
+  m_GameObject: {fileID: 4976659686860964455}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1448581199961133564}
-  - {fileID: 1115203029973731078}
-  m_Father: {fileID: 0}
+  m_Children: []
+  m_Father: {fileID: 1870946212128571755}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &1143896969594645196
+--- !u!33 &5194834364410329291
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7089869053030189814}
+  m_GameObject: {fileID: 4976659686860964455}
   m_Mesh: {fileID: 4300000, guid: 7dfaf6d1e9ab8494894299532b06cc44, type: 2}
---- !u!23 &1905172535112585327
+--- !u!23 &2910240846551564421
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7089869053030189814}
+  m_GameObject: {fileID: 4976659686860964455}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -4939,6 +4935,42 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &7089869053030189814
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1870946212128571755}
+  - component: {fileID: 8005488752296452479}
+  - component: {fileID: 7543491976566295726}
+  m_Layer: 0
+  m_Name: vfx_prefab_slash_wave_fire
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1870946212128571755
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7089869053030189814}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8146055346367740546}
+  - {fileID: 1448581199961133564}
+  - {fileID: 1115203029973731078}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &8005488752296452479
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4953,7 +4985,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::VfxSandbox.SlashWaveProjectile
   speed: 22
   lifetime: 1.2
-  explosionPrefab: {fileID: 5709959888718292967, guid: 2faeb9a05a8b3944f802cb9bca9402c2, type: 3}
+  explosionPrefab: {fileID: 7407800645275696499, guid: 49332a37283d9bb4499f32bb15567b80, type: 3}
 --- !u!65 &7543491976566295726
 BoxCollider:
   m_ObjectHideFlags: 0

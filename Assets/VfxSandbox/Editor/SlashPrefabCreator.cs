@@ -609,7 +609,8 @@ namespace VfxSandbox.Editor
             {
                 // Phong hệ: Phóng vòi rồng lốc gió xoáy cuộn di chuyển thẳng tiến
                 filter.sharedMesh = funnelMesh;
-                modelGo.transform.localRotation = Quaternion.identity;            // Đứng thẳng xoáy tròn
+                // Bù trừ góc xoay Z = 90 độ của cha bằng cách xoay con Z = -90 độ để vòi rồng đứng thẳng
+                modelGo.transform.localRotation = Quaternion.Euler(0f, 0f, -90f);
                 modelGo.transform.localScale = new Vector3(1.2f, 1.8f, 1.2f);
                 
                 // Thêm script xoay tự động quay tít khi di chuyển
@@ -624,7 +625,8 @@ namespace VfxSandbox.Editor
                 // Địa ngục hệ: Phóng đầu lâu khổng lồ đen thui lướt đi
                 filter.sharedMesh = CreateQuadMesh();
                 renderer.sharedMaterial = skullMat;
-                modelGo.transform.localRotation = Quaternion.identity;
+                // Bù trừ góc xoay Z = 90 độ của cha bằng cách xoay con Z = -90 độ để đầu lâu đứng thẳng
+                modelGo.transform.localRotation = Quaternion.Euler(0f, 0f, -90f);
                 modelGo.transform.localScale = new Vector3(2.5f, 2.5f, 2.5f);
             }
             else

@@ -1653,7 +1653,7 @@ ParticleSystem:
         m_RotationOrder: 4
     orbitalX:
       serializedVersion: 2
-      minMaxState: 0
+      minMaxState: 3
       scalar: 0
       minScalar: 0
       maxCurve:
@@ -1759,7 +1759,7 @@ ParticleSystem:
         m_RotationOrder: 4
     orbitalZ:
       serializedVersion: 2
-      minMaxState: 0
+      minMaxState: 3
       scalar: 0
       minScalar: 0
       maxCurve:
@@ -9681,8 +9681,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5189558826609134738}
-  - component: {fileID: 3514325404941615386}
-  - component: {fileID: 7704017403202902417}
   - component: {fileID: 3326538041323769271}
   - component: {fileID: 8603226671601666303}
   m_Layer: 0
@@ -9705,25 +9703,96 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 6924047760740826832}
   - {fileID: 8840800530098837156}
   - {fileID: 3847182059943521102}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &3514325404941615386
+--- !u!114 &3326538041323769271
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4065976146722621941}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec8cbc300f408b945ad74bc59943d415, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VfxSandbox.SlashWaveProjectile
+  speed: 22
+  lifetime: 1.2
+  explosionPrefab: {fileID: 5897770354141022590, guid: d7720135db8657e45bf13e550324756b, type: 3}
+--- !u!65 &8603226671601666303
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4065976146722621941}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 5, y: 1, z: 2}
+  m_Center: {x: 0, y: 0, z: 2.5}
+--- !u!1 &7146131193709143287
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6924047760740826832}
+  - component: {fileID: 5811415366698579203}
+  - component: {fileID: 565420697924064308}
+  - component: {fileID: 7671182599348734734}
+  m_Layer: 0
+  m_Name: Projectile_Model
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6924047760740826832
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7146131193709143287}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1.2, y: 1.8, z: 1.2}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5189558826609134738}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &5811415366698579203
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4065976146722621941}
-  m_Mesh: {fileID: 4300000, guid: 7dfaf6d1e9ab8494894299532b06cc44, type: 2}
---- !u!23 &7704017403202902417
+  m_GameObject: {fileID: 7146131193709143287}
+  m_Mesh: {fileID: 4300000, guid: 62195341da9e0f3469b1542f243e7e1c, type: 2}
+--- !u!23 &565420697924064308
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4065976146722621941}
+  m_GameObject: {fileID: 7146131193709143287}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -9766,39 +9835,19 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &3326538041323769271
+--- !u!114 &7671182599348734734
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4065976146722621941}
+  m_GameObject: {fileID: 7146131193709143287}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ec8cbc300f408b945ad74bc59943d415, type: 3}
+  m_Script: {fileID: 11500000, guid: ce16c211177a094449b52b9d24c2d38f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::VfxSandbox.SlashWaveProjectile
-  speed: 22
-  lifetime: 1.2
-  explosionPrefab: {fileID: 5709959888718292967, guid: 2faeb9a05a8b3944f802cb9bca9402c2, type: 3}
---- !u!65 &8603226671601666303
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4065976146722621941}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 5, y: 1, z: 2}
-  m_Center: {x: 0, y: 0, z: 2.5}
+  m_EditorClassIdentifier: Assembly-CSharp::VfxSandbox.VfxScaleAndFade
+  duration: 1.2
+  startScale: {x: 1.2, y: 1.8, z: 1.2}
+  endScale: {x: 1.2, y: 1.8, z: 1.2}
+  rotationSpeed: {x: 0, y: 1000, z: 0}
