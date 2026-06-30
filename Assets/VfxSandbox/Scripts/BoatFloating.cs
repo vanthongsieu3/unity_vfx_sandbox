@@ -30,10 +30,15 @@ namespace VfxSandbox
         private Vector4[] pillarPositionsArray = new Vector4[10];
         private Vector3 lastPosition;
         private float smoothSpeed = 0f;
+        
+        [Header("Shader Trail Smoothing")]
+        public float boatDirSmoothSpeed = 2.2f; // Tốc độ rượt đuổi hướng của vệt nước (càng nhỏ cua càng cong chữ S mượt)
+        private Vector3 smoothBoatDir;
 
         private void Start()
         {
             lastPosition = transform.position;
+            smoothBoatDir = transform.forward;
         }
 
         private void Update()
@@ -99,7 +104,11 @@ namespace VfxSandbox
 
                 // Đẩy tọa độ động của thuyền và mảng 10 cọc đá lên shader
                 mat.SetVector("_BoatPos", new Vector4(transform.position.x, transform.position.z, 0f, 0f));
-                mat.SetVector("_BoatDir", new Vector4(transform.forward.x, transform.forward.z, 0f, 0f));
+                
+                // Sử dụng Slerp xoay chậm hướng của vệt nước, tạo hiệu ứng bẻ cong chữ S cực kỳ tự nhiên khi rẽ tàu
+                smoothBoatDir = Vector3.Slerp(smoothBoatDir, transform.forward, Time.deltaTime * boatDirSmoothSpeed);
+                mat.SetVector("_BoatDir", new Vector4(smoothBoatDir.x, smoothBoatDir.z, 0f, 0f));
+                
                 mat.SetFloat("_BoatSpeed", smoothSpeed);
                 mat.SetVectorArray("_PillarPositions", pillarPositions);
             }
