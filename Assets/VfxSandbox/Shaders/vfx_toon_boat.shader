@@ -19,6 +19,12 @@ Shader "VFX/ToonBoat"
         _WoodGrainTiling("Wood Grain Tiling", Range(5.0, 80.0)) = 32.0
         _WoodGrainWiggle("Wood Grain Wavy distortion", Range(0.5, 8.0)) = 3.0
         
+        [Header(Vertical Ambient Gradient)]
+        _TopColorTint("Top Color Tint (Bright)", Color) = (1.15, 1.15, 1.1, 1.0)
+        _BottomColorTint("Bottom Color Tint (Dark)", Color) = (0.55, 0.6, 0.68, 1.0)
+        _GradientMinY("Gradient Min Local Y", Float) = -0.6
+        _GradientMaxY("Gradient Max Local Y", Float) = 1.6
+        
         [Header(Stylized Specular)]
         _SpecularColor("Specular Color", Color) = (1.0, 0.95, 0.85, 1.0)
         _SpecularSize("Specular Size", Range(0.001, 0.5)) = 0.04
@@ -89,6 +95,10 @@ Shader "VFX/ToonBoat"
                 half _WoodGrainIntensity;
                 half _WoodGrainTiling;
                 half _WoodGrainWiggle;
+                half4 _TopColorTint;
+                half4 _BottomColorTint;
+                float _GradientMinY;
+                float _GradientMaxY;
                 half4 _SpecularColor;
                 half _SpecularSize;
                 half _SpecularGloss;
@@ -132,53 +142,51 @@ Shader "VFX/ToonBoat"
                 half toonDiffuse = saturate((toneShadow + toneMid) * 0.5);
 
                 // 2. Tạo vân gỗ vẽ tay nghệ thuật dạng thủ tục (Procedural Stylized Wood Grain)
-                // Giúp biến các khối vuông gỗ đơn điệu thành các tấm ván có thớ vân xớ gỗ uốn lượn
                 float woodWiggle = sin(input.uv.x * 6.0) * _WoodGrainWiggle;
                 float woodLine = sin(input.uv.y * _WoodGrainTiling + woodWiggle) * 0.5 + 0.5;
                 float woodGrainMask = smoothstep(0.72, 0.82, woodLine) * _WoodGrainIntensity;
-                
-                // Trộn vân gỗ trực tiếp vào Base Color (làm tối đi 35% tại thớ vân gỗ)
                 half3 baseColorWithGrain = lerp(_BaseColor.rgb, _BaseColor.rgb * 0.60, woodGrainMask);
 
                 // Nội suy màu sắc thân gỗ/buồm giữa màu sáng và màu tối
                 half3 diffuseColor = lerp(_ShadowColor.rgb, baseColorWithGrain, toonDiffuse);
 
-                // 3. Tích hợp hiệu ứng vẽ tranh Manga chéo (Cross-Hatching) trong vùng tối theo tọa độ UV của mô hình
-                // Hatching bám chắc lên vỏ tàu khi di chuyển thay vì trượt Moire màn hình
+                // 3. Gradient sáng tối dọc thân (Vertical Height Ambient Gradient)
+                // Giúp phần trên cabin đón sáng trời tươi tắn, phần dưới lườn tàu chìm sâu tối sắc lạnh (Bake ánh sáng nghệ thuật)
+                float vGradient = saturate((input.localY - _GradientMinY) / max(0.001, _GradientMaxY - _GradientMinY));
+                half3 verticalAmbient = lerp(_BottomColorTint.rgb, _TopColorTint.rgb, vGradient);
+                diffuseColor *= verticalAmbient;
+
+                // 4. Tích hợp hiệu ứng vẽ tranh Manga chéo (Cross-Hatching) trong vùng tối theo tọa độ UV
                 float2 hatchUv = input.uv * _HatchDensity * 12.0;
                 float hatchPattern1 = saturate(sin((hatchUv.x - hatchUv.y) * 1.5) * 6.0 - 4.5);
                 float hatchPattern2 = saturate(sin((hatchUv.x + hatchUv.y) * 1.5) * 6.0 - 4.5);
                 
-                // Trộn 2 hướng kẻ: bóng nhạt vẽ nét đơn, bóng đậm vẽ nét đôi chéo nhau (cross-hatch)
                 float singleHatch = hatchPattern1 * (1.0 - toneShadow);
                 float crossHatch = max(hatchPattern1, hatchPattern2) * saturate(1.0 - toneShadow * 2.0);
                 float finalHatch = max(singleHatch, crossHatch) * _HatchStrength;
 
-                // Khắc vạch tối vào màu khuếch tán vùng tối
                 diffuseColor = lerp(diffuseColor, diffuseColor * 0.55, finalHatch);
 
-                // 4. Hiệu ứng tô bóng nổi khối viền cạnh (Backlit Toon Rim Light)
-                // Làm mượt rim light và chỉ cho xuất hiện ở vùng khuất sáng để tạo cảm giác nghệ thuật mềm mại hơn
+                // 5. Hiệu ứng tô bóng nổi khối viền cạnh (Backlit Toon Rim Light)
                 half fresnel = saturate(1.0 - dot(normalWS, viewDirWS));
                 half rimWeight = pow(fresnel, _RimPower);
                 half rimToon = smoothstep(_RimThreshold, _RimThreshold + _ToonFeather * 1.5, rimWeight);
-                // Rim light chỉ sáng ở vùng khuất sáng của đèn chính (Backlit Rim) tránh chói lóa
                 half rimLightMask = rimToon * saturate(0.2 - NdotL * 0.8);
                 half3 rimLightColor = rimLightMask * _RimColor.rgb * _RimColor.a * 0.65;
 
-                // 5. Phản chiếu Toon Specular Highlight
+                // 6. Phản chiếu Toon Specular Highlight
                 float3 halfDir = normalize(lightDirWS + viewDirWS);
                 float NdotH = saturate(dot(normalWS, halfDir));
                 float specPower = pow(NdotH, _SpecularGloss);
                 half specToon = smoothstep(1.0 - _SpecularSize, 1.0 - _SpecularSize + _ToonFeather, specPower);
                 half3 specularHighlight = specToon * _SpecularColor.rgb * _SpecularColor.a;
 
-                // 6. Gradient nhuộm ẩm chân thực (Height-based Waterline Tint với viền sóng gợn nhẹ)
+                // 7. Gradient nhuộm ẩm chân thực (Height-based Waterline Tint với viền sóng gợn nhẹ)
                 float waterlineNoise = sin(input.uv.x * 16.0) * 0.03;
                 float heightFactor = saturate(1.0 - (input.localY - _WaterlineOffset + waterlineNoise) / _WaterlineGrad);
                 diffuseColor = lerp(diffuseColor, _WaterlineColor.rgb, heightFactor * _WaterlineColor.a);
 
-                // 7. Tổng hợp màu sắc đầu ra hoàn chỉnh
+                // 8. Tổng hợp màu sắc đầu ra hoàn chỉnh
                 half3 finalColor = diffuseColor * lightColor; // Chiếu sáng
                 finalColor += specularHighlight;              // Highlight
                 finalColor += rimLightColor;                  // Rim light viền ngoài
