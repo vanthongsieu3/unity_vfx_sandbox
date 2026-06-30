@@ -109,8 +109,10 @@ namespace VfxSandbox.Editor
             if (importer != null)
             {
                 importer.textureType = isNormalMap ? TextureImporterType.NormalMap : TextureImporterType.Default;
+                importer.alphaSource = TextureImporterAlphaSource.FromInputAlpha; // Lấy alpha từ ảnh đầu vào
                 importer.alphaIsTransparency = true;
                 importer.mipmapEnabled = false;
+                importer.wrapMode = TextureWrapMode.Clamp; // Chặn lặp cạnh viền làm lộ khung ô vuông
                 importer.SaveAndReimport();
             }
         }
@@ -150,8 +152,8 @@ namespace VfxSandbox.Editor
             sparksMat.SetOverrideTag("RenderType", "Transparent");
             sparksMat.SetFloat("_Surface", 1.0f); // Transparent
             sparksMat.SetFloat("_Blend", 1.0f);   // Additive
-            sparksMat.SetInt("_SrcBlend", 1);     // BlendMode.One
-            sparksMat.SetInt("_DstBlend", 10);    // BlendMode.OneMinusSrcAlpha (Premultiplied Additive siêu mượt)
+            sparksMat.SetInt("_SrcBlend", 5);     // BlendMode.SrcAlpha (Thích hợp cho Straight Alpha PNG)
+            sparksMat.SetInt("_DstBlend", 1);     // BlendMode.One (Tạo hiệu ứng cộng màu phát sáng cực sạch)
             sparksMat.SetInt("_ZWrite", 0);
             sparksMat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
             sparksMat.renderQueue = 3000;
