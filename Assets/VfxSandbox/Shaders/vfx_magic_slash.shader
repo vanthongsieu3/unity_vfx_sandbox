@@ -99,9 +99,10 @@ Shader "VFX/MagicSlash"
                 
                 float borderOffset = 0.12 * (2.0 - thickness);
                 float edgeFade = smoothstep(0.0, borderOffset, input.uv.y) * smoothstep(1.0, 1.0 - borderOffset, input.uv.y);
-                float startFade = smoothstep(0.0, 0.06, input.uv.x);
+                // Uốn cong mờ dần ở cả 2 đầu kiếm khí (Tapered tips fade along U axis) để giấu cạnh sắc của model
+                float lenFade = smoothstep(0.0, 0.12, input.uv.x) * smoothstep(1.0, 0.88, input.uv.x);
 
-                float tearMask = swipeMask * edgeFade * startFade * _Opacity;
+                float tearMask = swipeMask * edgeFade * lenFade * _Opacity;
 
                 // 3. Nhiễu biến dạng UV (Noise-on-Noise UV Distortion)
                 float2 offset2 = _ScrollSpeed2 * _Time.y;
