@@ -564,8 +564,13 @@ namespace VfxSandbox.Editor
             Debug.Log($"Active URP Asset: {(activeURP != null ? activeURP.name : "NULL")}");
             if (activeURP != null)
             {
+                activeURP.msaaSampleCount = 4; // Kích hoạt 4x MSAA khử hoàn toàn răng cưa viền khối của mô hình!
+                activeURP.supportsCameraDepthTexture = true;
+                activeURP.supportsCameraOpaqueTexture = true;
+                EditorUtility.SetDirty(activeURP);
                 Debug.Log($"  Depth Texture: {activeURP.supportsCameraDepthTexture}");
                 Debug.Log($"  Opaque Texture: {activeURP.supportsCameraOpaqueTexture}");
+                Debug.Log($"  MSAA: {activeURP.msaaSampleCount}x");
             }
             Debug.Log("--------------------------------");
 

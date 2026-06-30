@@ -186,8 +186,13 @@ Shader "VFX/ToonBoat"
 
                 // 4. Tích hợp hiệu ứng vẽ tranh Manga chéo (Cross-Hatching) trong vùng tối theo tọa độ UV
                 float2 hatchUv = input.uv * _HatchDensity * 12.0;
-                float hatchPattern1 = saturate(sin((hatchUv.x - hatchUv.y) * 1.5) * 6.0 - 4.5);
-                float hatchPattern2 = saturate(sin((hatchUv.x + hatchUv.y) * 1.5) * 6.0 - 4.5);
+                
+                // Khử răng cưa cho nét vẽ Manga bằng cách chuyển đổi sang dùng smoothstep mềm mại thay vì xén cứng
+                float wave1 = sin((hatchUv.x - hatchUv.y) * 1.5) * 0.5 + 0.5;
+                float wave2 = sin((hatchUv.x + hatchUv.y) * 1.5) * 0.5 + 0.5;
+                
+                float hatchPattern1 = smoothstep(0.72, 0.88, wave1);
+                float hatchPattern2 = smoothstep(0.72, 0.88, wave2);
                 
                 float singleHatch = hatchPattern1 * (1.0 - toneShadow);
                 float crossHatch = max(hatchPattern1, hatchPattern2) * saturate(1.0 - toneShadow * 2.0);
