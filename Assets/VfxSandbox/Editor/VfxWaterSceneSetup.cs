@@ -408,17 +408,25 @@ namespace VfxSandbox.Editor
                     }
                 }
 
+                // Bắt buộc Refresh AssetDatabase để Unity import Shader mặt nạ vô hình mới tạo
+                AssetDatabase.Refresh();
+                var stencilShader = Shader.Find("VFX/BoatStencilMask");
+                if (stencilShader == null)
+                {
+                    Debug.LogError("[Stencil Mask] Không tìm thấy Shader VFX/BoatStencilMask! Hãy chắc chắn file đã được lưu.");
+                }
+
                 // Tạo vật liệu Stencil Mask cho Tàu
                 string maskMatPath = matDir + "/mat_boat_stencil_mask.mat";
                 Material maskMat = AssetDatabase.LoadAssetAtPath<Material>(maskMatPath);
                 if (maskMat == null)
                 {
-                    maskMat = new Material(Shader.Find("VFX/BoatStencilMask"));
+                    maskMat = new Material(stencilShader);
                     AssetDatabase.CreateAsset(maskMat, maskMatPath);
                 }
                 else
                 {
-                    maskMat.shader = Shader.Find("VFX/BoatStencilMask");
+                    maskMat.shader = stencilShader;
                 }
 
                 // Tạo hình hộp Stencil Mask Volume để xoá nước bên trong lòng thuyền
