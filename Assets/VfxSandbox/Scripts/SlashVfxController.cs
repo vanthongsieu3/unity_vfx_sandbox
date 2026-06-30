@@ -4,9 +4,25 @@ namespace VfxSandbox
 {
     public class SlashVfxController : MonoBehaviour
     {
-        [Header("VFX Prefabs")]
+        public enum SlashStyle
+        {
+            Magic,
+            Fire,
+            Ice,
+            Wind,
+            Lightning
+        }
+
+        [Header("Active Prefabs (Auto-swapped)")]
         public GameObject slashPrefab;
         public GameObject slashWavePrefab; // Prefab Kiếm Khí (projectile) phóng đi
+
+        [Header("Style Pools (Magic, Fire, Ice, Wind, Lightning)")]
+        public GameObject[] slashStylePrefabs = new GameObject[5];
+        public GameObject[] slashWaveStylePrefabs = new GameObject[5];
+
+        [Header("Current Active Style")]
+        public SlashStyle currentStyle = SlashStyle.Magic;
 
         [Header("Combo Settings")]
         public float comboResetTime = 1.0f; // Thời gian chờ reset combo nếu không ấn tiếp
@@ -18,8 +34,20 @@ namespace VfxSandbox
         private int comboIndex = 0; // Chỉ số nhát chém hiện tại (0, 1, 2)
         private float lastInputTime = 0f;
 
+        private void Start()
+        {
+            UpdateActivePrefabs();
+        }
+
         private void Update()
         {
+            // Phím số 1 -> 5 để đổi hệ/kiểu kiếm khí tức thì
+            if (Input.GetKeyDown(KeyCode.Alpha1) || Input.GetKeyDown(KeyCode.Keypad1)) SetStyle(SlashStyle.Magic);
+            else if (Input.GetKeyDown(KeyCode.Alpha2) || Input.GetKeyDown(KeyCode.Keypad2)) SetStyle(SlashStyle.Fire);
+            else if (Input.GetKeyDown(KeyCode.Alpha3) || Input.GetKeyDown(KeyCode.Keypad3)) SetStyle(SlashStyle.Ice);
+            else if (Input.GetKeyDown(KeyCode.Alpha4) || Input.GetKeyDown(KeyCode.Keypad4)) SetStyle(SlashStyle.Wind);
+            else if (Input.GetKeyDown(KeyCode.Alpha5) || Input.GetKeyDown(KeyCode.Keypad5)) SetStyle(SlashStyle.Lightning);
+
             // Tự động reset combo về nhát thứ nhất nếu để lâu không ấn chém
             if (comboIndex > 0 && Time.time - lastInputTime > comboResetTime)
             {
@@ -31,6 +59,26 @@ namespace VfxSandbox
             {
                 triggerSlash = false;
                 TriggerSlashEffect();
+            }
+        }
+
+        public void SetStyle(SlashStyle style)
+        {
+            currentStyle = style;
+            UpdateActivePrefabs();
+            Debug.Log($"[Slash Style] Swapped to {style} style!");
+        }
+
+        private void UpdateActivePrefabs()
+        {
+            int index = (int)currentStyle;
+            if (index >= 0 && index < slashStylePrefabs.Length)
+            {
+                slashPrefab = slashStylePrefabs[index];
+            }
+            if (index >= 0 && index < slashWaveStylePrefabs.Length)
+            {
+                slashWavePrefab = slashWaveStylePrefabs[index];
             }
         }
 

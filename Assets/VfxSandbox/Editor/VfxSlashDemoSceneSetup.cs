@@ -67,14 +67,16 @@ namespace VfxSandbox.Editor
             controllerObj.transform.position = new Vector3(0f, 0.2f, 0f); // Cao hơn mặt đất một chút
             var controller = controllerObj.AddComponent<SlashVfxController>();
 
-            // Liên kết các Prefabs cung chém và kiếm khí vào Controller
-            string prefabPath = "Assets/VfxSandbox/Prefabs/vfx_prefab_slash.prefab";
-            GameObject slashPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
-            controller.slashPrefab = slashPrefab;
+            // Liên kết 5 bộ Prefabs phong cách kiếm khí khác nhau vào Controller
+            string[] styles = new string[] { "magic", "fire", "ice", "wind", "lightning" };
+            for (int i = 0; i < 5; i++)
+            {
+                string slashPath = $"Assets/VfxSandbox/Prefabs/vfx_prefab_slash_{styles[i]}.prefab";
+                controller.slashStylePrefabs[i] = AssetDatabase.LoadAssetAtPath<GameObject>(slashPath);
 
-            string wavePrefabPath = "Assets/VfxSandbox/Prefabs/vfx_prefab_slash_wave.prefab";
-            GameObject slashWavePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(wavePrefabPath);
-            controller.slashWavePrefab = slashWavePrefab;
+                string wavePath = $"Assets/VfxSandbox/Prefabs/vfx_prefab_slash_wave_{styles[i]}.prefab";
+                controller.slashWaveStylePrefabs[i] = AssetDatabase.LoadAssetAtPath<GameObject>(wavePath);
+            }
 
             // Tạo thêm mô hình kiếm đơn giản đại diện cho vị trí người chơi vung kiếm
             GameObject bladeGizmo = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
