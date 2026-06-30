@@ -421,14 +421,24 @@ namespace VfxSandbox.Editor
                 AssetDatabase.Refresh();
                 
                 var stencilShader = Shader.Find("VFX/BoatStencilMask");
+                string logContent = "";
                 if (stencilShader == null)
                 {
+                    logContent = "Shader VFX/BoatStencilMask is NULL!";
                     Debug.LogError("[Stencil Mask] KHÔNG TÌM THẤY Shader VFX/BoatStencilMask! Hãy chắc chắn file nằm đúng Assets/VfxSandbox/Shaders/vfx_boat_stencil_mask.shader");
                 }
                 else
                 {
+                    logContent = $"Shader VFX/BoatStencilMask found successfully! IsSupported: {stencilShader.isSupported}\n";
+                    var messages = ShaderUtil.GetShaderMessages(stencilShader);
+                    logContent += $"Messages count: {messages.Length}\n";
+                    foreach (var msg in messages)
+                    {
+                        logContent += $"[{msg.severity}] Line {msg.line}: {msg.message}\n";
+                    }
                     Debug.Log("[Stencil Mask] Đã nhận diện và biên dịch thành công Shader VFX/BoatStencilMask!");
                 }
+                File.WriteAllText(@"C:\Users\XZONE\.gemini\antigravity\brain\218bfa55-1113-48dd-b361-4e066be0903e\scratch\shader_compile_log.txt", logContent);
 
                 // Tạo vật liệu Stencil Mask cho Tàu
                 string maskMatPath = matDir + "/mat_boat_stencil_mask.mat";
