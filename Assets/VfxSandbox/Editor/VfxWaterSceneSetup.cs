@@ -282,9 +282,41 @@ namespace VfxSandbox.Editor
             {
                 boatRoot = PrefabUtility.InstantiatePrefab(fbxPrefab) as GameObject;
                 boatRoot.name = "Stylized_Sailboat";
-                boatRoot.transform.position = new Vector3(-0.5f, 0f, -1.0f);
+                boatRoot.transform.position = new Vector3(-0.5f, 0.05f, -1.0f);
                 boatRoot.transform.rotation = Quaternion.Euler(0f, 45f, 0f);
-                boatRoot.transform.localScale = Vector3.one * 0.45f; // Thu nhỏ lại cho vừa với cự ly camera và cọc đá
+                
+                // Tính toán bounds tổng thể của prefab để tự động điều chỉnh scale tối ưu (Auto-scaling)
+                Bounds combinedBounds = new Bounds(Vector3.zero, Vector3.zero);
+                bool hasBounds = false;
+                var meshFilters = boatRoot.GetComponentsInChildren<MeshFilter>(true);
+                foreach (var mf in meshFilters)
+                {
+                    if (mf.sharedMesh != null)
+                    {
+                        if (!hasBounds)
+                        {
+                            combinedBounds = mf.sharedMesh.bounds;
+                            hasBounds = true;
+                        }
+                        else
+                        {
+                            combinedBounds.Encapsulate(mf.sharedMesh.bounds);
+                        }
+                    }
+                }
+
+                float scaleFactor = 0.45f; // Giá trị dự phòng nếu không tìm thấy mesh
+                if (hasBounds)
+                {
+                    float maxDim = Mathf.Max(combinedBounds.size.x, Mathf.Max(combinedBounds.size.y, combinedBounds.size.z));
+                    if (maxDim > 0.001f)
+                    {
+                        // Thuyền buồm nên dài khoảng 1.8m trong demo sandbox
+                        scaleFactor = 1.8f / maxDim;
+                        Debug.Log($"[Auto-Scale] Combined bounds size: {combinedBounds.size}, max dimension: {maxDim}. Applying scale factor: {scaleFactor}");
+                    }
+                }
+                boatRoot.transform.localScale = Vector3.one * scaleFactor;
                 
                 // Gán vật liệu ToonBoat cho tất cả MeshRenderer của mô hình
                 var renderers = boatRoot.GetComponentsInChildren<MeshRenderer>(true);
@@ -450,7 +482,7 @@ namespace VfxSandbox.Editor
                 var renderers = root.GetComponentsInChildren<Renderer>(true);
                 foreach (var r in renderers)
                 {
-                    Debug.Log($"  Renderer: {r.gameObject.name}, ActiveInHierarchy: {r.gameObject.activeInHierarchy}, Mat: {r.sharedMaterial?.name}, Shader: {r.sharedMaterial?.shader?.name}");
+                    Debug.Log($"  Renderer: {r.gameObject.name}, Active: {r.gameObject.activeInHierarchy}, Mat: {r.sharedMaterial?.name}, Shader: {r.sharedMaterial?.shader?.name}, Pos: {r.transform.position}, Scale: {r.transform.lossyScale}, Bounds: {r.bounds}");
                 }
             }
             var activeURP = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
