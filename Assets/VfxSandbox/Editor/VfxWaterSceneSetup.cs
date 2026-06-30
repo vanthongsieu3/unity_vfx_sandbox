@@ -518,6 +518,14 @@ namespace VfxSandbox.Editor
             floatingScript.rippleSpeed = 4.5f;
             floatingScript.rippleDecay = 0.32f; // Đồng pha 32% suy hao để lan tỏa xa nhiều lớp
 
+            // Thêm CharacterController vào boatRoot để xử lý va chạm và trượt trên bãi cát/đảo đá
+            var charController = boatRoot.AddComponent<CharacterController>();
+            charController.center = new Vector3(0f, 0.45f, 0f);
+            charController.radius = 0.42f; // Vừa khít mạn ngang của thuyền
+            charController.height = 1.2f;
+            charController.slopeLimit = 0.0f; // Khóa không cho thuyền leo lên dốc bãi cát!
+            charController.stepOffset = 0.0f;
+
             // H. Thêm script điều khiển di chuyển bàn phím (BoatController)
             var controllerScript = boatRoot.AddComponent<BoatController>();
             controllerScript.moveSpeed = 5.0f;

@@ -29,9 +29,20 @@ namespace VfxSandbox
                 currentSpeed = Mathf.MoveTowards(currentSpeed, 0f, deceleration * Time.deltaTime);
             }
 
-            // Di chuyển con thuyền theo trục phẳng ngang X, Z
-            Vector3 movement = transform.forward * currentSpeed * Time.deltaTime;
-            transform.position += movement;
+            // Di chuyển con thuyền bằng CharacterController để xử lý va chạm trượt với đảo đá và bờ cát
+            CharacterController controller = GetComponent<CharacterController>();
+            if (controller != null)
+            {
+                Vector3 movement = transform.forward * currentSpeed * Time.deltaTime;
+                // Áp lực nhẹ đi xuống để CharacterController bám sát va chạm với dốc cát dưới đáy
+                movement.y = -0.2f; 
+                controller.Move(movement);
+            }
+            else
+            {
+                Vector3 movement = transform.forward * currentSpeed * Time.deltaTime;
+                transform.position += movement;
+            }
 
             // Xoay hướng mũi thuyền quanh trục đứng Y (Yaw)
             float turnRotation = turnInput * turnSpeed * Time.deltaTime;
