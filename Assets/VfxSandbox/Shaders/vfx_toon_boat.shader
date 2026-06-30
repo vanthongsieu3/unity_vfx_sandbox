@@ -2,8 +2,10 @@ Shader "VFX/ToonBoat"
 {
     Properties
     {
-        _BaseColor("Base Color", Color) = (0.35, 0.20, 0.10, 1.0)
+        _BaseColor("Base Color Tint", Color) = (1.0, 1.0, 1.0, 1.0)
         _ShadowColor("Shadow Tint Color", Color) = (0.12, 0.06, 0.08, 1.0)
+        _BaseMap("Albedo Map (RGB)", 2D) = "white" {}
+        _BumpMap("Normal Map", 2D) = "bump" {}
         
         [Header(Toon Shading)]
         _ToonStep1("Toon Step 1 (Shadow-Mid)", Range(-1.0, 1.0)) = -0.15
@@ -15,7 +17,7 @@ Shader "VFX/ToonBoat"
         _HatchStrength("Hatch Line Intensity", Range(0.0, 1.0)) = 0.45
         
         [Header(Procedural Wood Grain)]
-        _WoodGrainIntensity("Wood Grain Intensity", Range(0.0, 1.0)) = 0.75
+        _WoodGrainIntensity("Wood Grain Intensity", Range(0.0, 1.0)) = 0.0
         _WoodGrainTiling("Wood Grain Tiling", Range(5.0, 80.0)) = 32.0
         _WoodGrainWiggle("Wood Grain Wavy distortion", Range(0.5, 8.0)) = 3.0
         
@@ -71,6 +73,7 @@ Shader "VFX/ToonBoat"
             {
                 float4 positionOS   : POSITION;
                 float3 normalOS     : NORMAL;
+                float4 tangentOS    : TANGENT;
                 float2 uv           : TEXCOORD0;
             };
 
@@ -79,6 +82,7 @@ Shader "VFX/ToonBoat"
                 float4 positionCS   : SV_POSITION;
                 float3 positionWS   : TEXCOORD1;
                 float3 normalWS     : NORMAL;
+                float4 tangentWS    : TANGENT;
                 float2 uv           : TEXCOORD0;
             };
 
@@ -109,6 +113,10 @@ Shader "VFX/ToonBoat"
                 half _WaterlineGrad;
             CBUFFER_END
 
+            // Textures declarations
+            sampler2D _BaseMap;
+            sampler2D _BumpMap;
+
             // Global shader variable populated by C# BoatFloating.cs script
             float _BoatWorldY;
 
@@ -119,7 +127,11 @@ Shader "VFX/ToonBoat"
                 VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
                 output.positionCS = vertexInput.positionCS;
                 output.positionWS = vertexInput.positionWS;
-                output.normalWS = TransformObjectToWorldNormal(input.normalOS);
+                
+                VertexNormalInputs normalInput = GetVertexNormalInputs(input.normalOS, input.tangentOS);
+                output.normalWS = normalInput.normalWS;
+                output.tangentWS = float4(normalInput.tangentWS, input.tangentOS.w);
+                
                 output.uv = input.uv;
                 
                 return output;
@@ -127,31 +139,44 @@ Shader "VFX/ToonBoat"
 
             half4 frag(Varyings input) : SV_Target
             {
+                // Sample Normal Map trong Tangent Space và biến đổi sang World Space
                 float3 normalWS = normalize(input.normalWS);
+                float3 tangentWS = normalize(input.tangentWS.xyz);
+                float3 bitangentWS = cross(normalWS, tangentWS) * input.tangentWS.w;
+                float3x3 tbn = float3x3(tangentWS, bitangentWS, normalWS);
+
+                half4 normalTex = tex2D(_BumpMap, input.uv);
+                float3 normalTS = UnpackNormal(normalTex);
+                float3 bumpedNormalWS = normalize(mul(normalTS, tbn));
+
                 float3 viewDirWS = normalize(GetCameraPositionWS() - input.positionWS);
 
                 Light mainLight = GetMainLight();
                 float3 lightDirWS = normalize(mainLight.direction);
                 half3 lightColor = mainLight.color;
 
-                half NdotL = dot(normalWS, lightDirWS);
+                // Tính toán khuếch tán dựa trên pháp tuyến đã được áp normal map
+                half NdotL = dot(bumpedNormalWS, lightDirWS);
 
                 // 1. Phân chia 3 vùng bóng rẽ (Tri-tone Step Shading) mượt mà bằng smoothstep
                 half toneShadow = smoothstep(_ToonStep1, _ToonStep1 + _ToonFeather, NdotL);
                 half toneMid = smoothstep(_ToonStep2, _ToonStep2 + _ToonFeather, NdotL);
                 half toonDiffuse = saturate((toneShadow + toneMid) * 0.5);
 
-                // 2. Tạo vân gỗ vẽ tay nghệ thuật dạng thủ tục (Procedural Stylized Wood Grain)
+                // Sample Base Map Texture
+                half4 texColor = tex2D(_BaseMap, input.uv);
+                half3 baseAlbedo = texColor.rgb * _BaseColor.rgb;
+
+                // 2. Tạo vân gỗ vẽ tay nghệ thuật dạng thủ tục (Chỉ áp dụng nếu WoodGrainIntensity > 0)
                 float woodWiggle = sin(input.uv.x * 6.0) * _WoodGrainWiggle;
                 float woodLine = sin(input.uv.y * _WoodGrainTiling + woodWiggle) * 0.5 + 0.5;
                 float woodGrainMask = smoothstep(0.72, 0.82, woodLine) * _WoodGrainIntensity;
-                half3 baseColorWithGrain = lerp(_BaseColor.rgb, _BaseColor.rgb * 0.60, woodGrainMask);
+                baseAlbedo = lerp(baseAlbedo, baseAlbedo * 0.60, woodGrainMask);
 
                 // Nội suy màu sắc thân gỗ/buồm giữa màu sáng và màu tối
-                half3 diffuseColor = lerp(_ShadowColor.rgb, baseColorWithGrain, toonDiffuse);
+                half3 diffuseColor = lerp(_ShadowColor.rgb * texColor.rgb, baseAlbedo, toonDiffuse);
 
                 // Tính toán độ cao thực tế của đỉnh so với trọng tâm thế giới của tàu
-                // Giải quyết 100% lỗi lệch trục Blender (Z-up) sang Unity (Y-up) ở Object Space
                 float relativeY = input.positionWS.y - _BoatWorldY;
 
                 // 3. Gradient sáng tối dọc thân (Vertical Height Ambient Gradient)
@@ -171,7 +196,7 @@ Shader "VFX/ToonBoat"
                 diffuseColor = lerp(diffuseColor, diffuseColor * 0.55, finalHatch);
 
                 // 5. Hiệu ứng tô bóng nổi khối viền cạnh (Backlit Toon Rim Light)
-                half fresnel = saturate(1.0 - dot(normalWS, viewDirWS));
+                half fresnel = saturate(1.0 - dot(bumpedNormalWS, viewDirWS));
                 half rimWeight = pow(fresnel, _RimPower);
                 half rimToon = smoothstep(_RimThreshold, _RimThreshold + _ToonFeather * 1.5, rimWeight);
                 half rimLightMask = rimToon * saturate(0.2 - NdotL * 0.8);
@@ -179,7 +204,7 @@ Shader "VFX/ToonBoat"
 
                 // 6. Phản chiếu Toon Specular Highlight
                 float3 halfDir = normalize(lightDirWS + viewDirWS);
-                float NdotH = saturate(dot(normalWS, halfDir));
+                float NdotH = saturate(dot(bumpedNormalWS, halfDir));
                 float specPower = pow(NdotH, _SpecularGloss);
                 half specToon = smoothstep(1.0 - _SpecularSize, 1.0 - _SpecularSize + _ToonFeather, specPower);
                 half3 specularHighlight = specToon * _SpecularColor.rgb * _SpecularColor.a;

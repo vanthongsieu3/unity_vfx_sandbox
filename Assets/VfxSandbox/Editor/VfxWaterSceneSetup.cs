@@ -337,18 +337,74 @@ namespace VfxSandbox.Editor
                     boatModel.transform.localPosition = Vector3.zero;
                 }
                 
-                // Gán vật liệu ToonBoat cho tất cả MeshRenderer của mô hình
+                // Cấu hình Import Settings cho các Textures vừa giải nén (base color là sRGB, normal map là NormalMap)
+                string texDir = "Assets/VfxSandbox/Textures/FishingShip";
+                ConfigureTexture(texDir + "/Boat_Interior_Base_Color.png", false);
+                ConfigureTexture(texDir + "/Boat_Interior_Normal_OpenGL.png", true);
+                ConfigureTexture(texDir + "/Fishing_Ship_Base_Color.png", false);
+                ConfigureTexture(texDir + "/Fishing_Ship_Normal_OpenGL.png", true);
+                AssetDatabase.Refresh();
+
+                // Tải các Texture
+                Texture2D interiorBase = AssetDatabase.LoadAssetAtPath<Texture2D>(texDir + "/Boat_Interior_Base_Color.png");
+                Texture2D interiorNormal = AssetDatabase.LoadAssetAtPath<Texture2D>(texDir + "/Boat_Interior_Normal_OpenGL.png");
+                Texture2D exteriorBase = AssetDatabase.LoadAssetAtPath<Texture2D>(texDir + "/Fishing_Ship_Base_Color.png");
+                Texture2D exteriorNormal = AssetDatabase.LoadAssetAtPath<Texture2D>(texDir + "/Fishing_Ship_Normal_OpenGL.png");
+
+                // Tạo/Cấu hình 2 vật liệu Toon chuyên biệt cho Tàu cá
+                string extMatPath = matDir + "/mat_fishing_ship_exterior.mat";
+                Material extMat = AssetDatabase.LoadAssetAtPath<Material>(extMatPath);
+                if (extMat == null)
+                {
+                    extMat = new Material(Shader.Find("VFX/ToonBoat"));
+                    AssetDatabase.CreateAsset(extMat, extMatPath);
+                }
+                else
+                {
+                    extMat.shader = Shader.Find("VFX/ToonBoat");
+                }
+                extMat.SetColor("_BaseColor", Color.white); // Nhân với texture nên để màu trắng làm gốc
+                extMat.SetColor("_ShadowColor", new Color(0.12f, 0.08f, 0.15f, 1.0f)); // Bóng tím thẫm đậm đà
+                if (exteriorBase != null) extMat.SetTexture("_BaseMap", exteriorBase);
+                if (exteriorNormal != null) extMat.SetTexture("_BumpMap", exteriorNormal);
+                extMat.SetFloat("_HatchStrength", 0.35f);
+                extMat.SetFloat("_WoodGrainIntensity", 0.0f); // Tắt vân gỗ vẽ tay vì đã có texture chi tiết!
+                extMat.SetFloat("_SpecularSize", 0.05f);
+
+                string intMatPath = matDir + "/mat_fishing_ship_interior.mat";
+                Material intMat = AssetDatabase.LoadAssetAtPath<Material>(intMatPath);
+                if (intMat == null)
+                {
+                    intMat = new Material(Shader.Find("VFX/ToonBoat"));
+                    AssetDatabase.CreateAsset(intMat, intMatPath);
+                }
+                else
+                {
+                    intMat.shader = Shader.Find("VFX/ToonBoat");
+                }
+                intMat.SetColor("_BaseColor", Color.white);
+                intMat.SetColor("_ShadowColor", new Color(0.10f, 0.06f, 0.12f, 1.0f));
+                if (interiorBase != null) intMat.SetTexture("_BaseMap", interiorBase);
+                if (interiorNormal != null) intMat.SetTexture("_BumpMap", interiorNormal);
+                intMat.SetFloat("_HatchStrength", 0.25f);
+                intMat.SetFloat("_WoodGrainIntensity", 0.0f);
+                intMat.SetFloat("_SpecularSize", 0.02f);
+
+                AssetDatabase.SaveAssets();
+
+                // Gán vật liệu dựa trên tên Mesh con
                 var renderers = boatModel.GetComponentsInChildren<MeshRenderer>(true);
                 foreach (var r in renderers)
                 {
                     string lowerName = r.gameObject.name.ToLower();
-                    if (lowerName.Contains("sail") || lowerName.Contains("cloth") || lowerName.Contains("fabric") || lowerName.Contains("canvas"))
+                    // Nếu là interior hoặc cabin thì dùng intMat, ngược lại dùng extMat
+                    if (lowerName.Contains("interior") || lowerName.Contains("inside") || lowerName.Contains("cabin") || lowerName.Contains("furnit") || lowerName.Contains("seat") || lowerName.Contains("steer"))
                     {
-                        r.sharedMaterial = sailMat;
+                        r.sharedMaterial = intMat;
                     }
                     else
                     {
-                        r.sharedMaterial = woodMat;
+                        r.sharedMaterial = extMat;
                     }
                 }
             }
@@ -573,6 +629,30 @@ namespace VfxSandbox.Editor
             var psr = bubbleObj.GetComponent<ParticleSystemRenderer>();
             psr.sharedMaterial = mat;
             psr.renderMode = ParticleSystemRenderMode.Billboard;
+        }
+
+        private static void ConfigureTexture(string assetPath, bool isNormalMap)
+        {
+            var importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
+            if (importer != null)
+            {
+                bool dirty = false;
+                if (isNormalMap && importer.textureType != TextureImporterType.NormalMap)
+                {
+                    importer.textureType = TextureImporterType.NormalMap;
+                    dirty = true;
+                }
+                else if (!isNormalMap && importer.textureType != TextureImporterType.Default)
+                {
+                    importer.textureType = TextureImporterType.Default;
+                    dirty = true;
+                }
+                
+                if (dirty)
+                {
+                    importer.SaveAndReimport();
+                }
+            }
         }
     }
 }
