@@ -243,6 +243,41 @@ namespace VfxSandbox.Editor
             string fbxPath = "Assets/VfxSandbox/Models/Fishing_Ship_Asset.fbx";
             GameObject fbxPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(fbxPath);
 
+            // Tạo vật liệu gỗ và cánh buồm nhanh trong thư mục Asset để lưu trữ sạch sẽ
+            string woodMatPath = matDir + "/mat_boat_wood.mat";
+            Material woodMat = AssetDatabase.LoadAssetAtPath<Material>(woodMatPath);
+            if (woodMat == null)
+            {
+                woodMat = new Material(Shader.Find("VFX/ToonBoat"));
+                AssetDatabase.CreateAsset(woodMat, woodMatPath);
+            }
+            else
+            {
+                woodMat.shader = Shader.Find("VFX/ToonBoat");
+            }
+            woodMat.SetColor("_BaseColor", new Color(0.35f, 0.20f, 0.10f, 1.0f)); // Nâu gỗ ấm
+            woodMat.SetColor("_ShadowColor", new Color(0.12f, 0.06f, 0.08f, 1.0f)); // Bóng gỗ tối hơi tím thẫm cổ điển
+            woodMat.SetFloat("_HatchStrength", 0.55f);
+            woodMat.SetFloat("_SpecularSize", 0.05f);
+
+            string sailMatPath = matDir + "/mat_boat_sail.mat";
+            Material sailMat = AssetDatabase.LoadAssetAtPath<Material>(sailMatPath);
+            if (sailMat == null)
+            {
+                sailMat = new Material(Shader.Find("VFX/ToonBoat"));
+                AssetDatabase.CreateAsset(sailMat, sailMatPath);
+            }
+            else
+            {
+                sailMat.shader = Shader.Find("VFX/ToonBoat");
+            }
+            sailMat.SetColor("_BaseColor", new Color(0.92f, 0.90f, 0.85f, 1.0f)); // Trắng ngà
+            sailMat.SetColor("_ShadowColor", new Color(0.55f, 0.58f, 0.65f, 1.0f)); // Bóng vải buồm xám xanh mát dịu nghệ thuật
+            sailMat.SetFloat("_HatchStrength", 0.35f); // Hatching mờ hơn trên vải buồm
+            sailMat.SetFloat("_SpecularSize", 0.001f); // Không bóng loáng trên buồm vải
+
+            AssetDatabase.SaveAssets();
+
             if (fbxPrefab != null)
             {
                 boatRoot = PrefabUtility.InstantiatePrefab(fbxPrefab) as GameObject;
