@@ -280,15 +280,20 @@ namespace VfxSandbox.Editor
 
             if (fbxPrefab != null)
             {
-                boatRoot = PrefabUtility.InstantiatePrefab(fbxPrefab) as GameObject;
-                boatRoot.name = "Stylized_Sailboat";
+                // Tạo parent container sạch sẽ để làm tâm quay và điều khiển vật lý dập dềnh
+                boatRoot = new GameObject("Stylized_Sailboat");
                 boatRoot.transform.position = new Vector3(-0.5f, 0.05f, -1.0f);
                 boatRoot.transform.rotation = Quaternion.Euler(0f, 45f, 0f);
+
+                // Instantiate prefab làm con của boatRoot để dễ dàng offset góc xoay và tâm (Pivot)
+                GameObject boatModel = PrefabUtility.InstantiatePrefab(fbxPrefab) as GameObject;
+                boatModel.name = "Boat_Model";
+                boatModel.transform.SetParent(boatRoot.transform);
                 
                 // Tính toán bounds tổng thể của prefab để tự động điều chỉnh scale tối ưu (Auto-scaling)
                 Bounds combinedBounds = new Bounds(Vector3.zero, Vector3.zero);
                 bool hasBounds = false;
-                var meshFilters = boatRoot.GetComponentsInChildren<MeshFilter>(true);
+                var meshFilters = boatModel.GetComponentsInChildren<MeshFilter>(true);
                 foreach (var mf in meshFilters)
                 {
                     if (mf.sharedMesh != null)
@@ -305,24 +310,37 @@ namespace VfxSandbox.Editor
                     }
                 }
 
-                float scaleFactor = 0.45f; // Giá trị dự phòng nếu không tìm thấy mesh
+                float scaleFactor = 0.45f;
                 if (hasBounds)
                 {
                     float maxDim = Mathf.Max(combinedBounds.size.x, Mathf.Max(combinedBounds.size.y, combinedBounds.size.z));
                     if (maxDim > 0.001f)
                     {
-                        // Thuyền buồm nên dài khoảng 1.8m trong demo sandbox
                         scaleFactor = 1.8f / maxDim;
                         Debug.Log($"[Auto-Scale] Combined bounds size: {combinedBounds.size}, max dimension: {maxDim}. Applying scale factor: {scaleFactor}");
                     }
                 }
-                boatRoot.transform.localScale = Vector3.one * scaleFactor;
+
+                // Thiết lập vị trí local và xoay local sửa lỗi trục Blender (Z-up sang Y-up)
+                boatModel.transform.localScale = Vector3.one * scaleFactor;
+                // Xoay -90 độ trục X để dựng con thuyền đứng thẳng dậy trên mặt nước
+                boatModel.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+                // Căn giữa trọng tâm trục Y dựa trên bounds để mép nước cắt ngang hông thuyền
+                if (hasBounds)
+                {
+                    // Tự động đẩy lườn thuyền chìm nhẹ xuống nước cho tự nhiên
+                    float yOffset = -combinedBounds.center.y * scaleFactor;
+                    boatModel.transform.localPosition = new Vector3(0f, yOffset, 0f);
+                }
+                else
+                {
+                    boatModel.transform.localPosition = Vector3.zero;
+                }
                 
                 // Gán vật liệu ToonBoat cho tất cả MeshRenderer của mô hình
-                var renderers = boatRoot.GetComponentsInChildren<MeshRenderer>(true);
+                var renderers = boatModel.GetComponentsInChildren<MeshRenderer>(true);
                 foreach (var r in renderers)
                 {
-                    // Phân biệt buồm/vải và thân thuyền dựa trên tên
                     string lowerName = r.gameObject.name.ToLower();
                     if (lowerName.Contains("sail") || lowerName.Contains("cloth") || lowerName.Contains("fabric") || lowerName.Contains("canvas"))
                     {
