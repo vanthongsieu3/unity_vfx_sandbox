@@ -407,6 +407,31 @@ namespace VfxSandbox.Editor
                         r.sharedMaterial = extMat;
                     }
                 }
+
+                // Tạo vật liệu Stencil Mask cho Tàu
+                string maskMatPath = matDir + "/mat_boat_stencil_mask.mat";
+                Material maskMat = AssetDatabase.LoadAssetAtPath<Material>(maskMatPath);
+                if (maskMat == null)
+                {
+                    maskMat = new Material(Shader.Find("VFX/BoatStencilMask"));
+                    AssetDatabase.CreateAsset(maskMat, maskMatPath);
+                }
+                else
+                {
+                    maskMat.shader = Shader.Find("VFX/BoatStencilMask");
+                }
+
+                // Tạo hình hộp Stencil Mask Volume để xoá nước bên trong lòng thuyền
+                GameObject maskVol = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                maskVol.name = "Stencil_Mask_Volume";
+                maskVol.transform.SetParent(boatRoot.transform);
+                // Đặt vị trí và tỷ lệ khớp hoàn hảo với khoang cabin và sàn boong của Fishing Ship
+                maskVol.transform.localPosition = new Vector3(0f, 0.05f, -0.1f);
+                maskVol.transform.localScale = new Vector3(0.76f, 0.45f, 1.35f);
+                
+                // Gán vật liệu Stencil Mask và xoá Collider để tránh va chạm vật lý
+                maskVol.GetComponent<Renderer>().sharedMaterial = maskMat;
+                DestroyImmediate(maskVol.GetComponent<Collider>());
             }
             else
             {

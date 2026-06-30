@@ -79,6 +79,13 @@ Shader "VFX/StylizedWater"
             Name "StylizedWaterPass"
             Tags { "LightMode"="UniversalForward" }
 
+            Stencil
+            {
+                Ref 1
+                Comp NotEqual
+                Pass Keep
+            }
+
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
