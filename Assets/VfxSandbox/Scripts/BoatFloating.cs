@@ -131,8 +131,19 @@ namespace VfxSandbox
             float pitch = Mathf.Atan2(hFront - hBack, 2.0f) * Mathf.Rad2Deg;
             float roll = Mathf.Atan2(hRight - hLeft, 0.8f) * Mathf.Rad2Deg;
 
-            // Xoay thuyền nhấp nhô theo mặt nước
-            Quaternion targetRot = Quaternion.Euler(pitch, transform.rotation.eulerAngles.y, -roll);
+            // Tính thêm góc nghiêng động học khi cua thuyền (Steering Roll) tỷ lệ thuận với vận tốc
+            float steerRoll = 0f;
+            var controller = GetComponent<BoatController>();
+            if (controller != null)
+            {
+                float turnInput = Input.GetAxis("Horizontal");
+                float speedRatio = Mathf.Clamp01(Mathf.Abs(controller.currentSpeed) / controller.moveSpeed);
+                // Nghiêng thuyền ngược chiều quay cua (nhìn như thật nhờ phản lực ly tâm)
+                steerRoll = -turnInput * 8.0f * speedRatio;
+            }
+
+            // Xoay thuyền nhấp nhô theo mặt nước và nghiêng cua
+            Quaternion targetRot = Quaternion.Euler(pitch, transform.rotation.eulerAngles.y, -roll + steerRoll);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * rotationLerpSpeed);
         }
 

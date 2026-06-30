@@ -10,7 +10,7 @@ namespace VfxSandbox
         public float acceleration = 3.0f;
         public float deceleration = 2.5f;
 
-        private float currentSpeed = 0f;
+        public float currentSpeed = 0f;
 
         private void Update()
         {

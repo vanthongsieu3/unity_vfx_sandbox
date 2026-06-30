@@ -613,7 +613,23 @@ namespace VfxSandbox.Editor
             AddBubbleParticleSystem(rock2, "Rock2_Churn_Bubbles", new Vector3(0f, -0.05f, 0f), new Vector3(1.2f, 0.1f, 1.2f), 12f, 0.015f, 0.06f, 0.02f, 0.08f, 0.6f, 1.3f, -0.02f, bubbleMat);
 
             // D. Bọt khí rẽ sóng dưới đáy thuyền (Boat Churning Bubbles) - sủi bọt và tan ngay dưới lườn thuyền
-            AddBubbleParticleSystem(boatRoot, "Boat_Churn_Bubbles", new Vector3(0f, -0.05f, -0.2f), new Vector3(0.8f, 0.1f, 1.8f), 16f, 0.015f, 0.07f, 0.02f, 0.08f, 0.6f, 1.3f, -0.02f, bubbleMat);
+            var sternWake = AddBubbleParticleSystem(boatRoot, "Boat_Churn_Bubbles", new Vector3(0f, -0.05f, -0.6f), new Vector3(0.4f, 0.1f, 0.4f), 16f, 0.015f, 0.07f, 0.02f, 0.08f, 0.6f, 1.3f, -0.02f, bubbleMat);
+
+            // E. Sóng rẽ nước mạn trái mũi thuyền (Bow Wave Left)
+            var bowWakeL = AddBubbleParticleSystem(boatRoot, "Bow_Wave_L", new Vector3(-0.22f, -0.05f, 0.45f), new Vector3(0.15f, 0.1f, 0.15f), 0f, 0.01f, 0.06f, 0.01f, 0.05f, 0.5f, 1.1f, -0.02f, bubbleMat);
+            var shapeL = bowWakeL.shape;
+            shapeL.rotation = new Vector3(0f, -30f, 0f); // Nghiêng luồng phun chếch ra ngoài mạn trái
+
+            // F. Sóng rẽ nước mạn phải mũi thuyền (Bow Wave Right)
+            var bowWakeR = AddBubbleParticleSystem(boatRoot, "Bow_Wave_R", new Vector3(0.22f, -0.05f, 0.45f), new Vector3(0.15f, 0.1f, 0.15f), 0f, 0.01f, 0.06f, 0.01f, 0.05f, 0.5f, 1.1f, -0.02f, bubbleMat);
+            var shapeR = bowWakeR.shape;
+            shapeR.rotation = new Vector3(0f, 30f, 0f); // Nghiêng luồng phun chếch ra ngoài mạn phải
+
+            // Gán Controller quản lý hiệu ứng hạt nước động học theo vận tốc thuyền
+            var vfxCtrl = boatRoot.AddComponent<BoatVfxController>();
+            vfxCtrl.sternWake = sternWake;
+            vfxCtrl.bowWakeL = bowWakeL;
+            vfxCtrl.bowWakeR = bowWakeR;
 
             // 8.5. Tạo Game Object quản lý thời tiết và tương tác HUD (WeatherController)
             GameObject weatherCtrlObj = new GameObject("Weather_Controller");
@@ -663,7 +679,7 @@ namespace VfxSandbox.Editor
             EditorUtility.DisplayDialog("VFX Water Setup", "Đã khởi tạo và tự động mở Scene Nước cách điệu Stylized Water!\n\nNhấn Play để chiêm ngưỡng sóng Gerstner, thấu quang ngọc lục bảo, thủy triều bờ cát, bọt viền ôm vật thể, gợn nắng caustics long lanh và hệ thống hạt bọt khí sủi bọt sinh động xung quanh cọc và thuyền!", "OK");
         }
 
-        private static void AddBubbleParticleSystem(GameObject parent, string name, Vector3 localPos, Vector3 localScale, float emissionRate, float startSizeMin, float startSizeMax, float speedMin, float speedMax, float lifeMin, float lifeMax, float gravity, Material mat)
+        private static ParticleSystem AddBubbleParticleSystem(GameObject parent, string name, Vector3 localPos, Vector3 localScale, float emissionRate, float startSizeMin, float startSizeMax, float speedMin, float speedMax, float lifeMin, float lifeMax, float gravity, Material mat)
         {
             GameObject bubbleObj = new GameObject(name);
             bubbleObj.transform.SetParent(parent.transform);
@@ -714,6 +730,8 @@ namespace VfxSandbox.Editor
             var psr = bubbleObj.GetComponent<ParticleSystemRenderer>();
             psr.sharedMaterial = mat;
             psr.renderMode = ParticleSystemRenderMode.Billboard;
+
+            return ps;
         }
 
         private static void ConfigureTexture(string assetPath, bool isNormalMap)
