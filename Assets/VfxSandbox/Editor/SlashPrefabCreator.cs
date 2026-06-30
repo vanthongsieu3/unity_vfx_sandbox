@@ -14,12 +14,21 @@ namespace VfxSandbox.Editor
             if (!Directory.Exists(prefabDir)) Directory.CreateDirectory(prefabDir);
             if (!Directory.Exists(matDir)) Directory.CreateDirectory(matDir);
 
+            // Cấu hình các Texture trước khi tải để đảm bảo nhận diện đúng Alpha kênh trong suốt
+            ConfigureTexture("Assets/VfxSandbox/Textures/vfx_tex_star_01.png", false);
+            ConfigureTexture("Assets/VfxSandbox/Textures/vfx_tex_ember_01.png", false);
+            ConfigureTexture("Assets/VfxSandbox/Textures/vfx_tex_noise_01.png", false);
+            ConfigureTexture("Assets/VfxSandbox/Textures/vfx_tex_ramp_void.png", false);
+            ConfigureTexture("Assets/VfxSandbox/Textures/vfx_tex_ramp_01.png", false);
+            ConfigureTexture("Assets/VfxSandbox/Textures/vfx_tex_skull_01.png", false);
+
             // Tải các tài nguyên nền
             Texture2D noiseTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_noise_01.png");
             Texture2D voidRampTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_ramp_void.png");
             Texture2D colorRampTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_ramp_01.png");
             Texture2D starTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_star_01.png");
             Texture2D emberTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_ember_01.png");
+            Texture2D skullTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_skull_01.png");
 
             // Tải các Meshes đặc trưng để thay đổi hình thái kiếm khí
             Mesh slashMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/VfxSandbox/Meshes/vfx_mesh_slash_01.asset");
@@ -30,10 +39,6 @@ namespace VfxSandbox.Editor
             // Tải các vật liệu phụ trợ cho vụ nổ
             Material fireRingMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/VfxSandbox/Materials/mat_fire_ring.mat");
             Material smokeMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/VfxSandbox/Materials/mat_explosion_smoke.mat");
-
-            // Cấu hình Texture đầu lâu địa ngục
-            ConfigureTexture("Assets/VfxSandbox/Textures/vfx_tex_skull_01.png", false);
-            Texture2D skullTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/VfxSandbox/Textures/vfx_tex_skull_01.png");
             
             // Tạo vật liệu đầu lâu riêng cho hệ Địa Ngục
             string skullMatPath = matDir + "/mat_slash_skulls_hell.mat";
