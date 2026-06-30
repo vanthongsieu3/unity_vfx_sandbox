@@ -109,7 +109,7 @@ namespace VfxSandbox.Editor
             if (importer != null)
             {
                 importer.textureType = isNormalMap ? TextureImporterType.NormalMap : TextureImporterType.Default;
-                importer.alphaSource = TextureImporterAlphaSource.FromInputAlpha; // Lấy alpha từ ảnh đầu vào
+                importer.alphaSource = TextureImporterAlphaSource.FromInput; // Lấy alpha từ ảnh đầu vào
                 importer.alphaIsTransparency = true;
                 importer.mipmapEnabled = false;
                 importer.wrapMode = TextureWrapMode.Clamp; // Chặn lặp cạnh viền làm lộ khung ô vuông
