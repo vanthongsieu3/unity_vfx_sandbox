@@ -403,7 +403,10 @@ namespace VfxSandbox.Editor
                 var vel = windPs.velocityOverLifetime;
                 vel.enabled = true;
                 vel.space = ParticleSystemSimulationSpace.Local;
+                // Bắt buộc X, Y, Z phải cùng chung một chế độ MinMaxCurve (ở đây là Random Between Two Constants) để tránh lỗi Unity validation
+                vel.orbitalX = new ParticleSystem.MinMaxCurve(0f, 0f);
                 vel.orbitalY = new ParticleSystem.MinMaxCurve(4.0f, 7.0f); // Xoáy tròn xung quanh
+                vel.orbitalZ = new ParticleSystem.MinMaxCurve(0f, 0f);
 
                 var windColor = windPs.colorOverLifetime;
                 windColor.enabled = true;
