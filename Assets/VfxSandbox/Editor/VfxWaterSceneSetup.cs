@@ -460,11 +460,15 @@ namespace VfxSandbox.Editor
                 // Tạo hình hộp Stencil Mask Volume để xoá nước bên trong lòng thuyền
                 GameObject maskVol = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 maskVol.name = "Stencil_Mask_Volume";
-                maskVol.transform.SetParent(boatRoot.transform);
-                // Đặt vị trí, góc xoay (Bù trừ lệch 90 độ của FBX) và tỷ lệ siêu mỏng khớp lòng thân tàu
-                maskVol.transform.localPosition = new Vector3(0f, 0.01f, 0f);
-                maskVol.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
-                maskVol.transform.localScale = new Vector3(0.28f, 0.04f, 0.65f);
+                
+                // Gán trực tiếp làm con của boatModel để thừa hưởng trọn vẹn góc xoay và hệ trục tọa độ của FBX
+                maskVol.transform.SetParent(boatModel.transform);
+                maskVol.transform.localPosition = new Vector3(0f, 0.05f / scaleFactor, 0f);
+                maskVol.transform.localRotation = Quaternion.identity;
+                
+                // Quy đổi tỷ lệ kích thước tương đối theo scaleFactor của mô hình
+                float invScale = 1.0f / scaleFactor;
+                maskVol.transform.localScale = new Vector3(0.28f * invScale, 0.65f * invScale, 0.04f * invScale);
                 
                 // Gán vật liệu Stencil Mask và tắt toàn bộ đổ bóng/nhận bóng để tránh vẽ đè bóng
                 var maskRenderer = maskVol.GetComponent<MeshRenderer>();
