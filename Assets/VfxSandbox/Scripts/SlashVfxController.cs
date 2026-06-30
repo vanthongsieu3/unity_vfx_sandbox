@@ -121,13 +121,10 @@ namespace VfxSandbox
                 GameObject slashObj = Instantiate(slashPrefab, transform.position + transform.forward * 0.35f, rotation);
                 slashObj.transform.localScale = Vector3.one * 1.2f; // Nhát chém lớn hơn 20%
 
-                // ĐỒNG THỜI: Phóng Kiếm Khí (Slash Wave Projectile) bay thẳng về phía trước
+                // ĐỒNG THỜI: Phóng Kiếm Khí (Slash Wave Projectile) bay thẳng về phía trước theo dạng trận pháp Tu Tiên hoành tráng!
                 if (slashWavePrefab != null)
                 {
-                    // Kiếm khí dựng đứng sát đất hơn
-                    Quaternion waveRot = transform.rotation * Quaternion.Euler(0f, 0f, 90f);
-                    Instantiate(slashWavePrefab, transform.position + transform.forward * 0.45f + new Vector3(0, 0.25f, 0), waveRot);
-                    Debug.Log("[Combo System] Finisher Strike 3: Heavy Vertical Slash + Projectile Wave Launched!");
+                    SpawnThemedProjectiles();
                 }
                 else
                 {
@@ -135,6 +132,115 @@ namespace VfxSandbox
                 }
 
                 comboIndex = 0; // Hoàn thành combo, quay lại nhát đầu
+            }
+        }
+
+        private void SpawnThemedProjectiles()
+        {
+            Vector3 spawnBase = transform.position + transform.forward * 0.45f + new Vector3(0f, 0.25f, 0f);
+            Quaternion baseRot = transform.rotation;
+
+            switch (currentStyle)
+            {
+                case SlashStyle.Magic:
+                    // 🔮 Ma pháp: Tam Kiếm Khí Hình Quạt (3 waves spreading)
+                    {
+                        float[] angles = { -15f, 0f, 15f };
+                        foreach (float angle in angles)
+                        {
+                            Quaternion rot = baseRot * Quaternion.Euler(0f, angle, 90f); // Nghiêng góc ngang Y, đứng dọc Z 90
+                            Instantiate(slashWavePrefab, spawnBase, rot);
+                        }
+                        Debug.Log("[Tu Tien VFX] Spawned 3-Way Magic Wave Array!");
+                    }
+                    break;
+
+                case SlashStyle.Fire:
+                    // 🔥 Hỏa hệ: Tam Hỏa Phách Bức Tường Lửa (3 waves side-by-side clearing the path)
+                    {
+                        float[] offsetsX = { -1.4f, 0f, 1.4f };
+                        foreach (float ox in offsetsX)
+                        {
+                            Vector3 pos = spawnBase + transform.right * ox;
+                            Quaternion rot = baseRot * Quaternion.Euler(0f, 0f, 90f);
+                            GameObject go = Instantiate(slashWavePrefab, pos, rot);
+                            go.transform.localScale = Vector3.one * 1.15f; // To hầm hố
+                        }
+                        Debug.Log("[Tu Tien VFX] Spawned 3-Way Fire Wall Array!");
+                    }
+                    break;
+
+                case SlashStyle.Ice:
+                    // ❄️ Băng hệ: Vạn Băng Trực Tiễn (5 ice spikes fan array)
+                    {
+                        float[] angles = { -22f, -11f, 0f, 11f, 22f };
+                        float[] offsetsX = { -1.8f, -0.9f, 0f, 0.9f, 1.8f };
+                        for (int i = 0; i < 5; i++)
+                        {
+                            Vector3 pos = spawnBase + transform.right * offsetsX[i];
+                            Quaternion rot = baseRot * Quaternion.Euler(0f, angles[i], 0f); // Con tự xoay X 90 rồi nên cha xoay Y thôi
+                            GameObject go = Instantiate(slashWavePrefab, pos, rot);
+                            
+                            float scaleFactor = 1f - Mathf.Abs(angles[i]) / 60f;
+                            go.transform.localScale = Vector3.one * scaleFactor * 1.1f;
+                        }
+                        Debug.Log("[Tu Tien VFX] Spawned 5-Way Ice Spike Barrage!");
+                    }
+                    break;
+
+                case SlashStyle.Wind:
+                    // 🌪️ Phong hệ: Tam Long Cuồng Phong (1 giant tornado center + 2 smaller tornadoes side)
+                    {
+                        // Giữa (Giant)
+                        GameObject centerTornado = Instantiate(slashWavePrefab, spawnBase, baseRot * Quaternion.Euler(0f, 0f, 90f));
+                        centerTornado.transform.localScale = Vector3.one * 1.6f;
+
+                        // Trái (Small)
+                        Vector3 leftPos = spawnBase - transform.right * 1.5f - transform.forward * 0.3f;
+                        GameObject leftTornado = Instantiate(slashWavePrefab, leftPos, baseRot * Quaternion.Euler(0f, -10f, 90f));
+                        leftTornado.transform.localScale = Vector3.one * 0.9f;
+
+                        // Phải (Small)
+                        Vector3 rightPos = spawnBase + transform.right * 1.5f - transform.forward * 0.3f;
+                        GameObject rightTornado = Instantiate(slashWavePrefab, rightPos, baseRot * Quaternion.Euler(0f, 10f, 90f));
+                        rightTornado.transform.localScale = Vector3.one * 0.9f;
+
+                        Debug.Log("[Tu Tien VFX] Spawned Triple Wind Tornado Array!");
+                    }
+                    break;
+
+                case SlashStyle.Lightning:
+                    // ⚡ Lôi hệ: Lôi Điện Liên Hoàn (3 electric arcs, fast and randomized scale)
+                    {
+                        float[] angles = { -12f, 0f, 12f };
+                        foreach (float angle in angles)
+                        {
+                            Quaternion rot = baseRot * Quaternion.Euler(0f, angle, 90f);
+                            GameObject go = Instantiate(slashWavePrefab, spawnBase, rot);
+                            go.transform.localScale = new Vector3(Random.Range(0.8f, 1.3f), Random.Range(0.8f, 1.3f), 1f);
+                        }
+                        Debug.Log("[Tu Tien VFX] Spawned Triple Lightning Strike!");
+                    }
+                    break;
+
+                case SlashStyle.Hell:
+                    // 💀 Địa ngục hệ: Bách Quỷ Dạ Hành (5 skulls flying in swarm with height offsets)
+                    {
+                        float[] offsetsX = { -1.5f, -0.7f, 0f, 0.7f, 1.5f };
+                        float[] heights = { 0.1f, 0.4f, 0.2f, 0.5f, 0.1f };
+                        float[] delays = { 0f, 0.05f, 0.02f, 0.06f, 0f };
+
+                        for (int i = 0; i < 5; i++)
+                        {
+                            Vector3 pos = spawnBase + transform.right * offsetsX[i] + new Vector3(0f, heights[i], 0f);
+                            Quaternion rot = baseRot * Quaternion.Euler(0f, offsetsX[i] * -5f, 90f);
+                            
+                            GameObject go = Instantiate(slashWavePrefab, pos - transform.forward * delays[i] * 10f, rot);
+                            go.transform.localScale = Vector3.one * Random.Range(0.8f, 1.2f);
+                        }
+                        Debug.Log("[Tu Tien VFX] Spawned 5-Skull Hell Swarm!");
+                    }
+                    break;
             }
         }
     }
